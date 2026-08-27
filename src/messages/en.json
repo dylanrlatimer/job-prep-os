@@ -1,0 +1,62 @@
+{
+  "Metadata": {
+    "title": "Latimer NextJS Template",
+    "description": "A modern Next.js starter project by Dylan Latimer.",
+    "ogTitle": "Latimer NextJS Template",
+    "ogDescription": "A modern Next.js starter project by Dylan Latimer.",
+    "twitterTitle": "Latimer NextJS Template",
+    "twitterDescription": "A modern Next.js starter project by Dylan Latimer."
+  },
+  "HomePage": {
+    "title": "Latimer NextJS Template",
+    "subtitle": "© Dylan Latimer 2025",
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "signingOut": "Signing out…",
+    "selectLanguage": "Select language"
+  },
+  "AuthPage": {
+    "authMode": "Auth mode",
+    "loginTab": "Login",
+    "registerTab": "Register",
+    "or": "or",
+    "emailLabel": "Email",
+    "emailPlaceholder": "you@example.com",
+    "passwordLabel": "Password",
+    "register": {
+      "title": "Create your account",
+      "subtitle": "Join in minutes.",
+      "submit": "Create account",
+      "google": "Sign up with Google",
+      "passwordPlaceholder": "Create a strong password",
+      "tosNote": "By signing up, you agree to our <tos>Terms of Service</tos> and <privacy>Privacy Policy</privacy>."
+    },
+    "login": {
+      "title": "Welcome back",
+      "subtitle": "Log in to continue.",
+      "submit": "Log in",
+      "google": "Continue with Google",
+      "passwordPlaceholder": "Your password"
+    }
+  },
+  "Common": {
+    "notifications": "Notifications"
+  },
+  "Errors": {
+    "fallback": "Something went wrong. Please try again.",
+    "UNAUTHENTICATED": "You must be signed in to continue.",
+    "SIGN_IN_FAILED": "Invalid email or password.",
+    "SIGN_UP_ERROR": "Could not create your account. Please try again.",
+    "SIGN_OUT_ERROR": "Could not sign out. Please try again.",
+    "DATABASE_ERROR": "A database error occurred. Please try again.",
+    "INTERNAL_SERVER_ERROR": "An unexpected error occurred. Please try again.",
+    "REQUEST_FAILED": "Request failed. Please try again.",
+    "NOT_FOUND": "Not found.",
+    "FORBIDDEN": "You do not have permission to do that.",
+    "validation": {
+      "invalidEmail": "Enter a valid email address.",
+      "passwordRequired": "Password is required.",
+      "passwordTooShort": "Password must be at least 8 characters."
+    }
+  }
+}

@@ -1,0 +1,110 @@
+@import "tailwindcss";
+
+/*
+  Semantic design tokens: Tailwind (@theme) reads from :root so colors stay single-sourced.
+  Trimmed Minmax palette — enough for auth, home, toasts, tabs (expand as the template grows).
+*/
+:root {
+  /* Surfaces */
+  --canvas: #fafafa;
+  --card: #ffffff;
+  --card-muted: #f4f4f5;
+  --muted: #f4f4f5;
+
+  /* Borders */
+  --border: #e4e4e7;
+  --border-subtle: #f4f4f5;
+  --input: #d4d4d8;
+
+  /* Text */
+  --foreground: #18181b;
+  --strong-foreground: #27272a;
+  --secondary-foreground: #52525b;
+  --muted-foreground: #71717a;
+  --subtle-foreground: #a1a1aa;
+  --tertiary-foreground: #3f3f46;
+
+  /* Primary CTA / links */
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-active: #1e40af;
+  --primary-foreground: #ffffff;
+  --link: #2563eb;
+  --ring: #3b82f6;
+  --ring-focus: rgb(37 99 235 / 0.2);
+
+  /* Status & forms */
+  --destructive: #b91c1c;
+  --destructive-subtle: #fef2f2;
+  --destructive-border: #fecaca;
+  --destructive-bright: #f87171;
+  --destructive-button: #b91c1c;
+  --destructive-button-hover: #991b1b;
+  --destructive-button-border: #991b1b;
+
+  --success: #22c55e;
+  --info: #3b82f6;
+
+  --accent: #2563eb;
+  --accent-subtle: #eff6ff;
+
+  /* Auth chrome */
+  --tab-track: #e4e4e7;
+  --tab-border: #d4d4d8;
+  --tab-hover: #d4d4d8;
+  --divider-foreground: #71717a;
+
+  --elevation-card: 0 1px 3px rgb(24 24 27 / 0.06);
+
+  --toast-error: #ef4444;
+}
+
+@theme {
+  --color-canvas: var(--canvas);
+  --color-card: var(--card);
+  --color-card-muted: var(--card-muted);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-border-subtle: var(--border-subtle);
+  --color-foreground: var(--foreground);
+  --color-strong-foreground: var(--strong-foreground);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-subtle-foreground: var(--subtle-foreground);
+  --color-tertiary-foreground: var(--tertiary-foreground);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-active: var(--primary-active);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-ring: var(--ring);
+  --color-destructive: var(--destructive);
+  --color-destructive-subtle: var(--destructive-subtle);
+  --color-destructive-border: var(--destructive-border);
+  --color-destructive-bright: var(--destructive-bright);
+  --color-destructive-button: var(--destructive-button);
+  --color-destructive-button-hover: var(--destructive-button-hover);
+  --color-destructive-button-border: var(--destructive-button-border);
+  --color-success: var(--success);
+  --color-info: var(--info);
+  --color-accent: var(--accent);
+  --color-accent-subtle: var(--accent-subtle);
+  --color-input: var(--input);
+  --color-link: var(--link);
+  --color-tab-track: var(--tab-track);
+  --color-tab-border: var(--tab-border);
+  --color-tab-hover: var(--tab-hover);
+  --color-divider-foreground: var(--divider-foreground);
+  --color-toast-error: var(--toast-error);
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --shadow-card: var(--elevation-card);
+}
+
+body {
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--canvas);
+  color: var(--foreground);
+}

@@ -1,0 +1,62 @@
+{
+  "Metadata": {
+    "title": "Modèle NextJS Latimer",
+    "description": "Un modèle Next.js starter par Dylan Latimer.",
+    "ogTitle": "Modèle NextJS Latimer",
+    "ogDescription": "Un modèle Next.js starter par Dylan Latimer.",
+    "twitterTitle": "Modèle NextJS Latimer",
+    "twitterDescription": "Un modèle Next.js starter par Dylan Latimer."
+  },
+  "HomePage": {
+    "title": "Modèle NextJS Latimer",
+    "subtitle": "© Dylan Latimer 2025",
+    "signIn": "Connexion",
+    "signOut": "Déconnexion",
+    "signingOut": "Déconnexion…",
+    "selectLanguage": "Choisir la langue"
+  },
+  "AuthPage": {
+    "authMode": "Mode d'authentification",
+    "loginTab": "Connexion",
+    "registerTab": "Inscription",
+    "or": "ou",
+    "emailLabel": "Courriel",
+    "emailPlaceholder": "vous@exemple.com",
+    "passwordLabel": "Mot de passe",
+    "register": {
+      "title": "Créez votre compte",
+      "subtitle": "Rejoignez en quelques minutes.",
+      "submit": "Créer un compte",
+      "google": "Créer un compte avec Google",
+      "passwordPlaceholder": "Créez un mot de passe fort",
+      "tosNote": "En vous inscrivant, vous acceptez nos <tos>Conditions d'utilisation</tos> et <privacy>Politique de confidentialité</privacy>."
+    },
+    "login": {
+      "title": "Bienvenue",
+      "subtitle": "Connectez-vous pour continuer.",
+      "submit": "Connexion",
+      "google": "Continuer avec Google",
+      "passwordPlaceholder": "Votre mot de passe"
+    }
+  },
+  "Common": {
+    "notifications": "Notifications"
+  },
+  "Errors": {
+    "fallback": "Une erreur s'est produite. Veuillez réessayer.",
+    "UNAUTHENTICATED": "Vous devez être connecté pour continuer.",
+    "SIGN_IN_FAILED": "Courriel ou mot de passe invalide.",
+    "SIGN_UP_ERROR": "Impossible de créer votre compte. Veuillez réessayer.",
+    "SIGN_OUT_ERROR": "Impossible de se déconnecter. Veuillez réessayer.",
+    "DATABASE_ERROR": "Une erreur de base de données s'est produite. Veuillez réessayer.",
+    "INTERNAL_SERVER_ERROR": "Une erreur inattendue s'est produite. Veuillez réessayer.",
+    "REQUEST_FAILED": "La requête a échoué. Veuillez réessayer.",
+    "NOT_FOUND": "Introuvable.",
+    "FORBIDDEN": "Vous n'avez pas la permission d'effectuer cette action.",
+    "validation": {
+      "invalidEmail": "Entrez une adresse courriel valide.",
+      "passwordRequired": "Le mot de passe est requis.",
+      "passwordTooShort": "Le mot de passe doit contenir au moins 8 caractères."
+    }
+  }
+}

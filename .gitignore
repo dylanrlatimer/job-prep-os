@@ -1,0 +1,52 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Runtime and build artifacts
+node_modules/
+dist/
+dist-ssr/
+.build/
+.next/
+out/
+build/
+.pnp.cjs      
+.pnp.loader.mjs
+
+# Env files
+.env
+.env.*        
+!.env.example
+
+# Lockfiles from other package managers
+package-lock.json
+yarn.lock
+
+# pnpm lockfile
+!pnpm-lock.yaml
+
+# Turborepo build state
+.turbo/
+
+# Editor junk
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.vercel
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
