@@ -1,19 +1,21 @@
 {
   "Metadata": {
-    "title": "Modèle NextJS Latimer",
-    "description": "Un modèle Next.js starter par Dylan Latimer.",
-    "ogTitle": "Modèle NextJS Latimer",
-    "ogDescription": "Un modèle Next.js starter par Dylan Latimer.",
-    "twitterTitle": "Modèle NextJS Latimer",
-    "twitterDescription": "Un modèle Next.js starter par Dylan Latimer."
+    "title": "JobPrepOS",
+    "description": "Espace de préparation aux entrevues."
   },
-  "HomePage": {
-    "title": "Modèle NextJS Latimer",
-    "subtitle": "© Dylan Latimer 2025",
-    "signIn": "Connexion",
+  "App": {
+    "name": "JobPrepOS",
+    "settings": "Paramètres"
+  },
+  "SettingsPage": {
+    "title": "Paramètres",
+    "displayNameLabel": "Nom affiché",
+    "emailLabel": "Courriel",
+    "save": "Enregistrer",
+    "saving": "Enregistrement…",
+    "saveSuccess": "Paramètres enregistrés.",
     "signOut": "Déconnexion",
-    "signingOut": "Déconnexion…",
-    "selectLanguage": "Choisir la langue"
+    "signingOut": "Déconnexion…"
   },
   "AuthPage": {
     "authMode": "Mode d'authentification",
@@ -53,10 +55,12 @@
     "REQUEST_FAILED": "La requête a échoué. Veuillez réessayer.",
     "NOT_FOUND": "Introuvable.",
     "FORBIDDEN": "Vous n'avez pas la permission d'effectuer cette action.",
+    "profileNotFound": "Profil introuvable.",
     "validation": {
       "invalidEmail": "Entrez une adresse courriel valide.",
       "passwordRequired": "Le mot de passe est requis.",
-      "passwordTooShort": "Le mot de passe doit contenir au moins 8 caractères."
+      "passwordTooShort": "Le mot de passe doit contenir au moins 8 caractères.",
+      "displayNameTooLong": "Le nom affiché est trop long."
     }
   }
 }

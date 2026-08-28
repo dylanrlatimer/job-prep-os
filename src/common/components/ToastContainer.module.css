@@ -1,3 +1,14 @@
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .wrapper {
   position: fixed;
   bottom: 1rem;
@@ -16,17 +27,16 @@
 }
 
 .toast {
-  padding: 0.875rem 1.25rem;
-  border-radius: 10px;
-  font-weight: 600;
-  font-size: 1rem;
+  padding: 0.625rem 1rem;
+  border-radius: 0.25rem;
+  font-weight: 500;
+  font-size: 0.875rem;
   line-height: 1.4;
-  color: white;
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.06),
-    0 6px 16px rgba(0, 0, 0, 0.14);
+  color: var(--foreground);
+  background-color: var(--surface-raised);
+  border: 1px solid var(--border);
   max-width: min(28rem, calc(100vw - 2rem));
-  animation: toastIn 0.2s ease;
+  animation: slideUp 0.2s ease-out;
 }
 
 .message {
@@ -35,24 +45,16 @@
 }
 
 .error {
-  background-color: var(--toast-error);
+  background-color: #281414;
+  border-color: #cc3333;
 }
 
 .success {
-  background-color: var(--success);
+  background-color: #142814;
+  border-color: #3d9e5f;
 }
 
 .info {
-  background-color: var(--info);
-}
-
-@keyframes toastIn {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  background-color: var(--surface-raised);
+  border-color: var(--border);
 }

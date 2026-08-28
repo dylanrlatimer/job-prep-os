@@ -1,19 +1,21 @@
 {
   "Metadata": {
-    "title": "Latimer NextJS Template",
-    "description": "A modern Next.js starter project by Dylan Latimer.",
-    "ogTitle": "Latimer NextJS Template",
-    "ogDescription": "A modern Next.js starter project by Dylan Latimer.",
-    "twitterTitle": "Latimer NextJS Template",
-    "twitterDescription": "A modern Next.js starter project by Dylan Latimer."
+    "title": "JobPrepOS",
+    "description": "Interview preparation workspace."
   },
-  "HomePage": {
-    "title": "Latimer NextJS Template",
-    "subtitle": "© Dylan Latimer 2025",
-    "signIn": "Sign in",
+  "App": {
+    "name": "JobPrepOS",
+    "settings": "Settings"
+  },
+  "SettingsPage": {
+    "title": "Settings",
+    "displayNameLabel": "Display name",
+    "emailLabel": "Email",
+    "save": "Save",
+    "saving": "Saving…",
+    "saveSuccess": "Settings saved.",
     "signOut": "Sign out",
-    "signingOut": "Signing out…",
-    "selectLanguage": "Select language"
+    "signingOut": "Signing out…"
   },
   "AuthPage": {
     "authMode": "Auth mode",
@@ -53,10 +55,12 @@
     "REQUEST_FAILED": "Request failed. Please try again.",
     "NOT_FOUND": "Not found.",
     "FORBIDDEN": "You do not have permission to do that.",
+    "profileNotFound": "Profile not found.",
     "validation": {
       "invalidEmail": "Enter a valid email address.",
       "passwordRequired": "Password is required.",
-      "passwordTooShort": "Password must be at least 8 characters."
+      "passwordTooShort": "Password must be at least 8 characters.",
+      "displayNameTooLong": "Display name is too long."
     }
   }
 }

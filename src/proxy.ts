@@ -12,7 +12,7 @@ export const config = {
 };
 
 // Public paths expressed in unlocalized form
-const PUBLIC_PATHS = ['/', '/auth/callback'];
+const PUBLIC_PATHS = ['/auth', '/auth/callback'];
 
 function isPublicPath(unlocalizedPathname: string) {
   return PUBLIC_PATHS.some((p) => unlocalizedPathname === p || unlocalizedPathname.startsWith(`${p}/`));
@@ -45,10 +45,11 @@ export default async function proxy(request: NextRequest) {
   const rawPathname = request.nextUrl.pathname;
   const { locale, pathname } = getLocaleAndUnlocalizedPathname(rawPathname);
 
-  if (isPublicPath(pathname)) return response;
+  if (!user && !isPublicPath(pathname)) {
+    return redirectPreservingCookies(request, response, `/${locale}/auth`);
+  }
 
-  if (pathname === '/auth' && user) {
-    // Redirect to the localized root to avoid relying on next-intl running again
+  if (user && pathname === '/auth') {
     return redirectPreservingCookies(request, response, `/${locale}`);
   }
 

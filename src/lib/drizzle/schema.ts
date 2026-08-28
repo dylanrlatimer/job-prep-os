@@ -1,5 +1,11 @@
-import { pgTable, pgSchema, index, foreignKey, check, uuid, text, timestamp, boolean, jsonb, varchar, bigserial, uniqueIndex, smallint, json, inet, bigint, unique, primaryKey } from "drizzle-orm/pg-core"
+import { pgTable, pgSchema, index, foreignKey, check, uuid, text, timestamp, boolean, jsonb, varchar, bigserial, uniqueIndex, smallint, json, inet, bigint, unique, primaryKey, customType } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
+
+const bytea = customType<{ data: string; driverData: string }>({
+	dataType() {
+		return 'bytea';
+	},
+});
 
 export const auth = pgSchema("auth");
 export const app = pgSchema("app");
@@ -146,14 +152,14 @@ export const usersInAuth = auth.table("users", {
 	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }),
 	phone: text().default(sql`NULL`),
 	phoneConfirmedAt: timestamp("phone_confirmed_at", { withTimezone: true, mode: 'string' }),
-	phoneChange: text("phone_change").default('),
-	phoneChangeToken: varchar("phone_change_token", { length: 255 }).default('),
+	phoneChange: text("phone_change").default(''),
+	phoneChangeToken: varchar("phone_change_token", { length: 255 }).default(''),
 	phoneChangeSentAt: timestamp("phone_change_sent_at", { withTimezone: true, mode: 'string' }),
 	confirmedAt: timestamp("confirmed_at", { withTimezone: true, mode: 'string' }).generatedAlwaysAs(sql`LEAST(email_confirmed_at, phone_confirmed_at)`),
-	emailChangeTokenCurrent: varchar("email_change_token_current", { length: 255 }).default('),
+	emailChangeTokenCurrent: varchar("email_change_token_current", { length: 255 }).default(''),
 	emailChangeConfirmStatus: smallint("email_change_confirm_status").default(0),
 	bannedUntil: timestamp("banned_until", { withTimezone: true, mode: 'string' }),
-	reauthenticationToken: varchar("reauthentication_token", { length: 255 }).default('),
+	reauthenticationToken: varchar("reauthentication_token", { length: 255 }).default(''),
 	reauthenticationSentAt: timestamp("reauthentication_sent_at", { withTimezone: true, mode: 'string' }),
 	isSsoUser: boolean("is_sso_user").default(false).notNull(),
 	deletedAt: timestamp("deleted_at", { withTimezone: true, mode: 'string' }),
@@ -180,7 +186,7 @@ export const auditLogEntriesInAuth = auth.table("audit_log_entries", {
 	id: uuid().notNull(),
 	payload: json(),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }),
-	ipAddress: varchar("ip_address", { length: 64 }).default(').notNull(),
+	ipAddress: varchar("ip_address", { length: 64 }).default('').notNull(),
 }, (table) => [
 	index("audit_logs_instance_id_idx").using("btree", table.instanceId.asc().nullsLast().op("uuid_ops")),
 ]);
@@ -497,18 +503,17 @@ export const customOauthProvidersInAuth = auth.table("custom_oauth_providers", {
 export const webauthnCredentialsInAuth = auth.table("webauthn_credentials", {
 	id: uuid().defaultRandom().notNull(),
 	userId: uuid("user_id").notNull(),
+	credentialId: bytea("credential_id").notNull(),
 	// TODO: failed to parse database type 'bytea'
-	credentialId: unknown("credential_id").notNull(),
-	// TODO: failed to parse database type 'bytea'
-	publicKey: unknown("public_key").notNull(),
-	attestationType: text("attestation_type").default(').notNull(),
+	publicKey: bytea("public_key").notNull(),
+	attestationType: text("attestation_type").default('').notNull(),
 	aaguid: uuid(),
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	signCount: bigint("sign_count", { mode: "number" }).default(0).notNull(),
 	transports: jsonb().default([]).notNull(),
 	backupEligible: boolean("backup_eligible").default(false).notNull(),
 	backedUp: boolean("backed_up").default(false).notNull(),
-	friendlyName: text("friendly_name").default(').notNull(),
+	friendlyName: text("friendly_name").default('').notNull(),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	lastUsedAt: timestamp("last_used_at", { withTimezone: true, mode: 'string' }),
