@@ -17,7 +17,7 @@
     "selectLanguage": "Choisir la langue"
   },
   "TheoryRepositoryPage": {
-    "title": "Mon référentiel",
+    "title": "Mes questions",
     "description": "Questions enregistrées que vous étudiez activement.",
     "browseQuestions": "Parcourir les questions",
     "createQuestion": "Créer une question",
@@ -32,11 +32,11 @@
     "noAttempts": "Aucune tentative",
     "attemptTotals": "{incorrect} incorrect · {partial} partiel · {correct} correct",
     "uncategorized": "Sans catégorie",
-    "emptyTitle": "Votre référentiel est vide",
+    "emptyTitle": "Aucune question enregistrée",
     "emptyDescription": "Parcourez la banque de questions ou créez une question pour commencer à pratiquer.",
     "noMatchesTitle": "Aucune question ne correspond",
     "noMatchesDescription": "Essayez un autre terme de recherche ou un autre filtre de catégorie.",
-    "loadError": "Impossible de charger votre référentiel.",
+    "loadError": "Impossible de charger vos questions.",
     "retry": "Réessayer",
     "retrying": "Nouvelle tentative…"
   },
@@ -53,9 +53,9 @@
   "QuestionBuilderPage": {
     "createTitle": "Créer une question",
     "editTitle": "Modifier la question",
-    "createDescription": "Ajoutez une question à votre référentiel avec une réponse de référence et des catégories facultatives.",
+    "createDescription": "Ajoutez une question avec une réponse de référence et des catégories facultatives.",
     "editDescription": "Mettez à jour votre question, votre réponse, vos catégories et votre visibilité.",
-    "backToRepository": "Retour au référentiel",
+    "backToRepository": "Retour aux questions",
     "questionLabel": "Question",
     "questionPlaceholder": "Quelle est la question ?",
     "answerLabel": "Réponse de référence",
@@ -83,7 +83,7 @@
   },
   "QuestionDetailPage": {
     "title": "Question",
-    "backToRepository": "Retour au référentiel",
+    "backToRepository": "Retour aux questions",
     "uncategorized": "Sans catégorie",
     "noAttempts": "Aucune tentative",
     "attemptTotals": "{incorrect} incorrect · {partial} partiel · {correct} correct",
@@ -105,7 +105,7 @@
   },
   "PracticePage": {
     "title": "Pratique",
-    "backToRepository": "Retour au référentiel",
+    "backToRepository": "Retour aux questions",
     "uncategorized": "Sans catégorie",
     "noAttempts": "Aucune tentative",
     "attemptTotals": "{incorrect} incorrect · {partial} partiel · {correct} correct",
@@ -183,7 +183,7 @@
     "profileNotFound": "Profil introuvable.",
     "questionNotFound": "Question introuvable.",
     "questionForbidden": "Vous ne pouvez modifier que vos propres questions.",
-    "questionNotInRepository": "Cette question n'est pas dans votre référentiel.",
+    "questionNotInRepository": "Cette question n'est pas dans vos questions enregistrées.",
     "validation": {
       "invalidEmail": "Entrez une adresse courriel valide.",
       "passwordRequired": "Le mot de passe est requis.",

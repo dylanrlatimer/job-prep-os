@@ -33,7 +33,7 @@ export default function AppSidebar() {
   ];
 
   return (
-    <aside className='flex w-full shrink-0 flex-col border-b border-border bg-card md:w-52 md:border-b-0 md:border-r'>
+    <aside className='flex w-full shrink-0 flex-col border-b border-border bg-card md:w-56 md:border-b-0 md:border-r'>
       <div className='flex h-11 items-center border-b border-border px-4 md:h-auto md:py-4'>
         <Link href='/' className='text-sm font-medium tracking-tight text-foreground no-underline'>
           {t('appName')}

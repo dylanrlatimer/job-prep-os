@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import AppShell from '@/common/components/AppShell';
+import Select from '@/common/components/Select';
 import { inputClassName, primaryButtonClassName, secondaryButtonClassName } from '@/common/styles/form';
 import { repositoryQueryOptions } from '@/features/theory/repository/api/queries';
 import type { RepositoryQuestionItem } from '@/features/theory/repository/api/contracts';
@@ -79,6 +80,14 @@ export default function TheoryRepositoryPage() {
     return data.questions.filter((question) => matchesSearch(question, search) && matchesCategory(question, categoryId));
   }, [categoryId, data, search]);
 
+  const categoryOptions = useMemo(() => {
+    if (!data) return [];
+    return [
+      { value: '', label: t('allCategories') },
+      ...data.categories.map((category) => ({ value: category.id, label: category.name })),
+    ];
+  }, [data, t]);
+
   if (isPending) {
     return (
       <AppShell>
@@ -140,17 +149,13 @@ export default function TheoryRepositoryPage() {
             </label>
 
             {data.categories.length > 0 && (
-              <label className='block w-full sm:w-44'>
-                <span className='sr-only'>{t('categoryFilterLabel')}</span>
-                <select className={inputClassName} value={categoryId ?? ''} onChange={(event) => setCategoryId(event.target.value || null)}>
-                  <option value=''>{t('allCategories')}</option>
-                  {data.categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <Select
+                className='w-full sm:w-44'
+                aria-label={t('categoryFilterLabel')}
+                value={categoryId ?? ''}
+                onValueChange={(value) => setCategoryId(value || null)}
+                options={categoryOptions}
+              />
             )}
           </div>
         )}
