@@ -44,10 +44,16 @@
     "title": "Parcourir les questions",
     "description": "Recherchez et filtrez les questions publiées de la banque partagée."
   },
+  "UnsavedChangesDialog": {
+    "title": "Abandonner les modifications ?",
+    "description": "Vous avez des modifications non enregistrées. Si vous quittez maintenant, votre progression sera perdue.",
+    "stay": "Rester sur la page",
+    "leave": "Abandonner et quitter"
+  },
   "QuestionBuilderPage": {
     "createTitle": "Créer une question",
     "editTitle": "Modifier la question",
-    "createDescription": "Ajoutez une question à votre référentiel avec une réponse de référence et des catégories.",
+    "createDescription": "Ajoutez une question à votre référentiel avec une réponse de référence et des catégories facultatives.",
     "editDescription": "Mettez à jour votre question, votre réponse, vos catégories et votre visibilité.",
     "backToRepository": "Retour au référentiel",
     "questionLabel": "Question",
@@ -55,6 +61,9 @@
     "answerLabel": "Réponse de référence",
     "answerPlaceholder": "Écrivez la réponse de référence avec laquelle vous comparerez.",
     "categoriesLabel": "Catégories",
+    "categoriesSearchLabel": "Rechercher des catégories",
+    "categoriesSearchPlaceholder": "Rechercher des catégories…",
+    "categoriesNoResults": "Aucune catégorie ne correspond à votre recherche.",
     "noCategories": "Aucune catégorie n'est disponible pour le moment.",
     "sourceNameLabel": "Source",
     "sourceNamePlaceholder": "p. ex. MDN, LeetCode",
@@ -130,7 +139,6 @@
       "displayNameTooLong": "Le nom affiché est trop long.",
       "questionRequired": "La question est requise.",
       "answerRequired": "La réponse de référence est requise.",
-      "categoriesRequired": "Sélectionnez au moins une catégorie.",
       "invalidSourceUrl": "Entrez une URL valide.",
       "invalidCategories": "Une ou plusieurs catégories sélectionnées sont invalides."
     }

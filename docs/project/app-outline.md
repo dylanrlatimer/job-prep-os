@@ -48,7 +48,7 @@ Users can create questions with:
 
 - the question;
 - a reference answer;
-- one or more categories;
+- optional categories (questions with none are treated as uncategorized in the UI);
 - an optional source;
 - an optional exact source URL;
 - private or public visibility.

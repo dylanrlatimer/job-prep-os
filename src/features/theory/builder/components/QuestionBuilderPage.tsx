@@ -1,13 +1,19 @@
 'use client';
 
 import type { SubmitEvent, ReactNode } from 'react';
+import { useMemo, useRef, useState } from 'react';
+import Fuse from 'fuse.js';
+import { ChevronLeft, Search } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import AppShell from '@/common/components/AppShell';
 import { useValidationMessage } from '@/common/hooks/use-validation-message';
 import { inputClassName, primaryButtonClassName, secondaryButtonClassName, textareaClassName } from '@/common/styles/form';
-import { useQuestionBuilderForm } from '@/features/theory/builder/hooks/useQuestionBuilderForm';
+import { useQuestionBuilderForm, questionBuilderFieldOrder } from '@/features/theory/builder/hooks/useQuestionBuilderForm';
+import type { BuilderCategory } from '@/features/theory/builder/api/contracts';
 import QuestionBuilderSkeleton from './QuestionBuilderSkeleton';
+import { scrollToFirstFormError } from '@/common/lib/scroll-to-first-form-error';
+import { useUnsavedChangesGuard } from '@/common/unsaved-changes/use-unsaved-changes-guard';
 import { cn } from '@/lib/cn';
 
 type QuestionBuilderPageProps = {
@@ -25,25 +31,54 @@ function Field({ label, htmlFor, error, children }: FieldProps) {
   const errorMessage = useValidationMessage(error);
 
   return (
-    <label className='block' htmlFor={htmlFor}>
-      <span className='mb-1.5 block text-xs text-secondary-foreground'>{label}</span>
-      {children}
-      {errorMessage ? <span className='mt-1.5 block text-xs text-destructive-bright'>{errorMessage}</span> : null}
-    </label>
+    <div data-field={htmlFor}>
+      <label className='block' htmlFor={htmlFor}>
+        <span className='mb-1.5 block text-xs text-secondary-foreground'>{label}</span>
+        {children}
+        {errorMessage ? <span className='mt-1.5 block text-xs text-destructive-bright'>{errorMessage}</span> : null}
+      </label>
+    </div>
   );
+}
+
+function useFilteredCategories(categories: BuilderCategory[], query: string) {
+  const fuse = useMemo(
+    () =>
+      new Fuse(categories, {
+        keys: ['name', 'slug'],
+        threshold: 0.35,
+        ignoreLocation: true,
+      }),
+    [categories],
+  );
+
+  return useMemo(() => {
+    const trimmed = query.trim();
+    if (!trimmed) return categories;
+    return fuse.search(trimmed).map((result) => result.item);
+  }, [categories, fuse, query]);
 }
 
 export default function QuestionBuilderPage({ questionId }: QuestionBuilderPageProps) {
   const t = useTranslations('QuestionBuilderPage');
-  const { isEdit, values, fieldErrors, metadata, isLoading, isError, isSubmitting, submit, setField, toggleCategory, refetch } = useQuestionBuilderForm({
+  const formRef = useRef<HTMLFormElement>(null);
+  const [categorySearch, setCategorySearch] = useState('');
+  const { isEdit, values, fieldErrors, isDirty, metadata, isLoading, isError, isSubmitting, submit, setField, toggleCategory, refetch } = useQuestionBuilderForm({
     questionId,
   });
 
+  useUnsavedChangesGuard(isDirty && !isLoading && !isError);
+
   const categoriesErrorMessage = useValidationMessage(fieldErrors.categoryIds);
+  const filteredCategories = useFilteredCategories(metadata?.categories ?? [], categorySearch);
 
   const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
-    submit();
+    const result = submit();
+
+    if (!result.ok) {
+      scrollToFirstFormError(result.fieldErrors, questionBuilderFieldOrder, formRef.current ?? document);
+    }
   };
 
   if (isLoading) {
@@ -73,7 +108,10 @@ export default function QuestionBuilderPage({ questionId }: QuestionBuilderPageP
   return (
     <AppShell>
       <div className='px-4 py-8 md:px-8'>
-        <Link href='/' className='text-sm text-muted-foreground no-underline hover:text-foreground hover:underline'>
+        <Link
+          href='/'
+          className='inline-flex items-center gap-1 text-sm text-muted-foreground no-underline transition-colors hover:text-foreground'>
+          <ChevronLeft size={16} strokeWidth={1.75} aria-hidden='true' />
           {t('backToRepository')}
         </Link>
 
@@ -82,7 +120,7 @@ export default function QuestionBuilderPage({ questionId }: QuestionBuilderPageP
           <p className='mt-1 max-w-2xl text-sm text-muted-foreground'>{isEdit ? t('editDescription') : t('createDescription')}</p>
         </header>
 
-        <form onSubmit={handleSubmit} className='mx-auto mt-8 max-w-2xl space-y-6'>
+        <form ref={formRef} onSubmit={handleSubmit} noValidate className='mx-auto mt-8 max-w-2xl space-y-6'>
           <Field label={t('questionLabel')} htmlFor='question' error={fieldErrors.question}>
             <textarea
               id='question'
@@ -91,7 +129,6 @@ export default function QuestionBuilderPage({ questionId }: QuestionBuilderPageP
               onChange={(event) => setField('question', event.target.value)}
               placeholder={t('questionPlaceholder')}
               rows={4}
-              required
             />
           </Field>
 
@@ -103,38 +140,61 @@ export default function QuestionBuilderPage({ questionId }: QuestionBuilderPageP
               onChange={(event) => setField('answer', event.target.value)}
               placeholder={t('answerPlaceholder')}
               rows={6}
-              required
             />
           </Field>
 
-          <div>
+          <div data-field='categoryIds'>
             <span className='mb-1.5 block text-xs text-secondary-foreground'>{t('categoriesLabel')}</span>
 
             {!hasCategories ? (
               <p className='m-0 text-sm text-muted-foreground'>{t('noCategories')}</p>
             ) : (
-              <div className='rounded-sm border border-border'>
-                <ul className='m-0 max-h-48 list-none overflow-y-auto p-0'>
-                  {metadata.categories.map((category, index) => {
-                    const checked = values.categoryIds.includes(category.id);
-                    const inputId = `category-${category.id}`;
+              <div className='overflow-hidden rounded-sm border border-border bg-card'>
+                <div className='border-b border-border px-3 py-2'>
+                  <label className='relative block'>
+                    <span className='sr-only'>{t('categoriesSearchLabel')}</span>
+                    <Search
+                      size={14}
+                      strokeWidth={1.75}
+                      className='pointer-events-none absolute top-1/2 left-0 -translate-y-1/2 text-muted-foreground'
+                      aria-hidden='true'
+                    />
+                    <input
+                      type='search'
+                      className='w-full border-0 bg-transparent py-1 pr-1 pl-5 text-sm text-foreground placeholder:text-subtle-foreground focus:outline-none'
+                      value={categorySearch}
+                      onChange={(event) => setCategorySearch(event.target.value)}
+                      placeholder={t('categoriesSearchPlaceholder')}
+                    />
+                  </label>
+                </div>
+                <div className='scrollbar-branded h-48 overflow-y-auto'>
+                  {filteredCategories.length === 0 ? (
+                    <p className='m-0 px-3 py-4 text-sm text-muted-foreground'>{t('categoriesNoResults')}</p>
+                  ) : (
+                    <ul className='m-0 list-none p-0'>
+                      {filteredCategories.map((category, index) => {
+                        const checked = values.categoryIds.includes(category.id);
+                        const inputId = `category-${category.id}`;
 
-                    return (
-                      <li key={category.id} className={cn(index > 0 && 'border-t border-border')}>
-                        <label htmlFor={inputId} className='flex cursor-pointer items-center gap-3 px-3 py-2.5 text-sm hover:bg-card-muted'>
-                          <input
-                            id={inputId}
-                            type='checkbox'
-                            className='size-3.5 shrink-0 accent-primary'
-                            checked={checked}
-                            onChange={() => toggleCategory(category.id)}
-                          />
-                          <span className='text-foreground'>{category.name}</span>
-                        </label>
-                      </li>
-                    );
-                  })}
-                </ul>
+                        return (
+                          <li key={category.id} className={cn(index > 0 && 'border-t border-border')}>
+                            <label htmlFor={inputId} className='flex cursor-pointer items-center gap-3 px-3 py-2.5 text-sm hover:bg-card-muted'>
+                              <input
+                                id={inputId}
+                                type='checkbox'
+                                className='size-3.5 shrink-0 cursor-pointer accent-primary'
+                                checked={checked}
+                                onChange={() => toggleCategory(category.id)}
+                              />
+                              <span className='text-foreground'>{category.name}</span>
+                            </label>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
               </div>
             )}
 
@@ -165,14 +225,14 @@ export default function QuestionBuilderPage({ questionId }: QuestionBuilderPageP
             />
           </Field>
 
-          <fieldset className='m-0 border-0 p-0'>
+          <fieldset className='m-0 mb-6 border-0 p-0'>
             <legend className='mb-1.5 block text-xs text-secondary-foreground'>{t('visibilityLabel')}</legend>
             <div className='flex flex-col gap-2 sm:flex-row sm:gap-6'>
               <label className='flex cursor-pointer items-center gap-2 text-sm text-foreground'>
                 <input
                   type='radio'
                   name='visibility'
-                  className='size-3.5 accent-primary'
+                  className='size-3.5 cursor-pointer accent-primary'
                   checked={!values.isPublic}
                   onChange={() => setField('isPublic', false)}
                 />
@@ -182,7 +242,7 @@ export default function QuestionBuilderPage({ questionId }: QuestionBuilderPageP
                 <input
                   type='radio'
                   name='visibility'
-                  className='size-3.5 accent-primary'
+                  className='size-3.5 cursor-pointer accent-primary'
                   checked={values.isPublic}
                   onChange={() => setField('isPublic', true)}
                 />
@@ -195,7 +255,7 @@ export default function QuestionBuilderPage({ questionId }: QuestionBuilderPageP
             <Link href='/' className={cn(secondaryButtonClassName, 'text-center')}>
               {t('cancel')}
             </Link>
-            <button type='submit' className={primaryButtonClassName} disabled={isSubmitting || !hasCategories}>
+            <button type='submit' className={primaryButtonClassName} disabled={isSubmitting}>
               {isSubmitting ? t('saving') : isEdit ? t('saveChanges') : t('createQuestion')}
             </button>
           </div>

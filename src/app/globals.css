@@ -100,3 +100,36 @@ body {
   background-color: var(--canvas);
   color: var(--foreground);
 }
+
+/* Viewport + nested scroll areas */
+html,
+.scrollbar-branded {
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary) var(--muted);
+}
+
+html::-webkit-scrollbar,
+.scrollbar-branded::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+html::-webkit-scrollbar-track,
+.scrollbar-branded::-webkit-scrollbar-track {
+  background: var(--muted);
+  border-left: 1px solid var(--border);
+}
+
+html::-webkit-scrollbar-thumb,
+.scrollbar-branded::-webkit-scrollbar-thumb {
+  background-color: var(--primary);
+  border: 3px solid var(--muted);
+  background-clip: padding-box;
+  border-radius: var(--radius-sm);
+}
+
+html::-webkit-scrollbar-thumb:hover,
+.scrollbar-branded::-webkit-scrollbar-thumb:hover {
+  background-color: var(--primary-hover);
+}

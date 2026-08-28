@@ -8,6 +8,7 @@ import type { QuestionInput } from '@/features/theory/builder/api/contracts';
 
 export async function validateQuestionInput(input: QuestionInput): Promise<void> {
   const uniqueCategoryIds = [...new Set(input.categoryIds)];
+  if (uniqueCategoryIds.length === 0) return;
 
   const categories = await db
     .select({ id: theoryCategoriesInApp.id })

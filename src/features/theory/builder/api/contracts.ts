@@ -23,7 +23,7 @@ function optionalUrl() {
 export const QuestionInputSchema = z.object({
   question: z.string().trim().min(1, { error: 'questionRequired' }),
   answer: z.string().trim().min(1, { error: 'answerRequired' }),
-  categoryIds: z.array(z.uuid()).min(1, { error: 'categoriesRequired' }),
+  categoryIds: z.array(z.uuid()),
   sourceName: optionalTrimmedText(200),
   sourceUrl: optionalUrl(),
   isPublic: z.boolean(),

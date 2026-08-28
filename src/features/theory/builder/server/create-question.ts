@@ -29,12 +29,14 @@ export async function createQuestion(input: CreateQuestionInput): Promise<Create
         throw new DatabaseError('DATABASE_ERROR');
       }
 
-      await tx.insert(theoryQuestionCategoriesInApp).values(
-        input.categoryIds.map((categoryId) => ({
-          questionId: created.id,
-          categoryId,
-        })),
-      );
+      if (input.categoryIds.length > 0) {
+        await tx.insert(theoryQuestionCategoriesInApp).values(
+          input.categoryIds.map((categoryId) => ({
+            questionId: created.id,
+            categoryId,
+          })),
+        );
+      }
 
       await tx
         .insert(theoryLibraryItemsInApp)

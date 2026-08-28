@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { makeQueryClient } from '@/lib/query-client';
 import ToastContainer from '@/common/components/ToastContainer';
+import UnsavedChangesProvider from '@/common/unsaved-changes/UnsavedChangesProvider';
 import AuthSyncBridge from '@/features/auth/components/AuthSyncBridge';
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
@@ -11,9 +12,11 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthSyncBridge />
-      {children}
-      <ToastContainer />
+      <UnsavedChangesProvider>
+        <AuthSyncBridge />
+        {children}
+        <ToastContainer />
+      </UnsavedChangesProvider>
     </QueryClientProvider>
   );
 }

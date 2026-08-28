@@ -46,12 +46,14 @@ export async function updateQuestion(id: string, input: UpdateQuestionInput): Pr
 
       await tx.delete(theoryQuestionCategoriesInApp).where(eq(theoryQuestionCategoriesInApp.questionId, id));
 
-      await tx.insert(theoryQuestionCategoriesInApp).values(
-        input.categoryIds.map((categoryId) => ({
-          questionId: id,
-          categoryId,
-        })),
-      );
+      if (input.categoryIds.length > 0) {
+        await tx.insert(theoryQuestionCategoriesInApp).values(
+          input.categoryIds.map((categoryId) => ({
+            questionId: id,
+            categoryId,
+          })),
+        );
+      }
 
       return { id: updated.id };
     });

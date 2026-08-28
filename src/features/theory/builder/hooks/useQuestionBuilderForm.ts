@@ -4,29 +4,21 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
+import { useAllowUnsavedNavigation } from '@/common/unsaved-changes/use-unsaved-changes-guard';
 import { QuestionInputSchema, type QuestionInput } from '@/features/theory/builder/api/contracts';
 import { createQuestion, updateQuestion } from '@/features/theory/builder/api/mutations';
 import { builderMetadataQueryOptions, questionDetailQueryOptions } from '@/features/theory/builder/api/queries';
+import {
+  areQuestionFormValuesEqual,
+  emptyQuestionFormValues,
+  type QuestionFormValues,
+} from '@/features/theory/builder/lib/question-form-values';
 import { theoryKeys } from '@/features/theory/api/query-keys';
 import { useToastStore } from '@/lib/store/use-toast-store';
 
-export type QuestionFormValues = {
-  question: string;
-  answer: string;
-  categoryIds: string[];
-  sourceName: string;
-  sourceUrl: string;
-  isPublic: boolean;
-};
+export type { QuestionFormValues } from '@/features/theory/builder/lib/question-form-values';
 
-const emptyValues: QuestionFormValues = {
-  question: '',
-  answer: '',
-  categoryIds: [],
-  sourceName: '',
-  sourceUrl: '',
-  isPublic: false,
-};
+const emptyValues = emptyQuestionFormValues;
 
 function toQuestionInput(values: QuestionFormValues): QuestionInput {
   return {
@@ -56,13 +48,21 @@ type UseQuestionBuilderFormOptions = {
   questionId?: string;
 };
 
+export type QuestionBuilderSubmitResult =
+  | { ok: true }
+  | { ok: false; fieldErrors: Partial<Record<keyof QuestionFormValues, string>> };
+
+export const questionBuilderFieldOrder = ['question', 'answer', 'categoryIds', 'sourceName', 'sourceUrl'] as const;
+
 export function useQuestionBuilderForm({ questionId }: UseQuestionBuilderFormOptions) {
   const t = useTranslations('QuestionBuilderPage');
   const router = useRouter();
+  const allowNavigation = useAllowUnsavedNavigation();
   const queryClient = useQueryClient();
   const isEdit = !!questionId;
 
   const [values, setValues] = useState<QuestionFormValues>(emptyValues);
+  const [baseline, setBaseline] = useState<QuestionFormValues | null>(isEdit ? null : emptyValues);
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof QuestionFormValues, string>>>({});
 
   const metadataQuery = useQuery(builderMetadataQueryOptions);
@@ -74,24 +74,29 @@ export function useQuestionBuilderForm({ questionId }: UseQuestionBuilderFormOpt
   useEffect(() => {
     if (!questionQuery.data) return;
 
-    setValues({
+    const loaded = {
       question: questionQuery.data.question,
       answer: questionQuery.data.answer,
       categoryIds: questionQuery.data.categoryIds,
       sourceName: questionQuery.data.sourceName ?? '',
       sourceUrl: questionQuery.data.sourceUrl ?? '',
       isPublic: questionQuery.data.isPublic,
-    });
+    };
+
+    setValues(loaded);
+    setBaseline(loaded);
   }, [questionQuery.data]);
+
+  const isDirty = baseline !== null && !areQuestionFormValuesEqual(values, baseline);
 
   const onSuccess = useCallback(
     async (id: string) => {
       await queryClient.invalidateQueries({ queryKey: theoryKeys.repository() });
       await queryClient.invalidateQueries({ queryKey: theoryKeys.question(id) });
       useToastStore.getState().addToast(isEdit ? t('updateSuccess') : t('createSuccess'), 'success');
-      router.push('/');
+      allowNavigation(() => router.push('/'));
     },
-    [isEdit, queryClient, router, t],
+    [allowNavigation, isEdit, queryClient, router, t],
   );
 
   const { mutate: mutateCreate, isPending: isCreating } = useMutation({
@@ -106,22 +111,24 @@ export function useQuestionBuilderForm({ questionId }: UseQuestionBuilderFormOpt
 
   const isSubmitting = isCreating || isUpdating;
 
-  const submit = useCallback(() => {
+  const submit = useCallback((): QuestionBuilderSubmitResult => {
     const parsed = QuestionInputSchema.safeParse(toQuestionInput(values));
 
     if (!parsed.success) {
-      setFieldErrors(mapZodFieldErrors(parsed.error));
-      return;
+      const errors = mapZodFieldErrors(parsed.error);
+      setFieldErrors(errors);
+      return { ok: false, fieldErrors: errors };
     }
 
     setFieldErrors({});
 
     if (isEdit) {
       mutateUpdate(parsed.data);
-      return;
+      return { ok: true };
     }
 
     mutateCreate(parsed.data);
+    return { ok: true };
   }, [isEdit, mutateCreate, mutateUpdate, values]);
 
   const setField = useCallback(<K extends keyof QuestionFormValues>(field: K, value: QuestionFormValues[K]) => {
@@ -159,6 +166,7 @@ export function useQuestionBuilderForm({ questionId }: UseQuestionBuilderFormOpt
       isEdit,
       values,
       fieldErrors,
+      isDirty,
       metadata: metadataQuery.data,
       isLoading,
       isError,
@@ -171,6 +179,6 @@ export function useQuestionBuilderForm({ questionId }: UseQuestionBuilderFormOpt
         if (isEdit) void questionQuery.refetch();
       },
     }),
-    [fieldErrors, isEdit, isError, isLoading, isSubmitting, metadataQuery, questionQuery, setField, submit, toggleCategory, values],
+    [fieldErrors, isDirty, isEdit, isError, isLoading, isSubmitting, metadataQuery, questionQuery, setField, submit, toggleCategory, values],
   );
 }

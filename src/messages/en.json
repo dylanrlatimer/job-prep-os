@@ -44,10 +44,16 @@
     "title": "Browse questions",
     "description": "Search and filter published questions from the shared bank."
   },
+  "UnsavedChangesDialog": {
+    "title": "Discard unsaved changes?",
+    "description": "You have unsaved changes. If you leave now, your progress will be lost.",
+    "stay": "Stay on page",
+    "leave": "Discard and leave"
+  },
   "QuestionBuilderPage": {
     "createTitle": "Create question",
     "editTitle": "Edit question",
-    "createDescription": "Add a question to your repository with a reference answer and categories.",
+    "createDescription": "Add a question to your repository with a reference answer and optional categories.",
     "editDescription": "Update your question, answer, categories, and visibility.",
     "backToRepository": "Back to repository",
     "questionLabel": "Question",
@@ -55,6 +61,9 @@
     "answerLabel": "Reference answer",
     "answerPlaceholder": "Write the reference answer you will compare against.",
     "categoriesLabel": "Categories",
+    "categoriesSearchLabel": "Search categories",
+    "categoriesSearchPlaceholder": "Search categories…",
+    "categoriesNoResults": "No categories match your search.",
     "noCategories": "No categories are available yet.",
     "sourceNameLabel": "Source",
     "sourceNamePlaceholder": "e.g. MDN, LeetCode",
@@ -130,7 +139,6 @@
       "displayNameTooLong": "Display name is too long.",
       "questionRequired": "Question is required.",
       "answerRequired": "Reference answer is required.",
-      "categoriesRequired": "Select at least one category.",
       "invalidSourceUrl": "Enter a valid URL.",
       "invalidCategories": "One or more selected categories are invalid."
     }
