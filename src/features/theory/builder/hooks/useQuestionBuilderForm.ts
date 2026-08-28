@@ -13,7 +13,7 @@ import {
   emptyQuestionFormValues,
   type QuestionFormValues,
 } from '@/features/theory/builder/lib/question-form-values';
-import { theoryKeys } from '@/features/theory/api/query-keys';
+import { invalidateQuestionCaches } from '@/features/theory/api/invalidate-question-caches';
 import { useToastStore } from '@/lib/store/use-toast-store';
 
 export type { QuestionFormValues } from '@/features/theory/builder/lib/question-form-values';
@@ -91,10 +91,9 @@ export function useQuestionBuilderForm({ questionId }: UseQuestionBuilderFormOpt
 
   const onSuccess = useCallback(
     async (id: string) => {
-      await queryClient.invalidateQueries({ queryKey: theoryKeys.repository() });
-      await queryClient.invalidateQueries({ queryKey: theoryKeys.question(id) });
+      await invalidateQuestionCaches(queryClient, id);
       useToastStore.getState().addToast(isEdit ? t('updateSuccess') : t('createSuccess'), 'success');
-      allowNavigation(() => router.push('/'));
+      allowNavigation(() => router.push(isEdit ? `/theory/${id}` : '/'));
     },
     [allowNavigation, isEdit, queryClient, router, t],
   );

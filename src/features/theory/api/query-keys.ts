@@ -5,4 +5,5 @@ export const theoryKeys = {
   questions: () => [...theoryKeys.all(), 'questions'] as const,
   question: (id: string) => [...theoryKeys.questions(), id] as const,
   practice: (id: string) => [...theoryKeys.all(), 'practice', id] as const,
+  questionDetail: (id: string) => [...theoryKeys.all(), 'question-detail', id] as const,
 };

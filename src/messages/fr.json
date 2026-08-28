@@ -81,6 +81,28 @@
     "loadError": "Impossible de charger l'éditeur de questions.",
     "retry": "Réessayer"
   },
+  "QuestionDetailPage": {
+    "title": "Question",
+    "backToRepository": "Retour au référentiel",
+    "uncategorized": "Sans catégorie",
+    "noAttempts": "Aucune tentative",
+    "attemptTotals": "{incorrect} incorrect · {partial} partiel · {correct} correct",
+    "visibilityPublic": "Publique",
+    "visibilityPrivate": "Privée",
+    "referenceAnswerLabel": "Réponse de référence",
+    "historyTitle": "Historique des tentatives",
+    "historyEmpty": "Aucune tentative enregistrée.",
+    "historyResponse": "Votre réponse :",
+    "historyNotes": "Notes :",
+    "practice": "Pratiquer",
+    "edit": "Modifier",
+    "loadError": "Impossible de charger cette question.",
+    "retry": "Réessayer",
+    "retrying": "Nouvelle tentative…",
+    "resultIncorrect": "Incorrect",
+    "resultPartial": "Partiel",
+    "resultCorrect": "Correct"
+  },
   "PracticePage": {
     "title": "Pratique",
     "backToRepository": "Retour au référentiel",

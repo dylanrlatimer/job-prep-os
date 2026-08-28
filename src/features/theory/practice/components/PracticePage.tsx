@@ -4,10 +4,10 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
-import { Link } from '@/i18n/navigation';
+import { Link, useRouter } from '@/i18n/navigation';
 import AppShell from '@/common/components/AppShell';
 import { primaryButtonClassName, secondaryButtonClassName, textareaClassName } from '@/common/styles/form';
-import { theoryKeys } from '@/features/theory/api/query-keys';
+import { invalidateQuestionCaches } from '@/features/theory/api/invalidate-question-caches';
 import { createAttempt, fetchPracticeReview } from '@/features/theory/practice/api/mutations';
 import { practiceQuestionQueryOptions } from '@/features/theory/practice/api/queries';
 import type { PracticeAttemptResult, PracticeReviewResponse } from '@/features/theory/practice/api/contracts';
@@ -40,6 +40,7 @@ function resultLabelKey(result: PracticeAttemptResult) {
 export default function PracticePage({ questionId }: PracticePageProps) {
   const t = useTranslations('PracticePage');
   const locale = useLocale();
+  const router = useRouter();
   const queryClient = useQueryClient();
 
   const { data, isPending, isError, refetch, isFetching } = useQuery(practiceQuestionQueryOptions(questionId));
@@ -72,14 +73,9 @@ export default function PracticePage({ questionId }: PracticePageProps) {
         notes,
       }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: theoryKeys.repository() });
+      await invalidateQuestionCaches(queryClient, questionId);
       useToastStore.getState().addToast(t('recordSuccess'), 'success');
-      setPhase('draft');
-      setResponse('');
-      setLockedResponse('');
-      setNotes('');
-      setResult(null);
-      setReview(null);
+      router.push(`/theory/${questionId}`);
     },
   });
 
@@ -188,8 +184,8 @@ export default function PracticePage({ questionId }: PracticePageProps) {
                 <p className='m-0 whitespace-pre-wrap text-sm leading-relaxed text-foreground'>{review.answer}</p>
               </div>
 
-              <fieldset className='m-0 border-0 p-0'>
-                <legend className='mb-1.5 block text-xs text-secondary-foreground'>{t('resultLabel')}</legend>
+              <div>
+                <p className='m-0 mb-1.5 text-xs text-secondary-foreground'>{t('resultLabel')}</p>
                 <div className='flex flex-col gap-2 sm:flex-row sm:gap-6'>
                   {(['incorrect', 'partial', 'correct'] as const).map((option) => (
                     <label key={option} className='flex cursor-pointer items-center gap-2 text-sm text-foreground'>
@@ -204,7 +200,7 @@ export default function PracticePage({ questionId }: PracticePageProps) {
                     </label>
                   ))}
                 </div>
-              </fieldset>
+              </div>
 
               <div>
                 <label className='mb-1.5 block text-xs text-secondary-foreground' htmlFor='notes'>

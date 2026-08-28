@@ -81,6 +81,28 @@
     "loadError": "Could not load the question builder.",
     "retry": "Try again"
   },
+  "QuestionDetailPage": {
+    "title": "Question",
+    "backToRepository": "Back to repository",
+    "uncategorized": "Uncategorized",
+    "noAttempts": "No attempts yet",
+    "attemptTotals": "{incorrect} incorrect · {partial} partial · {correct} correct",
+    "visibilityPublic": "Public",
+    "visibilityPrivate": "Private",
+    "referenceAnswerLabel": "Reference answer",
+    "historyTitle": "Attempt history",
+    "historyEmpty": "No attempts recorded yet.",
+    "historyResponse": "Your response:",
+    "historyNotes": "Notes:",
+    "practice": "Practice",
+    "edit": "Edit",
+    "loadError": "Could not load this question.",
+    "retry": "Try again",
+    "retrying": "Retrying…",
+    "resultIncorrect": "Incorrect",
+    "resultPartial": "Partial",
+    "resultCorrect": "Correct"
+  },
   "PracticePage": {
     "title": "Practice",
     "backToRepository": "Back to repository",

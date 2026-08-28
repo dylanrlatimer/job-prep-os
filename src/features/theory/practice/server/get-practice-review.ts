@@ -1,19 +1,13 @@
 import 'server-only';
 
-import { and, desc, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { db } from '@/lib/drizzle/client';
-import { theoryAttemptsInApp, theoryQuestionsInApp } from '@/lib/drizzle/schema';
+import { theoryQuestionsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError, NotFoundError } from '@/lib/errors';
 import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
 import type { PracticeReviewResponse } from '@/features/theory/practice/api/contracts';
-import type { RepositoryAttemptTotals } from '@/features/theory/repository/api/contracts';
 import { assertQuestionInLibrary } from '@/features/theory/practice/server/assert-question-in-library';
-
-const emptyTotals = (): RepositoryAttemptTotals => ({
-  incorrect: 0,
-  partial: 0,
-  correct: 0,
-});
+import { listQuestionAttempts } from '@/features/theory/practice/server/list-question-attempts';
 
 export async function getPracticeReview(id: string): Promise<PracticeReviewResponse> {
   const user = await getAuthenticatedUser();
@@ -30,28 +24,12 @@ export async function getPracticeReview(id: string): Promise<PracticeReviewRespo
       throw new NotFoundError('questionNotFound');
     }
 
-    const attemptRows = await db
-      .select({
-        id: theoryAttemptsInApp.id,
-        response: theoryAttemptsInApp.response,
-        result: theoryAttemptsInApp.result,
-        notes: theoryAttemptsInApp.notes,
-        createdAt: theoryAttemptsInApp.createdAt,
-      })
-      .from(theoryAttemptsInApp)
-      .where(and(eq(theoryAttemptsInApp.profileId, user.id), eq(theoryAttemptsInApp.questionId, id)))
-      .orderBy(desc(theoryAttemptsInApp.createdAt));
-
-    const attempts = emptyTotals();
-
-    for (const row of attemptRows) {
-      attempts[row.result] += 1;
-    }
+    const { attempts, attemptHistory } = await listQuestionAttempts(user.id, id);
 
     return {
       answer: question.answer,
       attempts,
-      attemptHistory: attemptRows,
+      attemptHistory,
     };
   } catch (error) {
     if (error instanceof NotFoundError) {
