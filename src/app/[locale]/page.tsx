@@ -1,5 +1,5 @@
-import HomePage from '@/features/home/components/HomePage';
+import TheoryRepositoryPage from '@/features/theory/repository/components/TheoryRepositoryPage';
 
 export default function HomePageEntry() {
-  return <HomePage />;
+  return <TheoryRepositoryPage />;
 }

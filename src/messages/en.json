@@ -7,6 +7,43 @@
     "name": "JobPrepOS",
     "settings": "Settings"
   },
+  "AppSidebar": {
+    "appName": "JobPrepOS",
+    "navigation": "Main navigation",
+    "workspace": "Workspace",
+    "theoryPractice": "Theory Practice",
+    "browseQuestions": "Browse questions",
+    "settings": "Settings",
+    "selectLanguage": "Select language"
+  },
+  "TheoryRepositoryPage": {
+    "title": "My repository",
+    "description": "Saved questions you are actively studying.",
+    "browseQuestions": "Browse questions",
+    "createQuestion": "Create question",
+    "searchLabel": "Search questions",
+    "searchPlaceholder": "Search saved questions…",
+    "categoryFilterLabel": "Filter by category",
+    "allCategories": "All categories",
+    "questionCount": "{count, plural, one {# question} other {# questions}}",
+    "questionCountEmpty": "No questions saved",
+    "exportCsv": "Export attempts (CSV)",
+    "practice": "Practice",
+    "noAttempts": "No attempts yet",
+    "attemptTotals": "{incorrect} incorrect · {partial} partial · {correct} correct",
+    "uncategorized": "Uncategorized",
+    "emptyTitle": "Your repository is empty",
+    "emptyDescription": "Browse the question bank or create a question to start practicing.",
+    "noMatchesTitle": "No questions match",
+    "noMatchesDescription": "Try a different search term or category filter.",
+    "loadError": "Could not load your repository.",
+    "retry": "Try again",
+    "retrying": "Retrying…"
+  },
+  "BrowsePage": {
+    "title": "Browse questions",
+    "description": "Search and filter published questions from the shared bank."
+  },
   "SettingsPage": {
     "title": "Settings",
     "displayNameLabel": "Display name",

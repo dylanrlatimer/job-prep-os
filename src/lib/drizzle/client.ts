@@ -9,9 +9,12 @@ if (!TRANSACTION_POOLER) {
   throw new Error('TRANSACTION_POOLER is not set');
 }
 
+const { hostname } = new URL(TRANSACTION_POOLER);
+const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
+
 const pool = new pg.Pool({
   connectionString: TRANSACTION_POOLER,
-  ssl: { rejectUnauthorized: false },
+  ssl: isLocal ? false : { rejectUnauthorized: false },
 });
 
 export const db = drizzle(pool, { schema });

@@ -12,8 +12,12 @@ const LOCALE_LABELS: Record<Locale, string> = {
   fr: 'Français',
 };
 
-export default function LocaleSwitcher() {
-  const t = useTranslations('HomePage');
+type LocaleSwitcherProps = {
+  className?: string;
+};
+
+export default function LocaleSwitcher({ className }: LocaleSwitcherProps) {
+  const t = useTranslations('AppSidebar');
   const locale = useLocale() as Locale;
   const pathname = usePathname();
   const router = useRouter();
@@ -23,14 +27,14 @@ export default function LocaleSwitcher() {
   }
 
   return (
-    <div className='relative mt-4 inline-block'>
+    <div className={cn('relative inline-block', className)}>
       <select
         value={locale}
         onChange={handleChange}
         aria-label={t('selectLanguage')}
         className={cn(
-          'cursor-pointer appearance-none rounded-lg border border-border bg-canvas py-2 pl-3 pr-8 text-sm font-medium text-foreground',
-          'transition-colors hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20',
+          'box-border w-full cursor-pointer appearance-none rounded-sm border border-input bg-card py-2 pl-3 pr-8 text-sm text-foreground',
+          'transition-colors hover:border-tertiary-foreground focus:border-tertiary-foreground focus:outline-none',
         )}>
         {routing.locales.map((l) => (
           <option key={l} value={l}>

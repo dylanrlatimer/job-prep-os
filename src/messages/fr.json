@@ -7,6 +7,43 @@
     "name": "JobPrepOS",
     "settings": "Paramètres"
   },
+  "AppSidebar": {
+    "appName": "JobPrepOS",
+    "navigation": "Navigation principale",
+    "workspace": "Espace de travail",
+    "theoryPractice": "Pratique théorique",
+    "browseQuestions": "Parcourir les questions",
+    "settings": "Paramètres",
+    "selectLanguage": "Choisir la langue"
+  },
+  "TheoryRepositoryPage": {
+    "title": "Mon référentiel",
+    "description": "Questions enregistrées que vous étudiez activement.",
+    "browseQuestions": "Parcourir les questions",
+    "createQuestion": "Créer une question",
+    "searchLabel": "Rechercher des questions",
+    "searchPlaceholder": "Rechercher dans les questions enregistrées…",
+    "categoryFilterLabel": "Filtrer par catégorie",
+    "allCategories": "Toutes les catégories",
+    "questionCount": "{count, plural, one {# question} other {# questions}}",
+    "questionCountEmpty": "Aucune question enregistrée",
+    "exportCsv": "Exporter les tentatives (CSV)",
+    "practice": "Pratiquer",
+    "noAttempts": "Aucune tentative",
+    "attemptTotals": "{incorrect} incorrect · {partial} partiel · {correct} correct",
+    "uncategorized": "Sans catégorie",
+    "emptyTitle": "Votre référentiel est vide",
+    "emptyDescription": "Parcourez la banque de questions ou créez une question pour commencer à pratiquer.",
+    "noMatchesTitle": "Aucune question ne correspond",
+    "noMatchesDescription": "Essayez un autre terme de recherche ou un autre filtre de catégorie.",
+    "loadError": "Impossible de charger votre référentiel.",
+    "retry": "Réessayer",
+    "retrying": "Nouvelle tentative…"
+  },
+  "BrowsePage": {
+    "title": "Parcourir les questions",
+    "description": "Recherchez et filtrez les questions publiées de la banque partagée."
+  },
   "SettingsPage": {
     "title": "Paramètres",
     "displayNameLabel": "Nom affiché",
