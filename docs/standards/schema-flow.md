@@ -54,7 +54,7 @@ The Supabase Data API is not used for normal application CRUD.
 
 # Authorization
 
-Because the `app` schema is not exposed to the browser, authorization is handled explicitly on the server rather than through RLS.
+Authorization is handled explicitly on the server, not through RLS policies.
 
 For an authenticated operation, the server:
 
@@ -66,7 +66,21 @@ The database connection does not inherit the user's Supabase session. It is a tr
 
 Public reads still pass through the server. The query itself should include whatever conditions make the data public.
 
-This architecture does not require RLS for the unexposed `app` schema. If `app` is exposed through the Data API, that assumption is no longer valid.
+# Row-level security
+
+Every `app` table has RLS enabled. There are no policies.
+
+This is a default-deny safety net, not the primary authorization layer. If `app` were ever exposed through the Data API and `anon` or `authenticated` somehow gained grants, they would still see nothing — zero permissive policies means zero access.
+
+Do not use `FORCE ROW LEVEL SECURITY`. The trusted server connection and `SECURITY DEFINER` functions must continue to bypass RLS without policies.
+
+When adding a new `app` table, enable RLS in the same migration:
+
+```sql
+alter table app.example enable row level security;
+```
+
+No policy should be added unless the architecture changes.
 
 # Application profiles
 
@@ -104,12 +118,12 @@ This keeps Supabase Auth isolated to authentication while the application owns i
 This document is likely to evolve over time. These are just some notes, in no particular order:
 
 1.  This structure is fine for a solo developer, but if ever we become multiple people working on this structure it might become problematic, as you really need to be sure the validation you do in your server code is correct, there's no guaranteed database fallback, which is something I think RLS was good for. I think there's ways to upgrade our structure, likely with some testing stuff, to mitigate and improve this flow. But as it stands, there's intrinsic danger here.
-2.  If ever the app schema becomes public by accident, some config missclick, it's game over. Something to keep in mind.
+2.  RLS with no policies limits damage from accidental API exposure or grants, but it is not a substitute for correct server authorization and keeping `app` out of the Data API.
 
 ---
 
-**Last modified:** 27/08/2026  
-**Version:** v1.0.0
+**Last modified:** 28/08/2026  
+**Version:** v1.0.1
 
 © 2026 Dylan Latimer. All rights reserved.
 
