@@ -1,22 +1,14 @@
 import 'server-only';
 
 import { eq } from 'drizzle-orm';
-import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
 import { db } from '@/lib/drizzle/client';
 import { profilesInApp } from '@/lib/drizzle/schema';
-import { NotFoundError, UnauthenticatedError } from '@/lib/errors';
+import { NotFoundError } from '@/lib/errors';
 import type { SettingsResponse, UpdateDisplayNameInput } from '@/features/settings/api/contracts';
 
 export async function updateDisplayName(input: UpdateDisplayNameInput): Promise<SettingsResponse> {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    throw new UnauthenticatedError('UNAUTHENTICATED', { cause: authError });
-  }
+  const user = await getAuthenticatedUser();
 
   const displayName = input.displayName.length > 0 ? input.displayName : null;
 

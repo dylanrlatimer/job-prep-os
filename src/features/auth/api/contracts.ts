@@ -1,15 +1,15 @@
 import { z } from 'zod';
 
 export const SignInSchema = z.object({
-  email: z.string().email('invalidEmail'),
-  password: z.string().min(1, 'passwordRequired'),
+  email: z.email({ error: 'invalidEmail' }),
+  password: z.string().min(1, { error: 'passwordRequired' }),
 });
 
 export type SignInInput = z.infer<typeof SignInSchema>;
 
 export const SignUpSchema = z.object({
-  email: z.string().email('invalidEmail'),
-  password: z.string().min(8, 'passwordTooShort'),
+  email: z.email({ error: 'invalidEmail' }),
+  password: z.string().min(8, { error: 'passwordTooShort' }),
 });
 
 export type SignUpInput = z.infer<typeof SignUpSchema>;

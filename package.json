@@ -10,7 +10,7 @@
     "sandbox:build": "dotenv -e .env.test.local -- next build",
     "sandbox:start": "concurrently \"supabase functions serve --env-file=./supabase/.env\" \"dotenv -e .env.test.local -- next start\"",
     "gen_webapp": "supabase gen types typescript --project-id nwssipldhhjkyybtedic --schema public > src/types/schema.ts",
-    "gen_drizzle": "drizzle-kit pull",
+    "gen_drizzle": "drizzle-kit pull && node scripts/fix-drizzle-schema.mjs",
     "gen_all": "pnpm run gen_webapp && pnpm run gen_drizzle"
   },
   "dependencies": {

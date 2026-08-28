@@ -44,6 +44,34 @@
     "title": "Browse questions",
     "description": "Search and filter published questions from the shared bank."
   },
+  "QuestionBuilderPage": {
+    "createTitle": "Create question",
+    "editTitle": "Edit question",
+    "createDescription": "Add a question to your repository with a reference answer and categories.",
+    "editDescription": "Update your question, answer, categories, and visibility.",
+    "backToRepository": "Back to repository",
+    "questionLabel": "Question",
+    "questionPlaceholder": "What is the question?",
+    "answerLabel": "Reference answer",
+    "answerPlaceholder": "Write the reference answer you will compare against.",
+    "categoriesLabel": "Categories",
+    "noCategories": "No categories are available yet.",
+    "sourceNameLabel": "Source",
+    "sourceNamePlaceholder": "e.g. MDN, LeetCode",
+    "sourceUrlLabel": "Source URL",
+    "sourceUrlPlaceholder": "https://…",
+    "visibilityLabel": "Visibility",
+    "visibilityPrivate": "Private",
+    "visibilityPublic": "Public",
+    "cancel": "Cancel",
+    "createQuestion": "Create question",
+    "saveChanges": "Save changes",
+    "saving": "Saving…",
+    "createSuccess": "Question created.",
+    "updateSuccess": "Question updated.",
+    "loadError": "Could not load the question builder.",
+    "retry": "Try again"
+  },
   "SettingsPage": {
     "title": "Settings",
     "displayNameLabel": "Display name",
@@ -93,11 +121,18 @@
     "NOT_FOUND": "Not found.",
     "FORBIDDEN": "You do not have permission to do that.",
     "profileNotFound": "Profile not found.",
+    "questionNotFound": "Question not found.",
+    "questionForbidden": "You can only edit your own questions.",
     "validation": {
       "invalidEmail": "Enter a valid email address.",
       "passwordRequired": "Password is required.",
       "passwordTooShort": "Password must be at least 8 characters.",
-      "displayNameTooLong": "Display name is too long."
+      "displayNameTooLong": "Display name is too long.",
+      "questionRequired": "Question is required.",
+      "answerRequired": "Reference answer is required.",
+      "categoriesRequired": "Select at least one category.",
+      "invalidSourceUrl": "Enter a valid URL.",
+      "invalidCategories": "One or more selected categories are invalid."
     }
   }
 }

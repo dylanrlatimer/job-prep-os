@@ -44,6 +44,34 @@
     "title": "Parcourir les questions",
     "description": "Recherchez et filtrez les questions publiées de la banque partagée."
   },
+  "QuestionBuilderPage": {
+    "createTitle": "Créer une question",
+    "editTitle": "Modifier la question",
+    "createDescription": "Ajoutez une question à votre référentiel avec une réponse de référence et des catégories.",
+    "editDescription": "Mettez à jour votre question, votre réponse, vos catégories et votre visibilité.",
+    "backToRepository": "Retour au référentiel",
+    "questionLabel": "Question",
+    "questionPlaceholder": "Quelle est la question ?",
+    "answerLabel": "Réponse de référence",
+    "answerPlaceholder": "Écrivez la réponse de référence avec laquelle vous comparerez.",
+    "categoriesLabel": "Catégories",
+    "noCategories": "Aucune catégorie n'est disponible pour le moment.",
+    "sourceNameLabel": "Source",
+    "sourceNamePlaceholder": "p. ex. MDN, LeetCode",
+    "sourceUrlLabel": "URL de la source",
+    "sourceUrlPlaceholder": "https://…",
+    "visibilityLabel": "Visibilité",
+    "visibilityPrivate": "Privée",
+    "visibilityPublic": "Publique",
+    "cancel": "Annuler",
+    "createQuestion": "Créer la question",
+    "saveChanges": "Enregistrer",
+    "saving": "Enregistrement…",
+    "createSuccess": "Question créée.",
+    "updateSuccess": "Question mise à jour.",
+    "loadError": "Impossible de charger l'éditeur de questions.",
+    "retry": "Réessayer"
+  },
   "SettingsPage": {
     "title": "Paramètres",
     "displayNameLabel": "Nom affiché",
@@ -93,11 +121,18 @@
     "NOT_FOUND": "Introuvable.",
     "FORBIDDEN": "Vous n'avez pas la permission d'effectuer cette action.",
     "profileNotFound": "Profil introuvable.",
+    "questionNotFound": "Question introuvable.",
+    "questionForbidden": "Vous ne pouvez modifier que vos propres questions.",
     "validation": {
       "invalidEmail": "Entrez une adresse courriel valide.",
       "passwordRequired": "Le mot de passe est requis.",
       "passwordTooShort": "Le mot de passe doit contenir au moins 8 caractères.",
-      "displayNameTooLong": "Le nom affiché est trop long."
+      "displayNameTooLong": "Le nom affiché est trop long.",
+      "questionRequired": "La question est requise.",
+      "answerRequired": "La réponse de référence est requise.",
+      "categoriesRequired": "Sélectionnez au moins une catégorie.",
+      "invalidSourceUrl": "Entrez une URL valide.",
+      "invalidCategories": "Une ou plusieurs catégories sélectionnées sont invalides."
     }
   }
 }

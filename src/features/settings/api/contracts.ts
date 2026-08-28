@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const UpdateDisplayNameSchema = z.object({
-  displayName: z.string().trim().max(100, 'displayNameTooLong'),
+  displayName: z.string().trim().max(100, { error: 'displayNameTooLong' }),
 });
 
 export type UpdateDisplayNameInput = z.infer<typeof UpdateDisplayNameSchema>;

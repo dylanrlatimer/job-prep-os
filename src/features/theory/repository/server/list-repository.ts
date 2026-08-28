@@ -1,10 +1,10 @@
 import 'server-only';
 
 import { and, desc, eq, inArray } from 'drizzle-orm';
-import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
 import { db } from '@/lib/drizzle/client';
 import { theoryAttemptsInApp, theoryCategoriesInApp, theoryLibraryItemsInApp, theoryQuestionCategoriesInApp, theoryQuestionsInApp } from '@/lib/drizzle/schema';
-import { DatabaseError, UnauthenticatedError } from '@/lib/errors';
+import { DatabaseError } from '@/lib/errors';
 import type { GetRepositoryResponse, RepositoryAttemptTotals, RepositoryCategory, RepositoryQuestionItem } from '@/features/theory/repository/api/contracts';
 
 const emptyTotals = (): RepositoryAttemptTotals => ({
@@ -14,15 +14,7 @@ const emptyTotals = (): RepositoryAttemptTotals => ({
 });
 
 export async function listRepository(): Promise<GetRepositoryResponse> {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    throw new UnauthenticatedError('UNAUTHENTICATED', { cause: authError });
-  }
+  const user = await getAuthenticatedUser();
 
   try {
     const libraryRows = await db

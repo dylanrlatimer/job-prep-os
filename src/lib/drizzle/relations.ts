@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { flowStateInAuth, samlRelayStatesInAuth, ssoProvidersInAuth, samlProvidersInAuth, sessionsInAuth, refreshTokensInAuth, ssoDomainsInAuth, mfaAmrClaimsInAuth, usersInAuth, identitiesInAuth, oneTimeTokensInAuth, oauthClientsInAuth, mfaFactorsInAuth, mfaChallengesInAuth, oauthConsentsInAuth, oauthAuthorizationsInAuth, webauthnCredentialsInAuth, webauthnChallengesInAuth, profilesInApp, theoryAttemptsInApp, theoryQuestionsInApp, theorySourcesInApp, theoryCategoriesInApp, theoryQuestionCategoriesInApp, theoryLibraryItemsInApp } from "./schema";
+import { flowStateInAuth, samlRelayStatesInAuth, ssoProvidersInAuth, samlProvidersInAuth, sessionsInAuth, refreshTokensInAuth, ssoDomainsInAuth, mfaAmrClaimsInAuth, usersInAuth, identitiesInAuth, oneTimeTokensInAuth, oauthClientsInAuth, mfaFactorsInAuth, mfaChallengesInAuth, oauthConsentsInAuth, oauthAuthorizationsInAuth, webauthnCredentialsInAuth, webauthnChallengesInAuth, profilesInApp, theoryAttemptsInApp, theoryQuestionsInApp, theoryCategoriesInApp, theoryQuestionCategoriesInApp, theoryLibraryItemsInApp } from "./schema";
 
 export const samlRelayStatesInAuthRelations = relations(samlRelayStatesInAuth, ({one}) => ({
 	flowStateInAuth: one(flowStateInAuth, {
@@ -173,16 +173,8 @@ export const theoryQuestionsInAppRelations = relations(theoryQuestionsInApp, ({o
 		fields: [theoryQuestionsInApp.ownerProfileId],
 		references: [profilesInApp.id]
 	}),
-	theorySourcesInApp: one(theorySourcesInApp, {
-		fields: [theoryQuestionsInApp.sourceId],
-		references: [theorySourcesInApp.id]
-	}),
 	theoryQuestionCategoriesInApps: many(theoryQuestionCategoriesInApp),
 	theoryLibraryItemsInApps: many(theoryLibraryItemsInApp),
-}));
-
-export const theorySourcesInAppRelations = relations(theorySourcesInApp, ({many}) => ({
-	theoryQuestionsInApps: many(theoryQuestionsInApp),
 }));
 
 export const theoryQuestionCategoriesInAppRelations = relations(theoryQuestionCategoriesInApp, ({one}) => ({

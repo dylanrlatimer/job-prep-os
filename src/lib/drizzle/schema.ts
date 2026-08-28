@@ -1,11 +1,5 @@
-import { pgTable, pgSchema, index, foreignKey, check, uuid, text, timestamp, boolean, jsonb, varchar, bigserial, uniqueIndex, smallint, json, inet, bigint, unique, primaryKey, customType } from "drizzle-orm/pg-core"
+import { pgTable, pgSchema, index, foreignKey, check, uuid, text, timestamp, boolean, jsonb, varchar, bigserial, uniqueIndex, smallint, json, inet, bigint, unique, primaryKey } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
-
-const bytea = customType<{ data: string; driverData: string }>({
-	dataType() {
-		return 'bytea';
-	},
-});
 
 export const auth = pgSchema("auth");
 export const app = pgSchema("app");
@@ -503,9 +497,10 @@ export const customOauthProvidersInAuth = auth.table("custom_oauth_providers", {
 export const webauthnCredentialsInAuth = auth.table("webauthn_credentials", {
 	id: uuid().defaultRandom().notNull(),
 	userId: uuid("user_id").notNull(),
-	credentialId: bytea("credential_id").notNull(),
 	// TODO: failed to parse database type 'bytea'
-	publicKey: bytea("public_key").notNull(),
+	credentialId: text("credential_id").notNull(),
+	// TODO: failed to parse database type 'bytea'
+	publicKey: text("public_key").notNull(),
 	attestationType: text("attestation_type").default('').notNull(),
 	aaguid: uuid(),
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
@@ -598,41 +593,23 @@ export const profilesInApp = app.table("profiles", {
 export const theoryQuestionsInApp = app.table("theory_questions", {
 	id: uuid().defaultRandom().primaryKey().notNull(),
 	ownerProfileId: uuid("owner_profile_id"),
-	sourceId: uuid("source_id"),
 	sourceUrl: text("source_url"),
 	isPublic: boolean("is_public").default(false).notNull(),
 	question: text().notNull(),
 	answer: text().notNull(),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	sourceName: text("source_name"),
 }, (table) => [
 	index("theory_questions_owner_profile_id_idx").using("btree", table.ownerProfileId.asc().nullsLast().op("uuid_ops")),
 	index("theory_questions_public_idx").using("btree", table.createdAt.desc().nullsFirst().op("timestamptz_ops")).where(sql`(is_public = true)`),
-	index("theory_questions_source_id_idx").using("btree", table.sourceId.asc().nullsLast().op("uuid_ops")),
 	foreignKey({
 			columns: [table.ownerProfileId],
 			foreignColumns: [profilesInApp.id],
 			name: "theory_questions_owner_profile_id_fkey"
 		}),
-	foreignKey({
-			columns: [table.sourceId],
-			foreignColumns: [theorySourcesInApp.id],
-			name: "theory_questions_source_id_fkey"
-		}),
 	check("theory_questions_answer_check", sql`length(btrim(answer)) > 0`),
 	check("theory_questions_question_check", sql`length(btrim(question)) > 0`),
-]);
-
-export const theorySourcesInApp = app.table("theory_sources", {
-	id: uuid().defaultRandom().primaryKey().notNull(),
-	title: text().notNull(),
-	url: text().notNull(),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-}, (table) => [
-	unique("theory_sources_url_key").on(table.url),
-	check("theory_sources_title_check", sql`length(btrim(title)) > 0`),
-	check("theory_sources_url_check", sql`length(btrim(url)) > 0`),
 ]);
 
 export const theoryQuestionCategoriesInApp = app.table("theory_question_categories", {

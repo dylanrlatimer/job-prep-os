@@ -14,7 +14,7 @@ export default defineConfig({
   dbCredentials: {
     url: TRANSACTION_POOLER + '?sslmode=no-verify',
   },
-  schemaFilter: ['public', 'auth', 'app'],
+  schemaFilter: ['public', 'app', 'auth'],
 });
 
 // npx drizzle-kit pull
