@@ -87,3 +87,7 @@ export type CreateQuestionResponse = {
 export type UpdateQuestionResponse = {
   id: string;
 };
+
+export type DeleteQuestionResponse = {
+  id: string;
+};

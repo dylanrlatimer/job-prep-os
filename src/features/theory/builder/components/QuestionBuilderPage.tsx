@@ -7,6 +7,7 @@ import { ChevronLeft, Search } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import AppShell from '@/common/components/AppShell';
+import ConfirmDialog from '@/common/components/ConfirmDialog';
 import { useValidationMessage } from '@/common/hooks/use-validation-message';
 import { inputClassName, primaryButtonClassName, secondaryButtonClassName, textareaClassName } from '@/common/styles/form';
 import TiptapEditor from '@/common/components/TiptapEditor';
@@ -64,6 +65,7 @@ export default function QuestionBuilderPage({ questionId }: QuestionBuilderPageP
   const t = useTranslations('QuestionBuilderPage');
   const formRef = useRef<HTMLFormElement>(null);
   const [categorySearch, setCategorySearch] = useState('');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const {
     isEdit,
     values,
@@ -77,11 +79,13 @@ export default function QuestionBuilderPage({ questionId }: QuestionBuilderPageP
     isError,
     isFormDataReady,
     isSubmitting,
+    isDeleting,
     submit,
     setField,
     toggleCategory,
     onEditorReady,
     onDocumentUpdate,
+    remove,
     refetch,
   } = useQuestionBuilderForm({
     questionId,
@@ -273,6 +277,22 @@ export default function QuestionBuilderPage({ questionId }: QuestionBuilderPageP
             </div>
           </fieldset>
 
+          {isEdit ? (
+            <section className='border-t border-border pt-6'>
+              <h2 className='m-0 text-sm font-medium text-foreground'>{t('dangerZoneTitle')}</h2>
+              <p className='mt-2 text-sm text-muted-foreground'>{t('deleteDescription')}</p>
+              <button
+                type='button'
+                className={cn(
+                  'mt-4 inline-flex cursor-pointer items-center justify-center rounded-sm border border-destructive-border bg-destructive-subtle px-3 py-2 text-sm text-destructive-bright transition-colors hover:bg-destructive-subtle/80 disabled:cursor-not-allowed disabled:opacity-60',
+                )}
+                disabled={isDeleting}
+                onClick={() => setDeleteDialogOpen(true)}>
+                {isDeleting ? t('deleting') : t('deleteQuestion')}
+              </button>
+            </section>
+          ) : null}
+
           <div className='flex flex-col-reverse gap-2 border-t border-border pt-6 sm:flex-row sm:justify-end'>
             <Link href='/' className={cn(secondaryButtonClassName, 'text-center')}>
               {t('cancel')}
@@ -282,6 +302,18 @@ export default function QuestionBuilderPage({ questionId }: QuestionBuilderPageP
             </button>
           </div>
         </form>
+
+        <ConfirmDialog
+          open={deleteDialogOpen}
+          title={t('deleteConfirmTitle')}
+          description={t('deleteConfirmDescription')}
+          cancelLabel={t('cancel')}
+          confirmLabel={isDeleting ? t('deleting') : t('deleteQuestion')}
+          confirmVariant='destructive'
+          isConfirming={isDeleting}
+          onCancel={() => setDeleteDialogOpen(false)}
+          onConfirm={remove}
+        />
       </div>
     </AppShell>
   );

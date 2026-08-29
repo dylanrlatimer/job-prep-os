@@ -111,6 +111,13 @@
     "saving": "Saving…",
     "createSuccess": "Question created.",
     "updateSuccess": "Question updated.",
+    "dangerZoneTitle": "Danger zone",
+    "deleteDescription": "Permanently delete this question and all practice attempts.",
+    "deleteQuestion": "Delete question",
+    "deleteConfirmTitle": "Delete question?",
+    "deleteConfirmDescription": "This will permanently delete the question and all practice attempts. This cannot be undone.",
+    "deleting": "Deleting…",
+    "deleteSuccess": "Question deleted.",
     "loadError": "Could not load the question builder.",
     "retry": "Try again"
   },

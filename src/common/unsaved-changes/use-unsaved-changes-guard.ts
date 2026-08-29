@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useId } from 'react';
+import { useCallback, useEffect, useId } from 'react';
 import { useUnsavedChangesContext } from './unsaved-changes-context';
 
 export function useUnsavedChangesGuard(isDirty: boolean) {
@@ -13,6 +13,6 @@ export function useUnsavedChangesGuard(isDirty: boolean) {
   }, [id, isDirty, registerGuard, unregisterGuard]);
 }
 
-export function useAllowUnsavedNavigation() {
-  return useUnsavedChangesContext().allowNavigation;
+export function useReleaseUnsavedGuard() {
+  return useUnsavedChangesContext().releaseGuard;
 }

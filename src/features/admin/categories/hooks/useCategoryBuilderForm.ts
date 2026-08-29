@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
-import { useAllowUnsavedNavigation } from '@/common/unsaved-changes/use-unsaved-changes-guard';
+import { useReleaseUnsavedGuard } from '@/common/unsaved-changes/use-unsaved-changes-guard';
 import { useSnapshotForm } from '@/common/form/use-snapshot-form';
 import { invalidateAdminCategoryCaches } from '@/features/admin/api/invalidate-admin-caches';
 import { CategoryInputSchema, UpdateCategorySchema, type CategoryInput, type UpdateCategoryInput } from '@/features/admin/categories/api/contracts';
@@ -58,7 +58,7 @@ export const categoryBuilderFieldOrder = ['name'] as const;
 export function useCategoryBuilderForm({ categoryId }: UseCategoryBuilderFormOptions) {
   const t = useTranslations('AdminCategoryBuilderPage');
   const router = useRouter();
-  const allowNavigation = useAllowUnsavedNavigation();
+  const releaseGuard = useReleaseUnsavedGuard();
   const queryClient = useQueryClient();
   const isEdit = !!categoryId;
 
@@ -101,12 +101,14 @@ export function useCategoryBuilderForm({ categoryId }: UseCategoryBuilderFormOpt
   }, [categoryQuery.data]);
 
   const onSaveSuccess = useCallback(
-    async (id: string) => {
-      await invalidateAdminCategoryCaches(queryClient, id);
+    (id: string) => {
+      form.commitSnapshot();
+      releaseGuard();
       useToastStore.getState().addToast(isEdit ? t('updateSuccess') : t('createSuccess'), 'success');
-      allowNavigation(() => router.push('/admin/categories'));
+      router.push('/admin/categories');
+      void invalidateAdminCategoryCaches(queryClient, id);
     },
-    [allowNavigation, isEdit, queryClient, router, t],
+    [form, isEdit, queryClient, releaseGuard, router, t],
   );
 
   const { mutate: mutateCreate, isPending: isCreating } = useMutation({
@@ -121,10 +123,11 @@ export function useCategoryBuilderForm({ categoryId }: UseCategoryBuilderFormOpt
 
   const { mutate: mutateDelete, isPending: isDeleting } = useMutation({
     mutationFn: () => deleteCategory(categoryId!),
-    onSuccess: async () => {
-      await invalidateAdminCategoryCaches(queryClient, categoryId);
+    onSuccess: () => {
+      releaseGuard();
       useToastStore.getState().addToast(t('deleteSuccess'), 'success');
-      allowNavigation(() => router.push('/admin/categories'));
+      router.push('/admin/categories');
+      void invalidateAdminCategoryCaches(queryClient, categoryId);
     },
   });
 

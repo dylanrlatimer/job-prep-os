@@ -4,10 +4,10 @@ import { useCallback, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
-import { useAllowUnsavedNavigation } from '@/common/unsaved-changes/use-unsaved-changes-guard';
+import { useReleaseUnsavedGuard } from '@/common/unsaved-changes/use-unsaved-changes-guard';
 import { useSnapshotForm } from '@/common/form/use-snapshot-form';
 import { QuestionInputSchema } from '@/features/theory/builder/api/contracts';
-import { createQuestion, updateQuestion } from '@/features/theory/builder/api/mutations';
+import { createQuestion, deleteQuestion, updateQuestion } from '@/features/theory/builder/api/mutations';
 import { builderMetadataQueryOptions, questionDetailQueryOptions } from '@/features/theory/builder/api/queries';
 import {
   areQuestionSnapshotsEqual,
@@ -17,7 +17,7 @@ import {
   type QuestionFormValues,
   type QuestionScalars,
 } from '@/features/theory/builder/lib/question-form-values';
-import { invalidateQuestionCaches } from '@/features/theory/api/invalidate-question-caches';
+import { invalidateQuestionCaches, invalidateRepositoryCache, removeQuestionCaches } from '@/features/theory/api/invalidate-question-caches';
 import { useToastStore } from '@/lib/store/use-toast-store';
 
 export type { QuestionFormValues } from '@/features/theory/builder/lib/question-form-values';
@@ -57,7 +57,7 @@ export const questionBuilderFieldOrder = ['question', 'answer', 'categoryIds', '
 export function useQuestionBuilderForm({ questionId }: UseQuestionBuilderFormOptions) {
   const t = useTranslations('QuestionBuilderPage');
   const router = useRouter();
-  const allowNavigation = useAllowUnsavedNavigation();
+  const releaseGuard = useReleaseUnsavedGuard();
   const queryClient = useQueryClient();
   const isEdit = !!questionId;
 
@@ -97,23 +97,40 @@ export function useQuestionBuilderForm({ questionId }: UseQuestionBuilderFormOpt
     snapshotsEqual: areQuestionSnapshotsEqual,
   });
 
-  const onSuccess = useCallback(
-    async (id: string) => {
-      await invalidateQuestionCaches(queryClient, id);
+  const onSaveSuccess = useCallback(
+    (id: string) => {
+      form.commitSnapshot();
+      releaseGuard();
       useToastStore.getState().addToast(isEdit ? t('updateSuccess') : t('createSuccess'), 'success');
-      allowNavigation(() => router.push(isEdit ? `/theory/${id}` : '/'));
+      router.replace(`/theory/${id}`);
+      void invalidateQuestionCaches(queryClient, id);
     },
-    [allowNavigation, isEdit, queryClient, router, t],
+    [form, isEdit, queryClient, releaseGuard, router, t],
   );
+
+  const onDeleteSuccess = useCallback(() => {
+    if (!questionId) return;
+
+    removeQuestionCaches(queryClient, questionId);
+    releaseGuard();
+    useToastStore.getState().addToast(t('deleteSuccess'), 'success');
+    router.replace('/');
+    void invalidateRepositoryCache(queryClient);
+  }, [questionId, queryClient, releaseGuard, router, t]);
 
   const { mutate: mutateCreate, isPending: isCreating } = useMutation({
     mutationFn: createQuestion,
-    onSuccess: (response) => onSuccess(response.id),
+    onSuccess: (response) => onSaveSuccess(response.id),
   });
 
   const { mutate: mutateUpdate, isPending: isUpdating } = useMutation({
     mutationFn: (payload: Parameters<typeof updateQuestion>[1]) => updateQuestion(questionId!, payload),
-    onSuccess: (response) => onSuccess(response.id),
+    onSuccess: (response) => onSaveSuccess(response.id),
+  });
+
+  const { mutate: mutateDelete, isPending: isDeleting } = useMutation({
+    mutationFn: () => deleteQuestion(questionId!),
+    onSuccess: onDeleteSuccess,
   });
 
   const isSubmitting = isCreating || isUpdating;
@@ -173,6 +190,11 @@ export function useQuestionBuilderForm({ questionId }: UseQuestionBuilderFormOpt
     [form],
   );
 
+  const remove = useCallback(() => {
+    if (!isEdit || isDeleting) return;
+    mutateDelete();
+  }, [isDeleting, isEdit, mutateDelete]);
+
   return useMemo(
     () => ({
       isEdit,
@@ -187,11 +209,13 @@ export function useQuestionBuilderForm({ questionId }: UseQuestionBuilderFormOpt
       isError: isDataError,
       isFormDataReady: form.isFormDataReady,
       isSubmitting,
+      isDeleting,
       submit,
       setField,
       toggleCategory,
       onEditorReady: form.onEditorReady,
       onDocumentUpdate: form.onDocumentUpdate,
+      remove,
       refetch: () => {
         void metadataQuery.refetch();
         if (isEdit) void questionQuery.refetch();
@@ -203,10 +227,12 @@ export function useQuestionBuilderForm({ questionId }: UseQuestionBuilderFormOpt
       initialDocument,
       isDataError,
       isDataLoading,
+      isDeleting,
       isEdit,
       isSubmitting,
       metadataQuery,
       questionQuery,
+      remove,
       setField,
       submit,
       toggleCategory,

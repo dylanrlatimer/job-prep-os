@@ -111,6 +111,13 @@
     "saving": "Enregistrement…",
     "createSuccess": "Question créée.",
     "updateSuccess": "Question mise à jour.",
+    "dangerZoneTitle": "Zone de danger",
+    "deleteDescription": "Supprime définitivement cette question et toutes les tentatives de pratique.",
+    "deleteQuestion": "Supprimer la question",
+    "deleteConfirmTitle": "Supprimer la question ?",
+    "deleteConfirmDescription": "Cette action supprimera définitivement la question et toutes les tentatives de pratique. Elle est irréversible.",
+    "deleting": "Suppression…",
+    "deleteSuccess": "Question supprimée.",
     "loadError": "Impossible de charger l'éditeur de questions.",
     "retry": "Réessayer"
   },

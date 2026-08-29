@@ -46,35 +46,48 @@ export default function UnsavedChangesProvider({ children }: UnsavedChangesProvi
     [syncBlockingState],
   );
 
-  const releaseHistoryTrap = useCallback(() => {
+  /** Collapse trap entry in place — safe before App Router navigation. */
+  const disarmHistoryTrapInPlace = useCallback(() => {
+    if (!historyTrapActiveRef.current) return;
+
+    historyTrapActiveRef.current = false;
+    window.history.replaceState(window.history.state, '', window.location.href);
+  }, []);
+
+  /** Pop trap entry — used only when user confirms back-button leave. */
+  const disarmHistoryTrapForBackNavigation = useCallback(() => {
     if (!historyTrapActiveRef.current) return;
 
     historyTrapActiveRef.current = false;
     window.history.back();
   }, []);
 
-  const beginLeaving = useCallback(() => {
+  const releaseGuard = useCallback(() => {
     setIsLeaving(true);
     bypassRef.current = true;
-    releaseHistoryTrap();
-  }, [releaseHistoryTrap]);
 
-  const allowNavigation = useCallback(
-    (fn: () => void) => {
-      beginLeaving();
-      fn();
-    },
-    [beginLeaving],
-  );
+    for (const id of guardsRef.current.keys()) {
+      guardsRef.current.set(id, false);
+    }
+    setIsBlocking(false);
+
+    disarmHistoryTrapInPlace();
+  }, [disarmHistoryTrapInPlace]);
+
+  const beginConfirmedLeave = useCallback(() => {
+    setIsLeaving(true);
+    bypassRef.current = true;
+    disarmHistoryTrapForBackNavigation();
+  }, [disarmHistoryTrapForBackNavigation]);
 
   const requestNavigation = useCallback((navigation: PendingNavigation) => {
     pendingNavigationRef.current = navigation;
     setDialogOpen(true);
   }, []);
 
-  const executePendingNavigation = useCallback(
+  const confirmLeave = useCallback(
     (pending: PendingNavigation) => {
-      beginLeaving();
+      beginConfirmedLeave();
 
       if (pending.type === 'back') {
         window.history.go(-2);
@@ -83,7 +96,7 @@ export default function UnsavedChangesProvider({ children }: UnsavedChangesProvi
 
       window.location.assign(pending.href);
     },
-    [beginLeaving],
+    [beginConfirmedLeave],
   );
 
   const handleStay = useCallback(() => {
@@ -98,8 +111,8 @@ export default function UnsavedChangesProvider({ children }: UnsavedChangesProvi
 
     if (!pending) return;
 
-    executePendingNavigation(pending);
-  }, [executePendingNavigation]);
+    confirmLeave(pending);
+  }, [confirmLeave]);
 
   useEffect(() => {
     setIsLeaving(false);
@@ -169,9 +182,9 @@ export default function UnsavedChangesProvider({ children }: UnsavedChangesProvi
     () => ({
       registerGuard,
       unregisterGuard,
-      allowNavigation,
+      releaseGuard,
     }),
-    [allowNavigation, registerGuard, unregisterGuard],
+    [registerGuard, releaseGuard, unregisterGuard],
   );
 
   return (

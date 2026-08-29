@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
-import { useAllowUnsavedNavigation } from '@/common/unsaved-changes/use-unsaved-changes-guard';
+import { useReleaseUnsavedGuard } from '@/common/unsaved-changes/use-unsaved-changes-guard';
 import { useSnapshotForm } from '@/common/form/use-snapshot-form';
 import { invalidateAdminQuestionCaches } from '@/features/admin/api/invalidate-admin-caches';
 import { createSystemQuestion, deleteSystemQuestion, updateSystemQuestion } from '@/features/admin/questions/api/mutations';
@@ -61,7 +61,7 @@ export const systemQuestionBuilderFieldOrder = ['question', 'answer', 'categoryI
 export function useSystemQuestionBuilderForm({ questionId }: UseSystemQuestionBuilderFormOptions) {
   const t = useTranslations('AdminSystemQuestionBuilderPage');
   const router = useRouter();
-  const allowNavigation = useAllowUnsavedNavigation();
+  const releaseGuard = useReleaseUnsavedGuard();
   const queryClient = useQueryClient();
   const isEdit = !!questionId;
 
@@ -101,31 +101,34 @@ export function useSystemQuestionBuilderForm({ questionId }: UseSystemQuestionBu
     snapshotsEqual: areQuestionSnapshotsEqual,
   });
 
-  const onSuccess = useCallback(
-    async (id: string) => {
-      await invalidateAdminQuestionCaches(queryClient, id);
+  const onSaveSuccess = useCallback(
+    (id: string) => {
+      form.commitSnapshot();
+      releaseGuard();
       useToastStore.getState().addToast(isEdit ? t('updateSuccess') : t('createSuccess'), 'success');
-      allowNavigation(() => router.push('/admin/questions'));
+      router.push('/admin/questions');
+      void invalidateAdminQuestionCaches(queryClient, id);
     },
-    [allowNavigation, isEdit, queryClient, router, t],
+    [form, isEdit, queryClient, releaseGuard, router, t],
   );
 
   const { mutate: mutateCreate, isPending: isCreating } = useMutation({
     mutationFn: createSystemQuestion,
-    onSuccess: (response) => onSuccess(response.id),
+    onSuccess: (response) => onSaveSuccess(response.id),
   });
 
   const { mutate: mutateUpdate, isPending: isUpdating } = useMutation({
     mutationFn: (payload: Parameters<typeof updateSystemQuestion>[1]) => updateSystemQuestion(questionId!, payload),
-    onSuccess: (response) => onSuccess(response.id),
+    onSuccess: (response) => onSaveSuccess(response.id),
   });
 
   const { mutate: mutateDelete, isPending: isDeleting } = useMutation({
     mutationFn: () => deleteSystemQuestion(questionId!),
-    onSuccess: async () => {
-      await invalidateAdminQuestionCaches(queryClient, questionId);
+    onSuccess: () => {
+      releaseGuard();
       useToastStore.getState().addToast(t('deleteSuccess'), 'success');
-      allowNavigation(() => router.push('/admin/questions'));
+      router.push('/admin/questions');
+      void invalidateAdminQuestionCaches(queryClient, questionId);
     },
   });
 

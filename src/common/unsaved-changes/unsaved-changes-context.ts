@@ -5,7 +5,8 @@ import { createContext, useContext } from 'react';
 export type UnsavedChangesContextValue = {
   registerGuard: (id: string, isDirty: boolean) => void;
   unregisterGuard: (id: string) => void;
-  allowNavigation: (fn: () => void) => void;
+  /** Synchronous release for intentional exits (save success, delete). No history.back(). */
+  releaseGuard: () => void;
 };
 
 export const UnsavedChangesContext = createContext<UnsavedChangesContextValue | null>(null);
