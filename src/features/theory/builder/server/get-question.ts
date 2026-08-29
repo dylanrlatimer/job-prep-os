@@ -6,6 +6,7 @@ import { theoryQuestionCategoriesInApp, theoryQuestionsInApp } from '@/lib/drizz
 import { DatabaseError, ForbiddenError, NotFoundError } from '@/lib/errors';
 import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
 import type { QuestionResponse } from '@/features/theory/builder/api/contracts';
+import { parseTiptapDocument } from '@/lib/tiptap/parse-document';
 
 export async function getQuestion(id: string): Promise<QuestionResponse> {
   const user = await getAuthenticatedUser();
@@ -41,7 +42,7 @@ export async function getQuestion(id: string): Promise<QuestionResponse> {
     return {
       id: question.id,
       question: question.question,
-      answer: question.answer,
+      answer: parseTiptapDocument(question.answer),
       categoryIds: categoryRows.map((row) => row.categoryId),
       sourceName: question.sourceName,
       sourceUrl: question.sourceUrl,

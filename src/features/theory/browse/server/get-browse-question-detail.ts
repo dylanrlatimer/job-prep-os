@@ -12,6 +12,7 @@ import { DatabaseError, NotFoundError } from '@/lib/errors';
 import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
 import type { BrowseQuestionDetailResponse } from '@/features/theory/browse/api/contracts';
 import type { RepositoryCategory } from '@/features/theory/repository/api/contracts';
+import { parseTiptapDocument } from '@/lib/tiptap/parse-document';
 
 export async function getBrowseQuestionDetail(questionId: string): Promise<BrowseQuestionDetailResponse> {
   const user = await getAuthenticatedUser();
@@ -57,7 +58,7 @@ export async function getBrowseQuestionDetail(questionId: string): Promise<Brows
     return {
       id: question.id,
       question: question.question,
-      answer: question.answer,
+      answer: parseTiptapDocument(question.answer),
       categories,
       sourceName: question.sourceName,
       sourceUrl: question.sourceUrl,

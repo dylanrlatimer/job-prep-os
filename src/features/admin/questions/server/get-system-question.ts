@@ -6,6 +6,7 @@ import { theoryQuestionCategoriesInApp, theoryQuestionsInApp } from '@/lib/drizz
 import { DatabaseError, NotFoundError } from '@/lib/errors';
 import { assertAdmin } from '@/features/auth/server/assert-admin';
 import type { SystemQuestionResponse } from '@/features/admin/questions/api/contracts';
+import { parseTiptapDocument } from '@/lib/tiptap/parse-document';
 
 export async function getSystemQuestion(id: string): Promise<SystemQuestionResponse> {
   await assertAdmin();
@@ -36,7 +37,7 @@ export async function getSystemQuestion(id: string): Promise<SystemQuestionRespo
     return {
       id: question.id,
       question: question.question,
-      answer: question.answer,
+      answer: parseTiptapDocument(question.answer),
       categoryIds: categoryRows.map((row) => row.categoryId),
       sourceName: question.sourceName,
       sourceUrl: question.sourceUrl,

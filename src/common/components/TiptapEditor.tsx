@@ -1,32 +1,23 @@
 'use client';
 
-import { useEffect } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import type { JSONContent } from '@tiptap/core';
-import {
-  Bold,
-  Italic,
-  Strikethrough,
-  Heading2,
-  Heading3,
-  List,
-  ListOrdered,
-  Code,
-  Terminal,
-  Quote,
-  Minus,
-  Undo2,
-  Redo2,
-} from 'lucide-react';
+import { Bold, Italic, Strikethrough, Heading2, Heading3, List, ListOrdered, Code, Terminal, Quote, Minus, Undo2, Redo2 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 
+export type TiptapEditorRef = {
+  getJSON: () => JSONContent;
+  isEmpty: () => boolean;
+};
+
 type TiptapEditorProps = {
-  value: JSONContent | null;
-  onChange: (json: JSONContent) => void;
+  initialContent: JSONContent | null;
+  onEditorReady?: (json: JSONContent) => void;
+  onUpdate?: () => void;
   id?: string;
   disabled?: boolean;
-  error?: boolean;
 };
 
 type ToolbarButtonProps = {
@@ -59,14 +50,22 @@ function ToolbarDivider() {
   return <div className='mx-0.5 h-4 w-px shrink-0 bg-border' />;
 }
 
-export default function TiptapEditor({ value, onChange, id, disabled, error }: TiptapEditorProps) {
+const emptyDocument: JSONContent = { type: 'doc', content: [] };
+
+const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(function TiptapEditor({ initialContent, onEditorReady, onUpdate, id, disabled }, ref) {
+  const onEditorReadyRef = useRef(onEditorReady);
+  onEditorReadyRef.current = onEditorReady;
+
+  const onUpdateRef = useRef(onUpdate);
+  onUpdateRef.current = onUpdate;
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
         heading: { levels: [2, 3] },
       }),
     ],
-    content: value ?? '',
+    content: initialContent ?? '',
     immediatelyRender: false,
     editable: !disabled,
     editorProps: {
@@ -75,22 +74,23 @@ export default function TiptapEditor({ value, onChange, id, disabled, error }: T
         class: 'min-h-[9rem] px-3 py-2.5 text-sm leading-relaxed text-foreground focus:outline-none',
       },
     },
-    onUpdate({ editor: e }) {
-      onChange(e.getJSON());
+    onCreate({ editor: createdEditor }) {
+      onEditorReadyRef.current?.(createdEditor.getJSON());
+    },
+    onUpdate() {
+      onUpdateRef.current?.();
     },
   });
 
-  // Sync external value changes (e.g. when async-loaded data arrives)
-  useEffect(() => {
-    if (!editor || value === null) return;
-    const current = JSON.stringify(editor.getJSON());
-    const incoming = JSON.stringify(value);
-    if (current !== incoming) {
-      editor.commands.setContent(value, { emitUpdate: false });
-    }
-  }, [editor, value]);
+  useImperativeHandle(
+    ref,
+    () => ({
+      getJSON: () => editor?.getJSON() ?? emptyDocument,
+      isEmpty: () => editor?.isEmpty ?? true,
+    }),
+    [editor],
+  );
 
-  // Sync disabled state
   useEffect(() => {
     if (!editor) return;
     editor.setEditable(!disabled);
@@ -99,29 +99,14 @@ export default function TiptapEditor({ value, onChange, id, disabled, error }: T
   return (
     <div
       className={cn(
-        'overflow-hidden rounded-sm border bg-card transition-colors',
-        'focus-within:ring-1 focus-within:ring-ring',
-        error ? 'border-destructive' : 'border-border',
+        'overflow-hidden rounded-sm border border-input bg-card transition-colors focus-within:border-tertiary-foreground focus-within:outline-none',
         disabled && 'opacity-60',
       )}>
-      {/* Toolbar */}
-      <div
-        className={cn(
-          'flex flex-wrap items-center gap-0.5 border-b border-border bg-card-muted px-2 py-1.5',
-          disabled && 'pointer-events-none',
-        )}>
-        <ToolbarButton
-          title='Bold'
-          onClick={() => editor?.chain().focus().toggleBold().run()}
-          active={editor?.isActive('bold')}
-          disabled={!editor}>
+      <div className={cn('flex flex-wrap items-center gap-0.5 border-b border-border bg-card-muted px-2 py-1.5', disabled && 'pointer-events-none')}>
+        <ToolbarButton title='Bold' onClick={() => editor?.chain().focus().toggleBold().run()} active={editor?.isActive('bold')} disabled={!editor}>
           <Bold size={13} strokeWidth={2} />
         </ToolbarButton>
-        <ToolbarButton
-          title='Italic'
-          onClick={() => editor?.chain().focus().toggleItalic().run()}
-          active={editor?.isActive('italic')}
-          disabled={!editor}>
+        <ToolbarButton title='Italic' onClick={() => editor?.chain().focus().toggleItalic().run()} active={editor?.isActive('italic')} disabled={!editor}>
           <Italic size={13} strokeWidth={2} />
         </ToolbarButton>
         <ToolbarButton
@@ -168,11 +153,7 @@ export default function TiptapEditor({ value, onChange, id, disabled, error }: T
 
         <ToolbarDivider />
 
-        <ToolbarButton
-          title='Inline code'
-          onClick={() => editor?.chain().focus().toggleCode().run()}
-          active={editor?.isActive('code')}
-          disabled={!editor}>
+        <ToolbarButton title='Inline code' onClick={() => editor?.chain().focus().toggleCode().run()} active={editor?.isActive('code')} disabled={!editor}>
           <Code size={13} strokeWidth={2} />
         </ToolbarButton>
         <ToolbarButton
@@ -189,25 +170,16 @@ export default function TiptapEditor({ value, onChange, id, disabled, error }: T
           disabled={!editor}>
           <Quote size={13} strokeWidth={2} />
         </ToolbarButton>
-        <ToolbarButton
-          title='Horizontal rule'
-          onClick={() => editor?.chain().focus().setHorizontalRule().run()}
-          disabled={!editor}>
+        <ToolbarButton title='Horizontal rule' onClick={() => editor?.chain().focus().setHorizontalRule().run()} disabled={!editor}>
           <Minus size={13} strokeWidth={2} />
         </ToolbarButton>
 
         <ToolbarDivider />
 
-        <ToolbarButton
-          title='Undo'
-          onClick={() => editor?.chain().focus().undo().run()}
-          disabled={!editor || !editor.can().undo()}>
+        <ToolbarButton title='Undo' onClick={() => editor?.chain().focus().undo().run()} disabled={!editor || !editor.can().undo()}>
           <Undo2 size={13} strokeWidth={2} />
         </ToolbarButton>
-        <ToolbarButton
-          title='Redo'
-          onClick={() => editor?.chain().focus().redo().run()}
-          disabled={!editor || !editor.can().redo()}>
+        <ToolbarButton title='Redo' onClick={() => editor?.chain().focus().redo().run()} disabled={!editor || !editor.can().redo()}>
           <Redo2 size={13} strokeWidth={2} />
         </ToolbarButton>
       </div>
@@ -215,4 +187,6 @@ export default function TiptapEditor({ value, onChange, id, disabled, error }: T
       <EditorContent editor={editor} />
     </div>
   );
-}
+});
+
+export default TiptapEditor;

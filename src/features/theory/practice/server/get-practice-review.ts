@@ -8,17 +8,14 @@ import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
 import type { PracticeReviewResponse } from '@/features/theory/practice/api/contracts';
 import { assertQuestionInLibrary } from '@/features/theory/practice/server/assert-question-in-library';
 import { listQuestionAttempts } from '@/features/theory/practice/server/list-question-attempts';
+import { parseTiptapDocument } from '@/lib/tiptap/parse-document';
 
 export async function getPracticeReview(id: string): Promise<PracticeReviewResponse> {
   const user = await getAuthenticatedUser();
   await assertQuestionInLibrary(user.id, id);
 
   try {
-    const [question] = await db
-      .select({ answer: theoryQuestionsInApp.answer })
-      .from(theoryQuestionsInApp)
-      .where(eq(theoryQuestionsInApp.id, id))
-      .limit(1);
+    const [question] = await db.select({ answer: theoryQuestionsInApp.answer }).from(theoryQuestionsInApp).where(eq(theoryQuestionsInApp.id, id)).limit(1);
 
     if (!question) {
       throw new NotFoundError('questionNotFound');
@@ -27,7 +24,7 @@ export async function getPracticeReview(id: string): Promise<PracticeReviewRespo
     const { attempts, attemptHistory } = await listQuestionAttempts(user.id, id);
 
     return {
-      answer: question.answer,
+      answer: parseTiptapDocument(question.answer),
       attempts,
       attemptHistory,
     };

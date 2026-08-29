@@ -11,7 +11,7 @@ import { useValidationMessage } from '@/common/hooks/use-validation-message';
 import { inputClassName, primaryButtonClassName, secondaryButtonClassName } from '@/common/styles/form';
 import { categoryBuilderFieldOrder, useCategoryBuilderForm } from '@/features/admin/categories/hooks/useCategoryBuilderForm';
 import { scrollToFirstFormError } from '@/common/lib/scroll-to-first-form-error';
-import { useUnsavedChangesGuard } from '@/common/unsaved-changes/use-unsaved-changes-guard';
+import { useFormGuard } from '@/common/form/use-form-guard';
 import { cn } from '@/lib/cn';
 
 type CategoryBuilderPageProps = {
@@ -52,10 +52,10 @@ export default function CategoryBuilderPage({ categoryId }: CategoryBuilderPageP
 function CategoryBuilderContent({ categoryId }: CategoryBuilderPageProps) {
   const t = useTranslations('AdminCategoryBuilderPage');
   const formRef = useRef<HTMLFormElement>(null);
-  const { isEdit, values, fieldErrors, isDirty, slug, questionCount, isLoading, isError, isSubmitting, isDeleting, submit, setField, remove, refetch } =
+  const { isEdit, values, fieldErrors, isDirty, status, slug, questionCount, isLoading, isError, isSubmitting, isDeleting, submit, setField, remove, refetch } =
     useCategoryBuilderForm({ categoryId });
 
-  useUnsavedChangesGuard(isDirty && !isLoading && !isError);
+  useFormGuard(status, isDirty, isError);
 
   const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -66,7 +66,7 @@ function CategoryBuilderContent({ categoryId }: CategoryBuilderPageProps) {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || status === 'loading') {
     return (
       <AppShell>
         <div className='px-4 py-8 md:px-8'>

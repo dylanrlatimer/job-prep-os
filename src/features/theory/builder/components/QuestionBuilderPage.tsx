@@ -14,7 +14,7 @@ import { useQuestionBuilderForm, questionBuilderFieldOrder } from '@/features/th
 import type { BuilderCategory } from '@/features/theory/builder/api/contracts';
 import QuestionBuilderSkeleton from './QuestionBuilderSkeleton';
 import { scrollToFirstFormError } from '@/common/lib/scroll-to-first-form-error';
-import { useUnsavedChangesGuard } from '@/common/unsaved-changes/use-unsaved-changes-guard';
+import { useFormGuard } from '@/common/form/use-form-guard';
 import { cn } from '@/lib/cn';
 
 type QuestionBuilderPageProps = {
@@ -64,12 +64,30 @@ export default function QuestionBuilderPage({ questionId }: QuestionBuilderPageP
   const t = useTranslations('QuestionBuilderPage');
   const formRef = useRef<HTMLFormElement>(null);
   const [categorySearch, setCategorySearch] = useState('');
-  const { isEdit, values, fieldErrors, isDirty, metadata, isLoading, isError, isSubmitting, submit, setField, toggleCategory, refetch } =
-    useQuestionBuilderForm({
-      questionId,
-    });
+  const {
+    isEdit,
+    values,
+    fieldErrors,
+    isDirty,
+    status,
+    initialDocument,
+    editorRef,
+    metadata,
+    isLoading,
+    isError,
+    isFormDataReady,
+    isSubmitting,
+    submit,
+    setField,
+    toggleCategory,
+    onEditorReady,
+    onDocumentUpdate,
+    refetch,
+  } = useQuestionBuilderForm({
+    questionId,
+  });
 
-  useUnsavedChangesGuard(isDirty && !isLoading && !isError);
+  useFormGuard(status, isDirty, isError);
 
   const answerErrorMessage = useValidationMessage(fieldErrors.answer);
   const categoriesErrorMessage = useValidationMessage(fieldErrors.categoryIds);
@@ -84,7 +102,7 @@ export default function QuestionBuilderPage({ questionId }: QuestionBuilderPageP
     }
   };
 
-  if (isLoading) {
+  if (isLoading || !isFormDataReady) {
     return (
       <AppShell>
         <QuestionBuilderSkeleton />
@@ -135,7 +153,15 @@ export default function QuestionBuilderPage({ questionId }: QuestionBuilderPageP
 
           <div data-field='answer'>
             <span className='mb-1.5 block text-xs text-secondary-foreground'>{t('answerLabel')}</span>
-            <TiptapEditor id='answer' value={values.answer} onChange={(json) => setField('answer', json)} error={!!fieldErrors.answer} />
+            <TiptapEditor
+              key={questionId ?? 'new'}
+              ref={editorRef}
+              id='answer'
+              initialContent={initialDocument}
+              onEditorReady={onEditorReady}
+              onUpdate={onDocumentUpdate}
+              disabled={status !== 'ready'}
+            />
             {answerErrorMessage ? <span className='mt-1.5 block text-xs text-destructive-bright'>{answerErrorMessage}</span> : null}
           </div>
 
@@ -251,7 +277,7 @@ export default function QuestionBuilderPage({ questionId }: QuestionBuilderPageP
             <Link href='/' className={cn(secondaryButtonClassName, 'text-center')}>
               {t('cancel')}
             </Link>
-            <button type='submit' className={primaryButtonClassName} disabled={isSubmitting}>
+            <button type='submit' className={primaryButtonClassName} disabled={isSubmitting || status !== 'ready'}>
               {isSubmitting ? t('saving') : isEdit ? t('saveChanges') : t('createQuestion')}
             </button>
           </div>

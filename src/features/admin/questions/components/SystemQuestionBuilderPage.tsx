@@ -16,7 +16,7 @@ import { systemQuestionBuilderFieldOrder, useSystemQuestionBuilderForm } from '@
 import type { BuilderCategory } from '@/features/theory/builder/api/contracts';
 import QuestionBuilderSkeleton from '@/features/theory/builder/components/QuestionBuilderSkeleton';
 import { scrollToFirstFormError } from '@/common/lib/scroll-to-first-form-error';
-import { useUnsavedChangesGuard } from '@/common/unsaved-changes/use-unsaved-changes-guard';
+import { useFormGuard } from '@/common/form/use-form-guard';
 import { cn } from '@/lib/cn';
 
 type SystemQuestionBuilderPageProps = {
@@ -77,10 +77,30 @@ function SystemQuestionBuilderContent({ questionId }: SystemQuestionBuilderPageP
   const formRef = useRef<HTMLFormElement>(null);
   const [categorySearch, setCategorySearch] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const { isEdit, values, fieldErrors, isDirty, metadata, isLoading, isError, isSubmitting, isDeleting, submit, setField, toggleCategory, remove, refetch } =
-    useSystemQuestionBuilderForm({ questionId });
+  const {
+    isEdit,
+    values,
+    fieldErrors,
+    isDirty,
+    status,
+    initialDocument,
+    editorRef,
+    metadata,
+    isLoading,
+    isError,
+    isFormDataReady,
+    isSubmitting,
+    isDeleting,
+    submit,
+    setField,
+    toggleCategory,
+    onEditorReady,
+    onDocumentUpdate,
+    remove,
+    refetch,
+  } = useSystemQuestionBuilderForm({ questionId });
 
-  useUnsavedChangesGuard(isDirty && !isLoading && !isError);
+  useFormGuard(status, isDirty, isError);
 
   const answerErrorMessage = useValidationMessage(fieldErrors.answer);
   const categoriesErrorMessage = useValidationMessage(fieldErrors.categoryIds);
@@ -95,7 +115,7 @@ function SystemQuestionBuilderContent({ questionId }: SystemQuestionBuilderPageP
     }
   };
 
-  if (isLoading) {
+  if (isLoading || !isFormDataReady) {
     return (
       <AppShell>
         <QuestionBuilderSkeleton />
@@ -165,7 +185,15 @@ function SystemQuestionBuilderContent({ questionId }: SystemQuestionBuilderPageP
 
           <div data-field='answer'>
             <span className='mb-1.5 block text-xs text-secondary-foreground'>{t('answerLabel')}</span>
-            <TiptapEditor id='answer' value={values.answer} onChange={(json) => setField('answer', json)} error={!!fieldErrors.answer} />
+            <TiptapEditor
+              key={questionId ?? 'new'}
+              ref={editorRef}
+              id='answer'
+              initialContent={initialDocument}
+              onEditorReady={onEditorReady}
+              onUpdate={onDocumentUpdate}
+              disabled={status !== 'ready'}
+            />
             {answerErrorMessage ? <span className='mt-1.5 block text-xs text-destructive-bright'>{answerErrorMessage}</span> : null}
           </div>
 
@@ -281,7 +309,7 @@ function SystemQuestionBuilderContent({ questionId }: SystemQuestionBuilderPageP
             <Link href='/admin/questions' className={cn(secondaryButtonClassName, 'text-center')}>
               {t('cancel')}
             </Link>
-            <button type='submit' className={primaryButtonClassName} disabled={isSubmitting}>
+            <button type='submit' className={primaryButtonClassName} disabled={isSubmitting || status !== 'ready'}>
               {isSubmitting ? t('saving') : isEdit ? t('saveChanges') : t('createQuestion')}
             </button>
           </div>

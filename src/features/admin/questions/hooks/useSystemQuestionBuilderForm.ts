@@ -1,31 +1,39 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { useAllowUnsavedNavigation } from '@/common/unsaved-changes/use-unsaved-changes-guard';
+import { useSnapshotForm } from '@/common/form/use-snapshot-form';
 import { invalidateAdminQuestionCaches } from '@/features/admin/api/invalidate-admin-caches';
 import { createSystemQuestion, deleteSystemQuestion, updateSystemQuestion } from '@/features/admin/questions/api/mutations';
 import { systemQuestionQueryOptions } from '@/features/admin/questions/api/queries';
-import { SystemQuestionInputSchema, type SystemQuestionInput } from '@/features/admin/questions/api/contracts';
+import { SystemQuestionInputSchema } from '@/features/admin/questions/api/contracts';
 import { builderMetadataQueryOptions } from '@/features/theory/builder/api/queries';
-import { areQuestionFormValuesEqual, emptyQuestionFormValues, type QuestionFormValues } from '@/features/theory/builder/lib/question-form-values';
+import {
+  areQuestionSnapshotsEqual,
+  emptyQuestionScalars,
+  toQuestionSnapshot,
+  type QuestionFormSnapshot,
+  type QuestionFormValues,
+  type QuestionScalars,
+} from '@/features/theory/builder/lib/question-form-values';
 import { useToastStore } from '@/lib/store/use-toast-store';
 
-const emptyValues: QuestionFormValues = {
-  ...emptyQuestionFormValues,
+const emptyScalars: QuestionScalars = {
+  ...emptyQuestionScalars,
   isPublic: false,
 };
 
-function toSystemQuestionInput(values: QuestionFormValues): SystemQuestionInput {
+function toSystemQuestionInput(snapshot: QuestionFormSnapshot) {
   return {
-    question: values.question,
-    answer: values.answer,
-    categoryIds: values.categoryIds,
-    sourceName: values.sourceName,
-    sourceUrl: values.sourceUrl,
-    isPublic: values.isPublic,
+    question: snapshot.question,
+    answer: snapshot.answer,
+    categoryIds: snapshot.categoryIds,
+    sourceName: snapshot.sourceName,
+    sourceUrl: snapshot.sourceUrl,
+    isPublic: snapshot.isPublic,
   };
 }
 
@@ -57,8 +65,6 @@ export function useSystemQuestionBuilderForm({ questionId }: UseSystemQuestionBu
   const queryClient = useQueryClient();
   const isEdit = !!questionId;
 
-  const [values, setValues] = useState<QuestionFormValues>(emptyValues);
-  const [baseline, setBaseline] = useState<QuestionFormValues | null>(isEdit ? null : emptyValues);
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof QuestionFormValues, string>>>({});
 
   const metadataQuery = useQuery(builderMetadataQueryOptions);
@@ -67,23 +73,33 @@ export function useSystemQuestionBuilderForm({ questionId }: UseSystemQuestionBu
     enabled: isEdit,
   });
 
-  useEffect(() => {
-    if (!questionQuery.data) return;
+  const loadedScalars = useMemo((): QuestionScalars | null => {
+    if (!questionQuery.data) return null;
 
-    const loaded = {
+    return {
       question: questionQuery.data.question,
-      answer: questionQuery.data.answer,
       categoryIds: questionQuery.data.categoryIds,
       sourceName: questionQuery.data.sourceName ?? '',
       sourceUrl: questionQuery.data.sourceUrl ?? '',
       isPublic: questionQuery.data.isPublic,
     };
-
-    setValues(loaded);
-    setBaseline(loaded);
   }, [questionQuery.data]);
 
-  const isDirty = baseline !== null && !areQuestionFormValuesEqual(values, baseline);
+  const initialDocument = questionQuery.data?.answer ?? null;
+
+  const isDataLoading = metadataQuery.isPending || (isEdit && questionQuery.isPending);
+  const isDataError = metadataQuery.isError || (isEdit && questionQuery.isError);
+
+  const form = useSnapshotForm<QuestionFormSnapshot, QuestionScalars>({
+    isEdit,
+    emptyScalars,
+    loadedScalars,
+    isDataLoading,
+    isDataError,
+    hasDocumentField: true,
+    toSnapshot: toQuestionSnapshot,
+    snapshotsEqual: areQuestionSnapshotsEqual,
+  });
 
   const onSuccess = useCallback(
     async (id: string) => {
@@ -100,7 +116,7 @@ export function useSystemQuestionBuilderForm({ questionId }: UseSystemQuestionBu
   });
 
   const { mutate: mutateUpdate, isPending: isUpdating } = useMutation({
-    mutationFn: (payload: SystemQuestionInput) => updateSystemQuestion(questionId!, payload),
+    mutationFn: (payload: Parameters<typeof updateSystemQuestion>[1]) => updateSystemQuestion(questionId!, payload),
     onSuccess: (response) => onSuccess(response.id),
   });
 
@@ -116,7 +132,8 @@ export function useSystemQuestionBuilderForm({ questionId }: UseSystemQuestionBu
   const isSubmitting = isCreating || isUpdating;
 
   const submit = useCallback((): SystemQuestionBuilderSubmitResult => {
-    const parsed = SystemQuestionInputSchema.safeParse(toSystemQuestionInput(values));
+    const snapshot = form.getSnapshot();
+    const parsed = SystemQuestionInputSchema.safeParse(toSystemQuestionInput(snapshot));
 
     if (!parsed.success) {
       const errors = mapZodFieldErrors(parsed.error);
@@ -125,6 +142,7 @@ export function useSystemQuestionBuilderForm({ questionId }: UseSystemQuestionBu
     }
 
     setFieldErrors({});
+    form.markSubmitting();
 
     if (isEdit) {
       mutateUpdate(parsed.data);
@@ -133,63 +151,87 @@ export function useSystemQuestionBuilderForm({ questionId }: UseSystemQuestionBu
 
     mutateCreate(parsed.data);
     return { ok: true };
-  }, [isEdit, mutateCreate, mutateUpdate, values]);
+  }, [form, isEdit, mutateCreate, mutateUpdate]);
 
-  const setField = useCallback(<K extends keyof QuestionFormValues>(field: K, value: QuestionFormValues[K]) => {
-    setValues((current) => ({ ...current, [field]: value }));
-    setFieldErrors((current) => {
-      if (!current[field]) return current;
-      const next = { ...current };
-      delete next[field];
-      return next;
-    });
-  }, []);
+  const setField = useCallback(
+    <K extends keyof QuestionScalars>(field: K, value: QuestionScalars[K]) => {
+      form.setScalar(field, value);
+      setFieldErrors((current) => {
+        if (!current[field]) return current;
+        const next = { ...current };
+        delete next[field];
+        return next;
+      });
+    },
+    [form],
+  );
 
-  const toggleCategory = useCallback((categoryId: string) => {
-    setValues((current) => {
-      const categoryIds = current.categoryIds.includes(categoryId)
-        ? current.categoryIds.filter((id) => id !== categoryId)
-        : [...current.categoryIds, categoryId];
+  const toggleCategory = useCallback(
+    (categoryId: string) => {
+      form.setScalars((current) => {
+        const categoryIds = current.categoryIds.includes(categoryId)
+          ? current.categoryIds.filter((id) => id !== categoryId)
+          : [...current.categoryIds, categoryId];
 
-      return { ...current, categoryIds };
-    });
+        return { ...current, categoryIds };
+      });
 
-    setFieldErrors((current) => {
-      if (!current.categoryIds) return current;
-      const next = { ...current };
-      delete next.categoryIds;
-      return next;
-    });
-  }, []);
+      setFieldErrors((current) => {
+        if (!current.categoryIds) return current;
+        const next = { ...current };
+        delete next.categoryIds;
+        return next;
+      });
+    },
+    [form],
+  );
 
   const remove = useCallback(() => {
     if (!isEdit || isDeleting) return;
     mutateDelete();
   }, [isDeleting, isEdit, mutateDelete]);
 
-  const isLoading = metadataQuery.isPending || (isEdit && questionQuery.isPending);
-  const isError = metadataQuery.isError || (isEdit && questionQuery.isError);
-
   return useMemo(
     () => ({
       isEdit,
-      values,
+      values: form.scalars,
       fieldErrors,
-      isDirty,
+      isDirty: form.isDirty,
+      status: form.status,
+      initialDocument,
+      editorRef: form.editorRef,
       metadata: metadataQuery.data,
-      isLoading,
-      isError,
+      isLoading: isDataLoading,
+      isError: isDataError,
+      isFormDataReady: form.isFormDataReady,
       isSubmitting,
       isDeleting,
       submit,
       setField,
       toggleCategory,
+      onEditorReady: form.onEditorReady,
+      onDocumentUpdate: form.onDocumentUpdate,
       remove,
       refetch: () => {
         void metadataQuery.refetch();
         if (isEdit) void questionQuery.refetch();
       },
     }),
-    [fieldErrors, isDeleting, isDirty, isEdit, isError, isLoading, isSubmitting, metadataQuery, questionQuery, remove, setField, submit, toggleCategory, values],
+    [
+      fieldErrors,
+      form,
+      initialDocument,
+      isDataError,
+      isDataLoading,
+      isDeleting,
+      isEdit,
+      isSubmitting,
+      metadataQuery,
+      questionQuery,
+      remove,
+      setField,
+      submit,
+      toggleCategory,
+    ],
   );
 }

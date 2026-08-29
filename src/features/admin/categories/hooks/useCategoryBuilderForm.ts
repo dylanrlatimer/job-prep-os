@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { useAllowUnsavedNavigation } from '@/common/unsaved-changes/use-unsaved-changes-guard';
+import { useSnapshotForm } from '@/common/form/use-snapshot-form';
 import { invalidateAdminCategoryCaches } from '@/features/admin/api/invalidate-admin-caches';
 import { CategoryInputSchema, UpdateCategorySchema, type CategoryInput, type UpdateCategoryInput } from '@/features/admin/categories/api/contracts';
 import { createCategory, deleteCategory, updateCategory } from '@/features/admin/categories/api/mutations';
@@ -61,8 +62,6 @@ export function useCategoryBuilderForm({ categoryId }: UseCategoryBuilderFormOpt
   const queryClient = useQueryClient();
   const isEdit = !!categoryId;
 
-  const [values, setValues] = useState<CategoryFormValues>(emptyValues);
-  const [baseline, setBaseline] = useState<CategoryFormValues | null>(isEdit ? null : emptyValues);
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof CategoryFormValues, string>>>({});
   const [slug, setSlug] = useState('');
   const [questionCount, setQuestionCount] = useState(0);
@@ -72,21 +71,34 @@ export function useCategoryBuilderForm({ categoryId }: UseCategoryBuilderFormOpt
     enabled: isEdit,
   });
 
-  useEffect(() => {
-    if (!categoryQuery.data) return;
+  const loadedScalars = useMemo((): CategoryFormValues | null => {
+    if (!categoryQuery.data) return null;
 
-    const loaded = {
+    return {
       name: categoryQuery.data.name,
       isActive: categoryQuery.data.isActive,
     };
+  }, [categoryQuery.data]);
 
-    setValues(loaded);
-    setBaseline(loaded);
+  const isDataLoading = isEdit && categoryQuery.isPending;
+  const isDataError = isEdit && categoryQuery.isError;
+
+  const form = useSnapshotForm<CategoryFormValues, CategoryFormValues>({
+    isEdit,
+    emptyScalars: emptyValues,
+    loadedScalars,
+    isDataLoading,
+    isDataError,
+    hasDocumentField: false,
+    toSnapshot: (scalars) => scalars,
+    snapshotsEqual: areCategoryFormValuesEqual,
+  });
+
+  useEffect(() => {
+    if (!categoryQuery.data) return;
     setSlug(categoryQuery.data.slug);
     setQuestionCount(categoryQuery.data.questionCount);
   }, [categoryQuery.data]);
-
-  const isDirty = baseline !== null && !areCategoryFormValuesEqual(values, baseline);
 
   const onSaveSuccess = useCallback(
     async (id: string) => {
@@ -119,7 +131,8 @@ export function useCategoryBuilderForm({ categoryId }: UseCategoryBuilderFormOpt
   const isSubmitting = isCreating || isUpdating;
 
   const submit = useCallback((): CategoryBuilderSubmitResult => {
-    const parsed = isEdit ? UpdateCategorySchema.safeParse(toUpdateInput(values)) : CategoryInputSchema.safeParse(toCreateInput(values));
+    const snapshot = form.getSnapshot();
+    const parsed = isEdit ? UpdateCategorySchema.safeParse(toUpdateInput(snapshot)) : CategoryInputSchema.safeParse(toCreateInput(snapshot));
 
     if (!parsed.success) {
       const errors = mapZodFieldErrors(parsed.error);
@@ -128,6 +141,7 @@ export function useCategoryBuilderForm({ categoryId }: UseCategoryBuilderFormOpt
     }
 
     setFieldErrors({});
+    form.markSubmitting();
 
     if (isEdit) {
       mutateUpdate(parsed.data as UpdateCategoryInput);
@@ -136,36 +150,37 @@ export function useCategoryBuilderForm({ categoryId }: UseCategoryBuilderFormOpt
 
     mutateCreate(parsed.data as CategoryInput);
     return { ok: true };
-  }, [isEdit, mutateCreate, mutateUpdate, values]);
+  }, [form, isEdit, mutateCreate, mutateUpdate]);
 
-  const setField = useCallback(<K extends keyof CategoryFormValues>(field: K, value: CategoryFormValues[K]) => {
-    setValues((current) => ({ ...current, [field]: value }));
-    setFieldErrors((current) => {
-      if (!current[field]) return current;
-      const next = { ...current };
-      delete next[field];
-      return next;
-    });
-  }, []);
+  const setField = useCallback(
+    <K extends keyof CategoryFormValues>(field: K, value: CategoryFormValues[K]) => {
+      form.setScalar(field, value);
+      setFieldErrors((current) => {
+        if (!current[field]) return current;
+        const next = { ...current };
+        delete next[field];
+        return next;
+      });
+    },
+    [form],
+  );
 
   const remove = useCallback(() => {
     if (!isEdit || isDeleting) return;
     mutateDelete();
   }, [isDeleting, isEdit, mutateDelete]);
 
-  const isLoading = isEdit && categoryQuery.isPending;
-  const isError = isEdit && categoryQuery.isError;
-
   return useMemo(
     () => ({
       isEdit,
-      values,
+      values: form.scalars,
       fieldErrors,
-      isDirty,
+      isDirty: form.isDirty,
+      status: form.status,
       slug,
       questionCount,
-      isLoading,
-      isError,
+      isLoading: isDataLoading,
+      isError: isDataError,
       isSubmitting,
       isDeleting,
       submit,
@@ -175,6 +190,20 @@ export function useCategoryBuilderForm({ categoryId }: UseCategoryBuilderFormOpt
         if (isEdit) void categoryQuery.refetch();
       },
     }),
-    [categoryQuery, fieldErrors, isDeleting, isDirty, isEdit, isError, isLoading, isSubmitting, questionCount, remove, setField, slug, submit, values],
+    [
+      categoryQuery,
+      fieldErrors,
+      form,
+      isDataError,
+      isDataLoading,
+      isDeleting,
+      isEdit,
+      isSubmitting,
+      questionCount,
+      remove,
+      setField,
+      slug,
+      submit,
+    ],
   );
 }

@@ -9,6 +9,7 @@ import type { QuestionDetailResponse } from '@/features/theory/detail/api/contra
 import type { RepositoryCategory } from '@/features/theory/repository/api/contracts';
 import { assertQuestionInLibrary } from '@/features/theory/practice/server/assert-question-in-library';
 import { listQuestionAttempts } from '@/features/theory/practice/server/list-question-attempts';
+import { parseTiptapDocument } from '@/lib/tiptap/parse-document';
 
 export async function getQuestionDetail(id: string): Promise<QuestionDetailResponse> {
   const user = await getAuthenticatedUser();
@@ -52,7 +53,7 @@ export async function getQuestionDetail(id: string): Promise<QuestionDetailRespo
     return {
       id: question.id,
       question: question.question,
-      answer: question.answer,
+      answer: parseTiptapDocument(question.answer),
       categories,
       sourceName: question.sourceName,
       sourceUrl: question.sourceUrl,
