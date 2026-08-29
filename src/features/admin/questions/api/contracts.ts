@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { JSONContent } from '@tiptap/core';
 import { QuestionInputSchema } from '@/features/theory/builder/api/contracts';
 import type { RepositoryCategory } from '@/features/theory/repository/api/contracts';
 
@@ -31,7 +32,7 @@ export type ListSystemQuestionsResponse = {
 export type SystemQuestionResponse = {
   id: string;
   question: string;
-  answer: string;
+  answer: JSONContent;
   categoryIds: string[];
   sourceName: string | null;
   sourceUrl: string | null;

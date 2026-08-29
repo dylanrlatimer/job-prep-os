@@ -12,6 +12,7 @@ import { createAttempt, fetchPracticeReview } from '@/features/theory/practice/a
 import { practiceQuestionQueryOptions } from '@/features/theory/practice/api/queries';
 import type { PracticeAttemptResult, PracticeReviewResponse } from '@/features/theory/practice/api/contracts';
 import PracticeSkeleton from './PracticeSkeleton';
+import TiptapRenderer from '@/common/components/TiptapRenderer';
 import { useToastStore } from '@/lib/store/use-toast-store';
 import { cn } from '@/lib/cn';
 
@@ -181,7 +182,7 @@ export default function PracticePage({ questionId }: PracticePageProps) {
             <div className='space-y-6'>
               <div className='rounded-sm border border-border bg-card px-4 py-3'>
                 <p className='m-0 mb-2 text-xs text-secondary-foreground'>{t('referenceAnswerLabel')}</p>
-                <p className='m-0 whitespace-pre-wrap text-sm leading-relaxed text-foreground'>{review.answer}</p>
+                <TiptapRenderer content={review.answer} />
               </div>
 
               <div>

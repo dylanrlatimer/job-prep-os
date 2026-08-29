@@ -133,3 +133,79 @@ html::-webkit-scrollbar-thumb:hover,
 .scrollbar-branded::-webkit-scrollbar-thumb:hover {
   background-color: var(--primary-hover);
 }
+
+/* ── Tiptap rich-text styles ────────────────────────────────────────────── */
+/* Shared by the live editor (.tiptap) and the server renderer (.tiptap-content) */
+
+.tiptap,
+.tiptap-content {
+  p {
+    @apply my-0 text-sm leading-relaxed text-foreground;
+  }
+
+  p + p {
+    @apply mt-3;
+  }
+
+  h2 {
+    @apply mt-5 mb-2 text-sm font-semibold text-strong-foreground first:mt-0;
+  }
+
+  h3 {
+    @apply mt-4 mb-1.5 text-sm font-medium text-foreground first:mt-0;
+  }
+
+  ul,
+  ol {
+    @apply my-3 pl-5 text-sm leading-relaxed text-foreground first:mt-0 last:mb-0;
+  }
+
+  ul {
+    @apply list-disc;
+  }
+
+  ol {
+    @apply list-decimal;
+  }
+
+  li {
+    @apply my-0.5;
+  }
+
+  li p {
+    @apply my-0;
+  }
+
+  code {
+    @apply rounded-sm bg-card-muted px-1 py-0.5 font-mono text-xs text-tertiary-foreground;
+  }
+
+  pre {
+    @apply my-3 overflow-x-auto rounded-sm border border-border bg-card-muted p-3 first:mt-0 last:mb-0;
+  }
+
+  pre code {
+    @apply bg-transparent p-0 text-xs text-tertiary-foreground;
+  }
+
+  blockquote {
+    @apply my-3 border-l-2 border-border pl-3 text-sm italic text-secondary-foreground first:mt-0 last:mb-0;
+  }
+
+  hr {
+    @apply my-4 border-border first:mt-0 last:mb-0;
+  }
+
+  strong {
+    @apply font-semibold text-strong-foreground;
+  }
+
+  em {
+    @apply italic;
+  }
+
+  s {
+    @apply line-through text-muted-foreground;
+  }
+}
+

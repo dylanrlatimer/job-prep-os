@@ -569,28 +569,6 @@ export const profilesInApp = app.table("profiles", {
 		}).onDelete("cascade"),
 ]);
 
-export const theoryQuestionsInApp = app.table("theory_questions", {
-	id: uuid().defaultRandom().primaryKey().notNull(),
-	ownerProfileId: uuid("owner_profile_id"),
-	sourceUrl: text("source_url"),
-	isPublic: boolean("is_public").default(false).notNull(),
-	question: text().notNull(),
-	answer: text().notNull(),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	sourceName: text("source_name"),
-}, (table) => [
-	index("theory_questions_owner_profile_id_idx").using("btree", table.ownerProfileId.asc().nullsLast().op("uuid_ops")),
-	index("theory_questions_public_idx").using("btree", table.createdAt.desc().nullsFirst().op("timestamptz_ops")).where(sql`(is_public = true)`),
-	foreignKey({
-			columns: [table.ownerProfileId],
-			foreignColumns: [profilesInApp.id],
-			name: "theory_questions_owner_profile_id_fkey"
-		}),
-	check("theory_questions_answer_check", sql`length(btrim(answer)) > 0`),
-	check("theory_questions_question_check", sql`length(btrim(question)) > 0`),
-]);
-
 export const theoryAttemptsInApp = app.table("theory_attempts", {
 	id: uuid().defaultRandom().primaryKey().notNull(),
 	profileId: uuid("profile_id").notNull(),
@@ -612,6 +590,27 @@ export const theoryAttemptsInApp = app.table("theory_attempts", {
 			foreignColumns: [theoryQuestionsInApp.id],
 			name: "theory_attempts_question_id_fkey"
 		}),
+]);
+
+export const theoryQuestionsInApp = app.table("theory_questions", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	ownerProfileId: uuid("owner_profile_id"),
+	sourceUrl: text("source_url"),
+	isPublic: boolean("is_public").default(false).notNull(),
+	question: text().notNull(),
+	answer: jsonb().notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	sourceName: text("source_name"),
+}, (table) => [
+	index("theory_questions_owner_profile_id_idx").using("btree", table.ownerProfileId.asc().nullsLast().op("uuid_ops")),
+	index("theory_questions_public_idx").using("btree", table.createdAt.desc().nullsFirst().op("timestamptz_ops")).where(sql`(is_public = true)`),
+	foreignKey({
+			columns: [table.ownerProfileId],
+			foreignColumns: [profilesInApp.id],
+			name: "theory_questions_owner_profile_id_fkey"
+		}),
+	check("theory_questions_question_check", sql`length(btrim(question)) > 0`),
 ]);
 
 export const theoryQuestionCategoriesInApp = app.table("theory_question_categories", {

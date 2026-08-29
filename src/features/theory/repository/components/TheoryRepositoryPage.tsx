@@ -116,10 +116,7 @@ export default function TheoryRepositoryPage() {
 
   const categoryOptions = useMemo(() => {
     if (!data) return [];
-    return [
-      { value: '', label: t('allCategories') },
-      ...data.categories.map((category) => ({ value: category.id, label: category.name })),
-    ];
+    return [{ value: '', label: t('allCategories') }, ...data.categories.map((category) => ({ value: category.id, label: category.name }))];
   }, [data, t]);
 
   if (isPending) {

@@ -11,6 +11,7 @@ import ConfirmDialog from '@/common/components/ConfirmDialog';
 import AdminGate from '@/features/admin/components/AdminGate';
 import { useValidationMessage } from '@/common/hooks/use-validation-message';
 import { inputClassName, primaryButtonClassName, secondaryButtonClassName, textareaClassName } from '@/common/styles/form';
+import TiptapEditor from '@/common/components/TiptapEditor';
 import { systemQuestionBuilderFieldOrder, useSystemQuestionBuilderForm } from '@/features/admin/questions/hooks/useSystemQuestionBuilderForm';
 import type { BuilderCategory } from '@/features/theory/builder/api/contracts';
 import QuestionBuilderSkeleton from '@/features/theory/builder/components/QuestionBuilderSkeleton';
@@ -81,6 +82,7 @@ function SystemQuestionBuilderContent({ questionId }: SystemQuestionBuilderPageP
 
   useUnsavedChangesGuard(isDirty && !isLoading && !isError);
 
+  const answerErrorMessage = useValidationMessage(fieldErrors.answer);
   const categoriesErrorMessage = useValidationMessage(fieldErrors.categoryIds);
   const filteredCategories = useFilteredCategories(metadata?.categories ?? [], categorySearch);
 
@@ -161,16 +163,11 @@ function SystemQuestionBuilderContent({ questionId }: SystemQuestionBuilderPageP
             />
           </Field>
 
-          <Field label={t('answerLabel')} htmlFor='answer' error={fieldErrors.answer}>
-            <textarea
-              id='answer'
-              className={textareaClassName}
-              value={values.answer}
-              onChange={(event) => setField('answer', event.target.value)}
-              placeholder={t('answerPlaceholder')}
-              rows={6}
-            />
-          </Field>
+          <div data-field='answer'>
+            <span className='mb-1.5 block text-xs text-secondary-foreground'>{t('answerLabel')}</span>
+            <TiptapEditor id='answer' value={values.answer} onChange={(json) => setField('answer', json)} error={!!fieldErrors.answer} />
+            {answerErrorMessage ? <span className='mt-1.5 block text-xs text-destructive-bright'>{answerErrorMessage}</span> : null}
+          </div>
 
           <div data-field='categoryIds'>
             <span className='mb-1.5 block text-xs text-secondary-foreground'>{t('categoriesLabel')}</span>

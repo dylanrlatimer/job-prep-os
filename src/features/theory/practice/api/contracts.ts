@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { JSONContent } from '@tiptap/core';
 import type { RepositoryAttemptTotals, RepositoryCategory } from '@/features/theory/repository/api/contracts';
 
 export const PracticeQuestionParamsSchema = z.object({
@@ -24,7 +25,7 @@ export type PracticeQuestionResponse = {
 };
 
 export type PracticeReviewResponse = {
-  answer: string;
+  answer: JSONContent;
   attempts: RepositoryAttemptTotals;
   attemptHistory: PracticeAttempt[];
 };

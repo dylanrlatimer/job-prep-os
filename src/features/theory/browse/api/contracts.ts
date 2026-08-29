@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { JSONContent } from '@tiptap/core';
 import type { RepositoryCategory } from '@/features/theory/repository/api/contracts';
 
 export type BrowseQuestionItem = {
@@ -25,7 +26,7 @@ export const BrowseQuestionDetailParamsSchema = z.object({
 export type BrowseQuestionDetailResponse = {
   id: string;
   question: string;
-  answer: string;
+  answer: JSONContent;
   categories: RepositoryCategory[];
   sourceName: string | null;
   sourceUrl: string | null;

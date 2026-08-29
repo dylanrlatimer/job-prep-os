@@ -9,6 +9,7 @@ import { Link } from '@/i18n/navigation';
 import AppShell from '@/common/components/AppShell';
 import { useValidationMessage } from '@/common/hooks/use-validation-message';
 import { inputClassName, primaryButtonClassName, secondaryButtonClassName, textareaClassName } from '@/common/styles/form';
+import TiptapEditor from '@/common/components/TiptapEditor';
 import { useQuestionBuilderForm, questionBuilderFieldOrder } from '@/features/theory/builder/hooks/useQuestionBuilderForm';
 import type { BuilderCategory } from '@/features/theory/builder/api/contracts';
 import QuestionBuilderSkeleton from './QuestionBuilderSkeleton';
@@ -63,12 +64,14 @@ export default function QuestionBuilderPage({ questionId }: QuestionBuilderPageP
   const t = useTranslations('QuestionBuilderPage');
   const formRef = useRef<HTMLFormElement>(null);
   const [categorySearch, setCategorySearch] = useState('');
-  const { isEdit, values, fieldErrors, isDirty, metadata, isLoading, isError, isSubmitting, submit, setField, toggleCategory, refetch } = useQuestionBuilderForm({
-    questionId,
-  });
+  const { isEdit, values, fieldErrors, isDirty, metadata, isLoading, isError, isSubmitting, submit, setField, toggleCategory, refetch } =
+    useQuestionBuilderForm({
+      questionId,
+    });
 
   useUnsavedChangesGuard(isDirty && !isLoading && !isError);
 
+  const answerErrorMessage = useValidationMessage(fieldErrors.answer);
   const categoriesErrorMessage = useValidationMessage(fieldErrors.categoryIds);
   const filteredCategories = useFilteredCategories(metadata?.categories ?? [], categorySearch);
 
@@ -108,9 +111,7 @@ export default function QuestionBuilderPage({ questionId }: QuestionBuilderPageP
   return (
     <AppShell>
       <div className='px-4 py-8 md:px-8'>
-        <Link
-          href='/'
-          className='inline-flex items-center gap-1 text-sm text-muted-foreground no-underline transition-colors hover:text-foreground'>
+        <Link href='/' className='inline-flex items-center gap-1 text-sm text-muted-foreground no-underline transition-colors hover:text-foreground'>
           <ChevronLeft size={16} strokeWidth={1.75} aria-hidden='true' />
           {t('backToRepository')}
         </Link>
@@ -132,16 +133,11 @@ export default function QuestionBuilderPage({ questionId }: QuestionBuilderPageP
             />
           </Field>
 
-          <Field label={t('answerLabel')} htmlFor='answer' error={fieldErrors.answer}>
-            <textarea
-              id='answer'
-              className={textareaClassName}
-              value={values.answer}
-              onChange={(event) => setField('answer', event.target.value)}
-              placeholder={t('answerPlaceholder')}
-              rows={6}
-            />
-          </Field>
+          <div data-field='answer'>
+            <span className='mb-1.5 block text-xs text-secondary-foreground'>{t('answerLabel')}</span>
+            <TiptapEditor id='answer' value={values.answer} onChange={(json) => setField('answer', json)} error={!!fieldErrors.answer} />
+            {answerErrorMessage ? <span className='mt-1.5 block text-xs text-destructive-bright'>{answerErrorMessage}</span> : null}
+          </div>
 
           <div data-field='categoryIds'>
             <span className='mb-1.5 block text-xs text-secondary-foreground'>{t('categoriesLabel')}</span>

@@ -12,6 +12,7 @@ import { questionDetailQueryOptions } from '@/features/theory/detail/api/queries
 import { unsaveRepositoryQuestion } from '@/features/theory/repository/api/mutations';
 import type { PracticeAttemptResult } from '@/features/theory/practice/api/contracts';
 import QuestionDetailSkeleton from './QuestionDetailSkeleton';
+import TiptapRenderer from '@/common/components/TiptapRenderer';
 import { primaryButtonClassName, secondaryButtonClassName } from '@/common/styles/form';
 import { useToastStore } from '@/lib/store/use-toast-store';
 import { cn } from '@/lib/cn';
@@ -146,7 +147,7 @@ export default function QuestionDetailPage({ questionId }: QuestionDetailPagePro
         <div className='mx-auto mt-8 max-w-2xl space-y-8'>
           <section>
             <h2 className='m-0 text-xs text-secondary-foreground'>{t('referenceAnswerLabel')}</h2>
-            <p className='mt-2 whitespace-pre-wrap text-sm leading-relaxed text-foreground'>{data.answer}</p>
+            <TiptapRenderer content={data.answer} className='mt-2' />
           </section>
 
           <section className='border-t border-border pt-6'>

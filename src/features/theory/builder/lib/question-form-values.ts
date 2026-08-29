@@ -1,6 +1,8 @@
+import type { JSONContent } from '@tiptap/core';
+
 export type QuestionFormValues = {
   question: string;
-  answer: string;
+  answer: JSONContent | null;
   categoryIds: string[];
   sourceName: string;
   sourceUrl: string;
@@ -9,7 +11,7 @@ export type QuestionFormValues = {
 
 export const emptyQuestionFormValues: QuestionFormValues = {
   question: '',
-  answer: '',
+  answer: null,
   categoryIds: [],
   sourceName: '',
   sourceUrl: '',
@@ -26,7 +28,7 @@ function sameIdSet(left: string[], right: string[]) {
 export function areQuestionFormValuesEqual(left: QuestionFormValues, right: QuestionFormValues) {
   return (
     left.question === right.question &&
-    left.answer === right.answer &&
+    JSON.stringify(left.answer) === JSON.stringify(right.answer) &&
     left.sourceName === right.sourceName &&
     left.sourceUrl === right.sourceUrl &&
     left.isPublic === right.isPublic &&

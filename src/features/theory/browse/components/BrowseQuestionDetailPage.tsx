@@ -9,6 +9,7 @@ import { invalidateBrowseCaches } from '@/features/admin/api/invalidate-admin-ca
 import { saveBrowseQuestion } from '@/features/theory/browse/api/mutations';
 import { browseQuestionDetailQueryOptions } from '@/features/theory/browse/api/queries';
 import QuestionDetailSkeleton from '@/features/theory/detail/components/QuestionDetailSkeleton';
+import TiptapRenderer from '@/common/components/TiptapRenderer';
 import { primaryButtonClassName, secondaryButtonClassName } from '@/common/styles/form';
 import { useToastStore } from '@/lib/store/use-toast-store';
 import { cn } from '@/lib/cn';
@@ -108,7 +109,7 @@ export default function BrowseQuestionDetailPage({ questionId }: BrowseQuestionD
         <div className='mx-auto mt-8 max-w-2xl'>
           <section>
             <h2 className='m-0 text-xs text-secondary-foreground'>{tDetail('referenceAnswerLabel')}</h2>
-            <p className='mt-2 whitespace-pre-wrap text-sm leading-relaxed text-foreground'>{data.answer}</p>
+            <TiptapRenderer content={data.answer} className='mt-2' />
           </section>
         </div>
       </div>
