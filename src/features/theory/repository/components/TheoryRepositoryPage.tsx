@@ -31,6 +31,13 @@ function hasAttempts(question: RepositoryQuestionItem) {
   return incorrect + partial + correct > 0;
 }
 
+function attemptCountClassName(count: number, type: 'incorrect' | 'partial' | 'correct') {
+  if (count === 0) return 'text-muted-foreground';
+  if (type === 'incorrect') return 'text-destructive-bright';
+  if (type === 'partial') return 'text-warning';
+  return 'text-success';
+}
+
 function AttemptTotals({ question }: { question: RepositoryQuestionItem }) {
   const t = useTranslations('TheoryRepositoryPage');
 
@@ -40,7 +47,15 @@ function AttemptTotals({ question }: { question: RepositoryQuestionItem }) {
 
   const { incorrect, partial, correct } = question.attempts;
 
-  return <span className='text-xs text-muted-foreground'>{t('attemptTotals', { incorrect, partial, correct })}</span>;
+  return (
+    <span className='text-xs'>
+      <span className={attemptCountClassName(incorrect, 'incorrect')}>{t('attemptIncorrect', { count: incorrect })}</span>
+      <span className='text-muted-foreground'> · </span>
+      <span className={attemptCountClassName(partial, 'partial')}>{t('attemptPartial', { count: partial })}</span>
+      <span className='text-muted-foreground'> · </span>
+      <span className={attemptCountClassName(correct, 'correct')}>{t('attemptCorrect', { count: correct })}</span>
+    </span>
+  );
 }
 
 function QuestionRow({ question }: { question: RepositoryQuestionItem }) {

@@ -569,29 +569,6 @@ export const profilesInApp = app.table("profiles", {
 		}).onDelete("cascade"),
 ]);
 
-export const theoryAttemptsInApp = app.table("theory_attempts", {
-	id: uuid().defaultRandom().primaryKey().notNull(),
-	profileId: uuid("profile_id").notNull(),
-	questionId: uuid("question_id").notNull(),
-	response: text(),
-	result: theoryAttemptResultInApp().notNull(),
-	notes: text(),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-}, (table) => [
-	index("theory_attempts_profile_question_created_at_idx").using("btree", table.profileId.asc().nullsLast().op("timestamptz_ops"), table.questionId.asc().nullsLast().op("timestamptz_ops"), table.createdAt.desc().nullsFirst().op("timestamptz_ops")),
-	index("theory_attempts_question_id_idx").using("btree", table.questionId.asc().nullsLast().op("uuid_ops")),
-	foreignKey({
-			columns: [table.profileId],
-			foreignColumns: [profilesInApp.id],
-			name: "theory_attempts_profile_id_fkey"
-		}).onDelete("cascade"),
-	foreignKey({
-			columns: [table.questionId],
-			foreignColumns: [theoryQuestionsInApp.id],
-			name: "theory_attempts_question_id_fkey"
-		}),
-]);
-
 export const theoryQuestionsInApp = app.table("theory_questions", {
 	id: uuid().defaultRandom().primaryKey().notNull(),
 	ownerProfileId: uuid("owner_profile_id"),
@@ -611,6 +588,29 @@ export const theoryQuestionsInApp = app.table("theory_questions", {
 			name: "theory_questions_owner_profile_id_fkey"
 		}),
 	check("theory_questions_question_check", sql`length(btrim(question)) > 0`),
+]);
+
+export const theoryAttemptsInApp = app.table("theory_attempts", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	profileId: uuid("profile_id").notNull(),
+	questionId: uuid("question_id").notNull(),
+	response: jsonb(),
+	result: theoryAttemptResultInApp().notNull(),
+	notes: jsonb(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	index("theory_attempts_profile_question_created_at_idx").using("btree", table.profileId.asc().nullsLast().op("timestamptz_ops"), table.questionId.asc().nullsLast().op("timestamptz_ops"), table.createdAt.desc().nullsFirst().op("timestamptz_ops")),
+	index("theory_attempts_question_id_idx").using("btree", table.questionId.asc().nullsLast().op("uuid_ops")),
+	foreignKey({
+			columns: [table.profileId],
+			foreignColumns: [profilesInApp.id],
+			name: "theory_attempts_profile_id_fkey"
+		}).onDelete("cascade"),
+	foreignKey({
+			columns: [table.questionId],
+			foreignColumns: [theoryQuestionsInApp.id],
+			name: "theory_attempts_question_id_fkey"
+		}),
 ]);
 
 export const theoryQuestionCategoriesInApp = app.table("theory_question_categories", {

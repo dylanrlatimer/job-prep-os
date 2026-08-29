@@ -39,6 +39,7 @@
   --destructive-button-border: #b02b2b;
 
   --success: #6b9e7a;
+  --warning: #c9a84c;
   --info: #8c8983;
 
   --accent: #e4e2dc;
@@ -77,6 +78,7 @@
   --color-destructive-button-hover: var(--destructive-button-hover);
   --color-destructive-button-border: var(--destructive-button-border);
   --color-success: var(--success);
+  --color-warning: var(--warning);
   --color-info: var(--info);
   --color-accent: var(--accent);
   --color-accent-subtle: var(--accent-subtle);
@@ -206,6 +208,23 @@ html::-webkit-scrollbar-thumb:hover,
 
   s {
     @apply line-through text-muted-foreground;
+  }
+
+  table {
+    @apply my-3 w-full border-collapse text-sm first:mt-0 last:mb-0;
+  }
+
+  th,
+  td {
+    @apply border border-border px-3 py-1.5 text-left align-top;
+  }
+
+  th {
+    @apply bg-card-muted font-medium text-secondary-foreground;
+  }
+
+  tr:nth-child(even) td {
+    @apply bg-card-muted/40;
   }
 }
 

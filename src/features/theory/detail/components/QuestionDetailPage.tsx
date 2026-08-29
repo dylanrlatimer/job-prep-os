@@ -165,14 +165,16 @@ export default function QuestionDetailPage({ questionId }: QuestionDetailPagePro
                       <span className={resultClassName(attempt.result)}>{t(resultLabelKey(attempt.result))}</span>
                     </p>
                     {attempt.response ? (
-                      <p className='m-0 mt-2 whitespace-pre-wrap text-sm text-foreground'>
-                        <span className='text-secondary-foreground'>{t('historyResponse')}</span> {attempt.response}
-                      </p>
+                      <div className='mt-2'>
+                        <p className='m-0 mb-1 text-xs text-secondary-foreground'>{t('historyResponse')}</p>
+                        <TiptapRenderer content={attempt.response} />
+                      </div>
                     ) : null}
                     {attempt.notes ? (
-                      <p className='m-0 mt-2 whitespace-pre-wrap text-sm text-foreground'>
-                        <span className='text-secondary-foreground'>{t('historyNotes')}</span> {attempt.notes}
-                      </p>
+                      <div className='mt-2'>
+                        <p className='m-0 mb-1 text-xs text-secondary-foreground'>{t('historyNotes')}</p>
+                        <TiptapRenderer content={attempt.notes} />
+                      </div>
                     ) : null}
                   </li>
                 ))}

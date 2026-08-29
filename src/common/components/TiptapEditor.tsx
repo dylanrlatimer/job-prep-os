@@ -4,7 +4,8 @@ import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import type { JSONContent } from '@tiptap/core';
-import { Bold, Italic, Strikethrough, Heading2, Heading3, List, ListOrdered, Code, Terminal, Quote, Minus, Undo2, Redo2 } from 'lucide-react';
+import { Bold, Italic, Strikethrough, Heading2, Heading3, List, ListOrdered, Code, Terminal, Quote, Minus, Undo2, Redo2, Table2, PlusSquare, MinusSquare, Trash2 } from 'lucide-react';
+import { TableKit } from '@tiptap/extension-table';
 import { cn } from '@/lib/cn';
 
 export type TiptapEditorRef = {
@@ -64,6 +65,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(function Tip
       StarterKit.configure({
         heading: { levels: [2, 3] },
       }),
+      TableKit,
     ],
     content: initialContent ?? '',
     immediatelyRender: false,
@@ -172,6 +174,45 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(function Tip
         </ToolbarButton>
         <ToolbarButton title='Horizontal rule' onClick={() => editor?.chain().focus().setHorizontalRule().run()} disabled={!editor}>
           <Minus size={13} strokeWidth={2} />
+        </ToolbarButton>
+
+        <ToolbarDivider />
+
+        <ToolbarButton
+          title='Insert table'
+          onClick={() => editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
+          disabled={!editor}>
+          <Table2 size={13} strokeWidth={2} />
+        </ToolbarButton>
+        <ToolbarButton
+          title='Add row below'
+          onClick={() => editor?.chain().focus().addRowAfter().run()}
+          disabled={!editor?.isActive('table')}>
+          <PlusSquare size={13} strokeWidth={2} />
+        </ToolbarButton>
+        <ToolbarButton
+          title='Delete row'
+          onClick={() => editor?.chain().focus().deleteRow().run()}
+          disabled={!editor?.isActive('table')}>
+          <MinusSquare size={13} strokeWidth={2} />
+        </ToolbarButton>
+        <ToolbarButton
+          title='Add column right'
+          onClick={() => editor?.chain().focus().addColumnAfter().run()}
+          disabled={!editor?.isActive('table')}>
+          <PlusSquare size={13} strokeWidth={2} className='rotate-90' />
+        </ToolbarButton>
+        <ToolbarButton
+          title='Delete column'
+          onClick={() => editor?.chain().focus().deleteColumn().run()}
+          disabled={!editor?.isActive('table')}>
+          <MinusSquare size={13} strokeWidth={2} className='rotate-90' />
+        </ToolbarButton>
+        <ToolbarButton
+          title='Delete table'
+          onClick={() => editor?.chain().focus().deleteTable().run()}
+          disabled={!editor?.isActive('table')}>
+          <Trash2 size={13} strokeWidth={2} />
         </ToolbarButton>
 
         <ToolbarDivider />

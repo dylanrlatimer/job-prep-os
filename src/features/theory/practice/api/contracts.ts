@@ -10,9 +10,9 @@ export type PracticeAttemptResult = 'incorrect' | 'partial' | 'correct';
 
 export type PracticeAttempt = {
   id: string;
-  response: string | null;
+  response: JSONContent | null;
   result: PracticeAttemptResult;
-  notes: string | null;
+  notes: JSONContent | null;
   createdAt: string;
 };
 
@@ -30,23 +30,25 @@ export type PracticeReviewResponse = {
   attemptHistory: PracticeAttempt[];
 };
 
-function optionalTrimmedText(maxLength: number) {
-  return z
-    .union([z.string(), z.null(), z.undefined()])
-    .transform((value) => {
-      const trimmed = (value ?? '').trim();
-      return trimmed.length > 0 ? trimmed : null;
-    })
-    .pipe(z.union([z.string().max(maxLength), z.null()]));
-}
+const optionalTiptapDoc = z
+  .union([
+    z.object({ type: z.string(), content: z.array(z.any()) }).passthrough(),
+    z.null(),
+    z.undefined(),
+  ])
+  .transform((val) => val ?? null);
 
 export const CreateAttemptSchema = z.object({
   result: z.enum(['incorrect', 'partial', 'correct']),
-  response: optionalTrimmedText(10_000),
-  notes: optionalTrimmedText(5_000),
+  response: optionalTiptapDoc,
+  notes: optionalTiptapDoc,
 });
 
-export type CreateAttemptInput = z.infer<typeof CreateAttemptSchema>;
+export type CreateAttemptInput = {
+  result: 'incorrect' | 'partial' | 'correct';
+  response: JSONContent | null;
+  notes: JSONContent | null;
+};
 
 export type CreateAttemptResponse = {
   id: string;

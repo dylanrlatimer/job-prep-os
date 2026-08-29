@@ -1,20 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/navigation';
 import AppShell from '@/common/components/AppShell';
-import { primaryButtonClassName, secondaryButtonClassName, textareaClassName } from '@/common/styles/form';
+import { primaryButtonClassName, secondaryButtonClassName } from '@/common/styles/form';
 import { invalidateQuestionCaches } from '@/features/theory/api/invalidate-question-caches';
 import { createAttempt, fetchPracticeReview } from '@/features/theory/practice/api/mutations';
 import { practiceQuestionQueryOptions } from '@/features/theory/practice/api/queries';
 import type { PracticeAttemptResult, PracticeReviewResponse } from '@/features/theory/practice/api/contracts';
 import PracticeSkeleton from './PracticeSkeleton';
+import TiptapEditor, { type TiptapEditorRef } from '@/common/components/TiptapEditor';
 import TiptapRenderer from '@/common/components/TiptapRenderer';
 import { useToastStore } from '@/lib/store/use-toast-store';
 import { cn } from '@/lib/cn';
+import type { JSONContent } from '@tiptap/core';
 
 type PracticePageProps = {
   questionId: string;
@@ -46,10 +48,11 @@ export default function PracticePage({ questionId }: PracticePageProps) {
 
   const { data, isPending, isError, refetch, isFetching } = useQuery(practiceQuestionQueryOptions(questionId));
 
+  const responseEditorRef = useRef<TiptapEditorRef>(null);
+  const notesEditorRef = useRef<TiptapEditorRef>(null);
+
   const [phase, setPhase] = useState<SessionPhase>('draft');
-  const [response, setResponse] = useState('');
-  const [lockedResponse, setLockedResponse] = useState('');
-  const [notes, setNotes] = useState('');
+  const [lockedResponse, setLockedResponse] = useState<JSONContent | null>(null);
   const [result, setResult] = useState<PracticeAttemptResult | null>(null);
   const [review, setReview] = useState<PracticeReviewResponse | null>(null);
 
@@ -62,17 +65,20 @@ export default function PracticePage({ questionId }: PracticePageProps) {
   });
 
   const handleSubmit = () => {
-    setLockedResponse(response);
+    const isEmpty = responseEditorRef.current?.isEmpty() ?? true;
+    setLockedResponse(isEmpty ? null : (responseEditorRef.current?.getJSON() ?? null));
     submitResponse();
   };
 
   const { mutate: recordAttempt, isPending: isRecording } = useMutation({
-    mutationFn: () =>
-      createAttempt(questionId, {
+    mutationFn: () => {
+      const notesIsEmpty = notesEditorRef.current?.isEmpty() ?? true;
+      return createAttempt(questionId, {
         result: result!,
         response: lockedResponse,
-        notes,
-      }),
+        notes: notesIsEmpty ? null : (notesEditorRef.current?.getJSON() ?? null),
+      });
+    },
     onSuccess: async () => {
       await invalidateQuestionCaches(queryClient, questionId);
       useToastStore.getState().addToast(t('recordSuccess'), 'success');
@@ -159,18 +165,15 @@ export default function PracticePage({ questionId }: PracticePageProps) {
               {t('responseLabel')}
             </label>
             {isGrading ? (
-              <div className='rounded-sm border border-border bg-muted px-3 py-2 text-sm leading-relaxed whitespace-pre-wrap text-foreground'>
-                {lockedResponse || <span className='text-muted-foreground'>{t('responseEmpty')}</span>}
+              <div className='rounded-sm border border-border bg-muted px-3 py-2 text-sm'>
+                {lockedResponse ? (
+                  <TiptapRenderer content={lockedResponse} />
+                ) : (
+                  <span className='text-muted-foreground'>{t('responseEmpty')}</span>
+                )}
               </div>
             ) : (
-              <textarea
-                id='response'
-                className={textareaClassName}
-                value={response}
-                onChange={(event) => setResponse(event.target.value)}
-                placeholder={t('responsePlaceholder')}
-                rows={6}
-              />
+              <TiptapEditor ref={responseEditorRef} initialContent={null} id='response' />
             )}
           </div>
 
@@ -207,14 +210,7 @@ export default function PracticePage({ questionId }: PracticePageProps) {
                 <label className='mb-1.5 block text-xs text-secondary-foreground' htmlFor='notes'>
                   {t('notesLabel')}
                 </label>
-                <textarea
-                  id='notes'
-                  className={textareaClassName}
-                  value={notes}
-                  onChange={(event) => setNotes(event.target.value)}
-                  placeholder={t('notesPlaceholder')}
-                  rows={3}
-                />
+                <TiptapEditor ref={notesEditorRef} initialContent={null} id='notes' />
               </div>
 
               <div className='flex justify-end'>
@@ -242,14 +238,16 @@ export default function PracticePage({ questionId }: PracticePageProps) {
                       <span className={resultClassName(attempt.result)}>{t(resultLabelKey(attempt.result))}</span>
                     </p>
                     {attempt.response ? (
-                      <p className='m-0 mt-2 whitespace-pre-wrap text-sm text-foreground'>
-                        <span className='text-secondary-foreground'>{t('historyResponse')}</span> {attempt.response}
-                      </p>
+                      <div className='mt-2'>
+                        <p className='m-0 mb-1 text-xs text-secondary-foreground'>{t('historyResponse')}</p>
+                        <TiptapRenderer content={attempt.response} />
+                      </div>
                     ) : null}
                     {attempt.notes ? (
-                      <p className='m-0 mt-2 whitespace-pre-wrap text-sm text-foreground'>
-                        <span className='text-secondary-foreground'>{t('historyNotes')}</span> {attempt.notes}
-                      </p>
+                      <div className='mt-2'>
+                        <p className='m-0 mb-1 text-xs text-secondary-foreground'>{t('historyNotes')}</p>
+                        <TiptapRenderer content={attempt.notes} />
+                      </div>
                     ) : null}
                   </li>
                 ))}
