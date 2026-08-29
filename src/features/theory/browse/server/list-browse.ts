@@ -2,7 +2,7 @@ import 'server-only';
 
 import { desc, eq, inArray } from 'drizzle-orm';
 import { db } from '@/lib/drizzle/client';
-import { theoryCategoriesInApp, theoryLibraryItemsInApp, theoryQuestionCategoriesInApp, theoryQuestionsInApp } from '@/lib/drizzle/schema';
+import { topicsInApp, theoryLibraryItemsInApp, theoryQuestionTopicsInApp, theoryQuestionsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError } from '@/lib/errors';
 import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
 import type { BrowseQuestionItem, GetBrowseResponse } from '@/features/theory/browse/api/contracts';
@@ -37,14 +37,14 @@ export async function listBrowse(): Promise<GetBrowseResponse> {
 
     const categoryRows = await db
       .select({
-        questionId: theoryQuestionCategoriesInApp.questionId,
-        id: theoryCategoriesInApp.id,
-        name: theoryCategoriesInApp.name,
-        slug: theoryCategoriesInApp.slug,
+        questionId: theoryQuestionTopicsInApp.questionId,
+        id: topicsInApp.id,
+        name: topicsInApp.name,
+        slug: topicsInApp.slug,
       })
-      .from(theoryQuestionCategoriesInApp)
-      .innerJoin(theoryCategoriesInApp, eq(theoryQuestionCategoriesInApp.categoryId, theoryCategoriesInApp.id))
-      .where(inArray(theoryQuestionCategoriesInApp.questionId, questionIds));
+      .from(theoryQuestionTopicsInApp)
+      .innerJoin(topicsInApp, eq(theoryQuestionTopicsInApp.topicId, topicsInApp.id))
+      .where(inArray(theoryQuestionTopicsInApp.questionId, questionIds));
 
     const categoriesByQuestion = new Map<string, RepositoryCategory[]>();
     const categoryMap = new Map<string, RepositoryCategory>();

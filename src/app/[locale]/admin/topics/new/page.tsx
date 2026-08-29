@@ -1,5 +1,5 @@
 import CategoryBuilderPage from '@/features/admin/categories/components/CategoryBuilderPage';
 
-export default function NewCategoryPage() {
+export default function NewTopicPage() {
   return <CategoryBuilderPage />;
 }

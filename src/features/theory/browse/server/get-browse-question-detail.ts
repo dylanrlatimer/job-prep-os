@@ -3,9 +3,9 @@ import 'server-only';
 import { and, eq } from 'drizzle-orm';
 import { db } from '@/lib/drizzle/client';
 import {
-  theoryCategoriesInApp,
+  topicsInApp,
   theoryLibraryItemsInApp,
-  theoryQuestionCategoriesInApp,
+  theoryQuestionTopicsInApp,
   theoryQuestionsInApp,
 } from '@/lib/drizzle/schema';
 import { DatabaseError, NotFoundError } from '@/lib/errors';
@@ -37,13 +37,13 @@ export async function getBrowseQuestionDetail(questionId: string): Promise<Brows
 
     const categoryRows = await db
       .select({
-        id: theoryCategoriesInApp.id,
-        name: theoryCategoriesInApp.name,
-        slug: theoryCategoriesInApp.slug,
+        id: topicsInApp.id,
+        name: topicsInApp.name,
+        slug: topicsInApp.slug,
       })
-      .from(theoryQuestionCategoriesInApp)
-      .innerJoin(theoryCategoriesInApp, eq(theoryQuestionCategoriesInApp.categoryId, theoryCategoriesInApp.id))
-      .where(eq(theoryQuestionCategoriesInApp.questionId, questionId));
+      .from(theoryQuestionTopicsInApp)
+      .innerJoin(topicsInApp, eq(theoryQuestionTopicsInApp.topicId, topicsInApp.id))
+      .where(eq(theoryQuestionTopicsInApp.questionId, questionId));
 
     const categories: RepositoryCategory[] = categoryRows
       .map((row) => ({ id: row.id, name: row.name, slug: row.slug }))

@@ -96,7 +96,7 @@ function CategoryBuilderContent({ categoryId }: CategoryBuilderPageProps) {
     <AppShell>
       <div className='px-4 py-8 md:px-8'>
         <Link
-          href='/admin/categories'
+          href='/admin/topics'
           className='inline-flex items-center gap-1 text-sm text-muted-foreground no-underline transition-colors hover:text-foreground'>
           <ChevronLeft size={16} strokeWidth={1.75} aria-hidden='true' />
           {t('backToList')}
@@ -178,7 +178,7 @@ function CategoryBuilderContent({ categoryId }: CategoryBuilderPageProps) {
           ) : null}
 
           <div className='flex flex-col-reverse gap-2 border-t border-border pt-6 sm:flex-row sm:justify-end'>
-            <Link href='/admin/categories' className={cn(secondaryButtonClassName, 'text-center')}>
+            <Link href='/admin/topics' className={cn(secondaryButtonClassName, 'text-center')}>
               {t('cancel')}
             </Link>
             <button type='submit' className={primaryButtonClassName} disabled={isSubmitting}>

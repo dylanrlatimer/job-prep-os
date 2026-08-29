@@ -2,7 +2,7 @@ import 'server-only';
 
 import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '@/lib/drizzle/client';
-import { theoryQuestionCategoriesInApp, theoryQuestionsInApp } from '@/lib/drizzle/schema';
+import { theoryQuestionTopicsInApp, theoryQuestionsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError, NotFoundError } from '@/lib/errors';
 import { assertAdmin } from '@/features/auth/server/assert-admin';
 import { validateQuestionInput } from '@/features/theory/builder/server/validate-question-input';
@@ -40,13 +40,13 @@ export async function updateSystemQuestion(id: string, input: UpdateSystemQuesti
         throw new DatabaseError('DATABASE_ERROR');
       }
 
-      await tx.delete(theoryQuestionCategoriesInApp).where(eq(theoryQuestionCategoriesInApp.questionId, id));
+      await tx.delete(theoryQuestionTopicsInApp).where(eq(theoryQuestionTopicsInApp.questionId, id));
 
       if (input.categoryIds.length > 0) {
-        await tx.insert(theoryQuestionCategoriesInApp).values(
-          input.categoryIds.map((categoryId) => ({
+        await tx.insert(theoryQuestionTopicsInApp).values(
+          input.categoryIds.map((topicId) => ({
             questionId: id,
-            categoryId,
+            topicId,
           })),
         );
       }

@@ -2,7 +2,7 @@ import 'server-only';
 
 import { count, eq } from 'drizzle-orm';
 import { db } from '@/lib/drizzle/client';
-import { theoryCategoriesInApp, theoryQuestionCategoriesInApp } from '@/lib/drizzle/schema';
+import { topicsInApp, theoryQuestionTopicsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError, NotFoundError } from '@/lib/errors';
 import { assertAdmin } from '@/features/auth/server/assert-admin';
 import type { CategoryResponse } from '@/features/admin/categories/api/contracts';
@@ -13,13 +13,13 @@ export async function getCategory(id: string): Promise<CategoryResponse> {
   try {
     const [category] = await db
       .select({
-        id: theoryCategoriesInApp.id,
-        name: theoryCategoriesInApp.name,
-        slug: theoryCategoriesInApp.slug,
-        isActive: theoryCategoriesInApp.isActive,
+        id: topicsInApp.id,
+        name: topicsInApp.name,
+        slug: topicsInApp.slug,
+        isActive: topicsInApp.isActive,
       })
-      .from(theoryCategoriesInApp)
-      .where(eq(theoryCategoriesInApp.id, id))
+      .from(topicsInApp)
+      .where(eq(topicsInApp.id, id))
       .limit(1);
 
     if (!category) {
@@ -28,8 +28,8 @@ export async function getCategory(id: string): Promise<CategoryResponse> {
 
     const [usage] = await db
       .select({ questionCount: count() })
-      .from(theoryQuestionCategoriesInApp)
-      .where(eq(theoryQuestionCategoriesInApp.categoryId, id));
+      .from(theoryQuestionTopicsInApp)
+      .where(eq(theoryQuestionTopicsInApp.topicId, id));
 
     return {
       ...category,

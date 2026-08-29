@@ -1,5 +1,29 @@
 import { relations } from "drizzle-orm/relations";
-import { flowStateInAuth, samlRelayStatesInAuth, ssoProvidersInAuth, samlProvidersInAuth, sessionsInAuth, refreshTokensInAuth, ssoDomainsInAuth, mfaAmrClaimsInAuth, usersInAuth, identitiesInAuth, oneTimeTokensInAuth, oauthClientsInAuth, mfaFactorsInAuth, mfaChallengesInAuth, oauthConsentsInAuth, oauthAuthorizationsInAuth, webauthnCredentialsInAuth, webauthnChallengesInAuth, profilesInApp, theoryQuestionsInApp, theoryAttemptsInApp, theoryCategoriesInApp, theoryQuestionCategoriesInApp, theoryLibraryItemsInApp } from "./schema";
+import { profilesInApp, exercisesInApp, flowStateInAuth, samlRelayStatesInAuth, ssoProvidersInAuth, samlProvidersInAuth, exerciseChoicesInApp, exerciseAttemptsInApp, sessionsInAuth, refreshTokensInAuth, ssoDomainsInAuth, mfaAmrClaimsInAuth, usersInAuth, identitiesInAuth, oneTimeTokensInAuth, oauthClientsInAuth, mfaFactorsInAuth, mfaChallengesInAuth, oauthConsentsInAuth, oauthAuthorizationsInAuth, webauthnCredentialsInAuth, webauthnChallengesInAuth, theoryQuestionsInApp, theoryAttemptsInApp, exerciseTopicsInApp, topicsInApp, theoryQuestionTopicsInApp, exerciseLibraryItemsInApp, theoryLibraryItemsInApp } from "./schema";
+
+export const exercisesInAppRelations = relations(exercisesInApp, ({one, many}) => ({
+	profilesInApp: one(profilesInApp, {
+		fields: [exercisesInApp.ownerProfileId],
+		references: [profilesInApp.id]
+	}),
+	exerciseChoicesInApps: many(exerciseChoicesInApp),
+	exerciseAttemptsInApps: many(exerciseAttemptsInApp),
+	exerciseTopicsInApps: many(exerciseTopicsInApp),
+	exerciseLibraryItemsInApps: many(exerciseLibraryItemsInApp),
+}));
+
+export const profilesInAppRelations = relations(profilesInApp, ({one, many}) => ({
+	exercisesInApps: many(exercisesInApp),
+	exerciseAttemptsInApps: many(exerciseAttemptsInApp),
+	usersInAuth: one(usersInAuth, {
+		fields: [profilesInApp.id],
+		references: [usersInAuth.id]
+	}),
+	theoryQuestionsInApps: many(theoryQuestionsInApp),
+	theoryAttemptsInApps: many(theoryAttemptsInApp),
+	exerciseLibraryItemsInApps: many(exerciseLibraryItemsInApp),
+	theoryLibraryItemsInApps: many(theoryLibraryItemsInApp),
+}));
 
 export const samlRelayStatesInAuthRelations = relations(samlRelayStatesInAuth, ({one}) => ({
 	flowStateInAuth: one(flowStateInAuth, {
@@ -26,6 +50,24 @@ export const samlProvidersInAuthRelations = relations(samlProvidersInAuth, ({one
 	ssoProvidersInAuth: one(ssoProvidersInAuth, {
 		fields: [samlProvidersInAuth.ssoProviderId],
 		references: [ssoProvidersInAuth.id]
+	}),
+}));
+
+export const exerciseChoicesInAppRelations = relations(exerciseChoicesInApp, ({one}) => ({
+	exercisesInApp: one(exercisesInApp, {
+		fields: [exerciseChoicesInApp.exerciseId],
+		references: [exercisesInApp.id]
+	}),
+}));
+
+export const exerciseAttemptsInAppRelations = relations(exerciseAttemptsInApp, ({one}) => ({
+	exercisesInApp: one(exercisesInApp, {
+		fields: [exerciseAttemptsInApp.exerciseId],
+		references: [exercisesInApp.id]
+	}),
+	profilesInApp: one(profilesInApp, {
+		fields: [exerciseAttemptsInApp.profileId],
+		references: [profilesInApp.id]
 	}),
 }));
 
@@ -146,23 +188,13 @@ export const webauthnChallengesInAuthRelations = relations(webauthnChallengesInA
 	}),
 }));
 
-export const profilesInAppRelations = relations(profilesInApp, ({one, many}) => ({
-	usersInAuth: one(usersInAuth, {
-		fields: [profilesInApp.id],
-		references: [usersInAuth.id]
-	}),
-	theoryQuestionsInApps: many(theoryQuestionsInApp),
-	theoryAttemptsInApps: many(theoryAttemptsInApp),
-	theoryLibraryItemsInApps: many(theoryLibraryItemsInApp),
-}));
-
 export const theoryQuestionsInAppRelations = relations(theoryQuestionsInApp, ({one, many}) => ({
 	profilesInApp: one(profilesInApp, {
 		fields: [theoryQuestionsInApp.ownerProfileId],
 		references: [profilesInApp.id]
 	}),
 	theoryAttemptsInApps: many(theoryAttemptsInApp),
-	theoryQuestionCategoriesInApps: many(theoryQuestionCategoriesInApp),
+	theoryQuestionTopicsInApps: many(theoryQuestionTopicsInApp),
 	theoryLibraryItemsInApps: many(theoryLibraryItemsInApp),
 }));
 
@@ -177,19 +209,42 @@ export const theoryAttemptsInAppRelations = relations(theoryAttemptsInApp, ({one
 	}),
 }));
 
-export const theoryQuestionCategoriesInAppRelations = relations(theoryQuestionCategoriesInApp, ({one}) => ({
-	theoryCategoriesInApp: one(theoryCategoriesInApp, {
-		fields: [theoryQuestionCategoriesInApp.categoryId],
-		references: [theoryCategoriesInApp.id]
+export const exerciseTopicsInAppRelations = relations(exerciseTopicsInApp, ({one}) => ({
+	exercisesInApp: one(exercisesInApp, {
+		fields: [exerciseTopicsInApp.exerciseId],
+		references: [exercisesInApp.id]
 	}),
-	theoryQuestionsInApp: one(theoryQuestionsInApp, {
-		fields: [theoryQuestionCategoriesInApp.questionId],
-		references: [theoryQuestionsInApp.id]
+	topicsInApp: one(topicsInApp, {
+		fields: [exerciseTopicsInApp.topicId],
+		references: [topicsInApp.id]
 	}),
 }));
 
-export const theoryCategoriesInAppRelations = relations(theoryCategoriesInApp, ({many}) => ({
-	theoryQuestionCategoriesInApps: many(theoryQuestionCategoriesInApp),
+export const topicsInAppRelations = relations(topicsInApp, ({many}) => ({
+	exerciseTopicsInApps: many(exerciseTopicsInApp),
+	theoryQuestionTopicsInApps: many(theoryQuestionTopicsInApp),
+}));
+
+export const theoryQuestionTopicsInAppRelations = relations(theoryQuestionTopicsInApp, ({one}) => ({
+	theoryQuestionsInApp: one(theoryQuestionsInApp, {
+		fields: [theoryQuestionTopicsInApp.questionId],
+		references: [theoryQuestionsInApp.id]
+	}),
+	topicsInApp: one(topicsInApp, {
+		fields: [theoryQuestionTopicsInApp.topicId],
+		references: [topicsInApp.id]
+	}),
+}));
+
+export const exerciseLibraryItemsInAppRelations = relations(exerciseLibraryItemsInApp, ({one}) => ({
+	exercisesInApp: one(exercisesInApp, {
+		fields: [exerciseLibraryItemsInApp.exerciseId],
+		references: [exercisesInApp.id]
+	}),
+	profilesInApp: one(profilesInApp, {
+		fields: [exerciseLibraryItemsInApp.profileId],
+		references: [profilesInApp.id]
+	}),
 }));
 
 export const theoryLibraryItemsInAppRelations = relations(theoryLibraryItemsInApp, ({one}) => ({

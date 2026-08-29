@@ -2,7 +2,7 @@ import 'server-only';
 
 import { eq } from 'drizzle-orm';
 import { db } from '@/lib/drizzle/client';
-import { theoryQuestionCategoriesInApp, theoryQuestionsInApp } from '@/lib/drizzle/schema';
+import { theoryQuestionTopicsInApp, theoryQuestionsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError, ForbiddenError, NotFoundError } from '@/lib/errors';
 import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
 import type { QuestionResponse } from '@/features/theory/builder/api/contracts';
@@ -35,15 +35,15 @@ export async function getQuestion(id: string): Promise<QuestionResponse> {
     }
 
     const categoryRows = await db
-      .select({ categoryId: theoryQuestionCategoriesInApp.categoryId })
-      .from(theoryQuestionCategoriesInApp)
-      .where(eq(theoryQuestionCategoriesInApp.questionId, id));
+      .select({ topicId: theoryQuestionTopicsInApp.topicId })
+      .from(theoryQuestionTopicsInApp)
+      .where(eq(theoryQuestionTopicsInApp.questionId, id));
 
     return {
       id: question.id,
       question: question.question,
       answer: parseTiptapDocument(question.answer),
-      categoryIds: categoryRows.map((row) => row.categoryId),
+      categoryIds: categoryRows.map((row) => row.topicId),
       sourceName: question.sourceName,
       sourceUrl: question.sourceUrl,
       isPublic: question.isPublic,

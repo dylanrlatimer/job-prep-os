@@ -2,7 +2,7 @@ import 'server-only';
 
 import { asc, eq } from 'drizzle-orm';
 import { db } from '@/lib/drizzle/client';
-import { theoryCategoriesInApp } from '@/lib/drizzle/schema';
+import { topicsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError } from '@/lib/errors';
 import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
 import type { BuilderMetadataResponse } from '@/features/theory/builder/api/contracts';
@@ -13,13 +13,13 @@ export async function getBuilderMetadata(): Promise<BuilderMetadataResponse> {
   try {
     const categories = await db
       .select({
-        id: theoryCategoriesInApp.id,
-        name: theoryCategoriesInApp.name,
-        slug: theoryCategoriesInApp.slug,
+        id: topicsInApp.id,
+        name: topicsInApp.name,
+        slug: topicsInApp.slug,
       })
-      .from(theoryCategoriesInApp)
-      .where(eq(theoryCategoriesInApp.isActive, true))
-      .orderBy(asc(theoryCategoriesInApp.name));
+      .from(topicsInApp)
+      .where(eq(topicsInApp.isActive, true))
+      .orderBy(asc(topicsInApp.name));
 
     return { categories };
   } catch (error) {

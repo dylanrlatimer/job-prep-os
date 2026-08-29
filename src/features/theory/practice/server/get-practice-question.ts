@@ -2,7 +2,7 @@ import 'server-only';
 
 import { eq } from 'drizzle-orm';
 import { db } from '@/lib/drizzle/client';
-import { theoryCategoriesInApp, theoryQuestionCategoriesInApp, theoryQuestionsInApp } from '@/lib/drizzle/schema';
+import { topicsInApp, theoryQuestionTopicsInApp, theoryQuestionsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError, NotFoundError } from '@/lib/errors';
 import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
 import type { PracticeQuestionResponse } from '@/features/theory/practice/api/contracts';
@@ -31,13 +31,13 @@ export async function getPracticeQuestion(id: string): Promise<PracticeQuestionR
 
     const categoryRows = await db
       .select({
-        id: theoryCategoriesInApp.id,
-        name: theoryCategoriesInApp.name,
-        slug: theoryCategoriesInApp.slug,
+        id: topicsInApp.id,
+        name: topicsInApp.name,
+        slug: topicsInApp.slug,
       })
-      .from(theoryQuestionCategoriesInApp)
-      .innerJoin(theoryCategoriesInApp, eq(theoryQuestionCategoriesInApp.categoryId, theoryCategoriesInApp.id))
-      .where(eq(theoryQuestionCategoriesInApp.questionId, id));
+      .from(theoryQuestionTopicsInApp)
+      .innerJoin(topicsInApp, eq(theoryQuestionTopicsInApp.topicId, topicsInApp.id))
+      .where(eq(theoryQuestionTopicsInApp.questionId, id));
 
     const categories: RepositoryCategory[] = categoryRows
       .map((row) => ({ id: row.id, name: row.name, slug: row.slug }))

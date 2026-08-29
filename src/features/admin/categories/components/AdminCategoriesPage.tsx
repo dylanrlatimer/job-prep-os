@@ -91,7 +91,7 @@ function AdminCategoriesContent() {
               <p className='mt-1 max-w-2xl text-sm text-muted-foreground'>{t('description')}</p>
             </div>
 
-            <Link href='/admin/categories/new' className={cn(primaryButtonClassName, 'shrink-0 self-start')}>
+            <Link href='/admin/topics/new' className={cn(primaryButtonClassName, 'shrink-0 self-start')}>
               {t('createCategory')}
             </Link>
           </div>
@@ -128,7 +128,7 @@ function AdminCategoriesContent() {
           <div className='py-12'>
             <p className='m-0 text-sm text-foreground'>{t('emptyTitle')}</p>
             <p className='mt-1 text-sm text-muted-foreground'>{t('emptyDescription')}</p>
-            <Link href='/admin/categories/new' className={cn(primaryButtonClassName, 'mt-4 inline-flex')}>
+            <Link href='/admin/topics/new' className={cn(primaryButtonClassName, 'mt-4 inline-flex')}>
               {t('createCategory')}
             </Link>
           </div>
@@ -151,7 +151,7 @@ function AdminCategoriesContent() {
                     </div>
                   </div>
 
-                  <Link href={`/admin/categories/${category.id}/edit`} className={cn(secondaryButtonClassName, 'shrink-0 self-start sm:ml-4')}>
+                  <Link href={`/admin/topics/${category.id}/edit`} className={cn(secondaryButtonClassName, 'shrink-0 self-start sm:ml-4')}>
                     {t('edit')}
                   </Link>
                 </div>

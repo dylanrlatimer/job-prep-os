@@ -2,7 +2,7 @@ import 'server-only';
 
 import { eq } from 'drizzle-orm';
 import { db } from '@/lib/drizzle/client';
-import { theoryCategoriesInApp } from '@/lib/drizzle/schema';
+import { topicsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError, NotFoundError } from '@/lib/errors';
 import { assertAdmin } from '@/features/auth/server/assert-admin';
 import type { UpdateCategoryInput, UpdateCategoryResponse } from '@/features/admin/categories/api/contracts';
@@ -12,13 +12,13 @@ export async function updateCategory(id: string, input: UpdateCategoryInput): Pr
 
   try {
     const [updated] = await db
-      .update(theoryCategoriesInApp)
+      .update(topicsInApp)
       .set({
         name: input.name,
         isActive: input.isActive,
       })
-      .where(eq(theoryCategoriesInApp.id, id))
-      .returning({ id: theoryCategoriesInApp.id });
+      .where(eq(topicsInApp.id, id))
+      .returning({ id: topicsInApp.id });
 
     if (!updated) {
       throw new NotFoundError('categoryNotFound');

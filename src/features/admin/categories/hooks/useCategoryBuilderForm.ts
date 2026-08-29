@@ -105,7 +105,7 @@ export function useCategoryBuilderForm({ categoryId }: UseCategoryBuilderFormOpt
       form.commitSnapshot();
       releaseGuard();
       useToastStore.getState().addToast(isEdit ? t('updateSuccess') : t('createSuccess'), 'success');
-      router.push('/admin/categories');
+      router.push('/admin/topics');
       void invalidateAdminCategoryCaches(queryClient, id);
     },
     [form, isEdit, queryClient, releaseGuard, router, t],
@@ -126,7 +126,7 @@ export function useCategoryBuilderForm({ categoryId }: UseCategoryBuilderFormOpt
     onSuccess: () => {
       releaseGuard();
       useToastStore.getState().addToast(t('deleteSuccess'), 'success');
-      router.push('/admin/categories');
+      router.push('/admin/topics');
       void invalidateAdminCategoryCaches(queryClient, categoryId);
     },
   });

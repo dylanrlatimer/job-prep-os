@@ -1,9 +1,10 @@
-import { pgTable, pgSchema, index, foreignKey, check, uuid, text, timestamp, boolean, jsonb, varchar, bigserial, uniqueIndex, smallint, json, inet, bigint, unique, primaryKey } from "drizzle-orm/pg-core"
+import { pgTable, pgSchema, index, foreignKey, uuid, jsonb, boolean, text, timestamp, check, smallint, varchar, bigserial, uniqueIndex, json, inet, bigint, unique, primaryKey } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 export const auth = pgSchema("auth");
 export const app = pgSchema("app");
-export const theoryAttemptResultInApp = app.enum("theory_attempt_result", ['incorrect', 'partial', 'correct'])
+export const attemptResultInApp = app.enum("attempt_result", ['incorrect', 'partial', 'correct'])
+export const exerciseTypeInApp = app.enum("exercise_type", ['multiple_choice'])
 export const aalLevelInAuth = auth.enum("aal_level", ['aal1', 'aal2', 'aal3'])
 export const codeChallengeMethodInAuth = auth.enum("code_challenge_method", ['s256', 'plain'])
 export const factorStatusInAuth = auth.enum("factor_status", ['unverified', 'verified'])
@@ -14,6 +15,28 @@ export const oauthRegistrationTypeInAuth = auth.enum("oauth_registration_type", 
 export const oauthResponseTypeInAuth = auth.enum("oauth_response_type", ['code'])
 export const oneTimeTokenTypeInAuth = auth.enum("one_time_token_type", ['confirmation_token', 'reauthentication_token', 'recovery_token', 'email_change_token_new', 'email_change_token_current', 'phone_change_token'])
 
+
+export const exercisesInApp = app.table("exercises", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	ownerProfileId: uuid("owner_profile_id"),
+	type: exerciseTypeInApp().default('multiple_choice').notNull(),
+	prompt: jsonb().notNull(),
+	explanation: jsonb(),
+	isPublic: boolean("is_public").default(false).notNull(),
+	allowMultiple: boolean("allow_multiple").default(false).notNull(),
+	sourceName: text("source_name"),
+	sourceUrl: text("source_url"),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	index("exercises_owner_profile_id_idx").using("btree", table.ownerProfileId.asc().nullsLast().op("uuid_ops")),
+	index("exercises_public_idx").using("btree", table.createdAt.desc().nullsFirst().op("timestamptz_ops")).where(sql`(is_public = true)`),
+	foreignKey({
+			columns: [table.ownerProfileId],
+			foreignColumns: [profilesInApp.id],
+			name: "exercises_owner_profile_id_fkey"
+		}),
+]);
 
 export const samlRelayStatesInAuth = auth.table("saml_relay_states", {
 	id: uuid().notNull(),
@@ -87,6 +110,22 @@ export const samlProvidersInAuth = auth.table("saml_providers", {
 	check("metadata_xml not empty", sql`char_length(metadata_xml) > 0`),
 ]);
 
+export const exerciseChoicesInApp = app.table("exercise_choices", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	exerciseId: uuid("exercise_id").notNull(),
+	content: jsonb().notNull(),
+	isCorrect: boolean("is_correct").default(false).notNull(),
+	position: smallint().notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	index("exercise_choices_exercise_id_position_idx").using("btree", table.exerciseId.asc().nullsLast().op("int2_ops"), table.position.asc().nullsLast().op("int2_ops")),
+	foreignKey({
+			columns: [table.exerciseId],
+			foreignColumns: [exercisesInApp.id],
+			name: "exercise_choices_exercise_id_fkey"
+		}).onDelete("cascade"),
+]);
+
 export const instancesInAuth = auth.table("instances", {
 	id: uuid().notNull(),
 	uuid: uuid(),
@@ -94,6 +133,28 @@ export const instancesInAuth = auth.table("instances", {
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }),
 	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }),
 });
+
+export const exerciseAttemptsInApp = app.table("exercise_attempts", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	profileId: uuid("profile_id").notNull(),
+	exerciseId: uuid("exercise_id").notNull(),
+	selectedChoiceIds: jsonb("selected_choice_ids").notNull(),
+	result: attemptResultInApp().notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	index("exercise_attempts_exercise_id_idx").using("btree", table.exerciseId.asc().nullsLast().op("uuid_ops")),
+	index("exercise_attempts_profile_exercise_created_at_idx").using("btree", table.profileId.asc().nullsLast().op("timestamptz_ops"), table.exerciseId.asc().nullsLast().op("timestamptz_ops"), table.createdAt.desc().nullsFirst().op("timestamptz_ops")),
+	foreignKey({
+			columns: [table.exerciseId],
+			foreignColumns: [exercisesInApp.id],
+			name: "exercise_attempts_exercise_id_fkey"
+		}),
+	foreignKey({
+			columns: [table.profileId],
+			foreignColumns: [profilesInApp.id],
+			name: "exercise_attempts_profile_id_fkey"
+		}).onDelete("cascade"),
+]);
 
 export const schemaMigrationsInAuth = auth.table("schema_migrations", {
 	version: varchar({ length: 255 }).notNull(),
@@ -540,7 +601,7 @@ export const webauthnChallengesInAuth = auth.table("webauthn_challenges", {
 	check("webauthn_challenges_challenge_type_check", sql`challenge_type = ANY (ARRAY['signup'::text, 'registration'::text, 'authentication'::text])`),
 ]);
 
-export const theoryCategoriesInApp = app.table("theory_categories", {
+export const topicsInApp = app.table("topics", {
 	id: uuid().defaultRandom().primaryKey().notNull(),
 	name: text().notNull(),
 	slug: text().notNull(),
@@ -549,10 +610,10 @@ export const theoryCategoriesInApp = app.table("theory_categories", {
 	isActive: boolean("is_active").default(true).notNull(),
 }, (table) => [
 	index("theory_categories_active_idx").using("btree", table.isActive.asc().nullsLast().op("bool_ops")).where(sql`(is_active = true)`),
-	unique("theory_categories_name_key").on(table.name),
-	unique("theory_categories_slug_key").on(table.slug),
-	check("theory_categories_name_check", sql`length(btrim(name)) > 0`),
-	check("theory_categories_slug_check", sql`length(btrim(slug)) > 0`),
+	unique("topics_name_key").on(table.name),
+	unique("topics_slug_key").on(table.slug),
+	check("topics_name_check", sql`length(btrim(name)) > 0`),
+	check("topics_slug_check", sql`length(btrim(slug)) > 0`),
 ]);
 
 export const profilesInApp = app.table("profiles", {
@@ -595,7 +656,7 @@ export const theoryAttemptsInApp = app.table("theory_attempts", {
 	profileId: uuid("profile_id").notNull(),
 	questionId: uuid("question_id").notNull(),
 	response: jsonb(),
-	result: theoryAttemptResultInApp().notNull(),
+	result: attemptResultInApp().notNull(),
 	notes: jsonb(),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 }, (table) => [
@@ -613,22 +674,59 @@ export const theoryAttemptsInApp = app.table("theory_attempts", {
 		}),
 ]);
 
-export const theoryQuestionCategoriesInApp = app.table("theory_question_categories", {
-	questionId: uuid("question_id").notNull(),
-	categoryId: uuid("category_id").notNull(),
+export const exerciseTopicsInApp = app.table("exercise_topics", {
+	exerciseId: uuid("exercise_id").notNull(),
+	topicId: uuid("topic_id").notNull(),
 }, (table) => [
-	index("theory_question_categories_category_id_idx").using("btree", table.categoryId.asc().nullsLast().op("uuid_ops")),
+	index("exercise_topics_topic_id_idx").using("btree", table.topicId.asc().nullsLast().op("uuid_ops")),
 	foreignKey({
-			columns: [table.categoryId],
-			foreignColumns: [theoryCategoriesInApp.id],
-			name: "theory_question_categories_category_id_fkey"
+			columns: [table.exerciseId],
+			foreignColumns: [exercisesInApp.id],
+			name: "exercise_topics_exercise_id_fkey"
+		}).onDelete("cascade"),
+	foreignKey({
+			columns: [table.topicId],
+			foreignColumns: [topicsInApp.id],
+			name: "exercise_topics_topic_id_fkey"
 		}),
+	primaryKey({ columns: [table.exerciseId, table.topicId], name: "exercise_topics_pkey"}),
+]);
+
+export const theoryQuestionTopicsInApp = app.table("theory_question_topics", {
+	questionId: uuid("question_id").notNull(),
+	topicId: uuid("topic_id").notNull(),
+}, (table) => [
+	index("theory_question_categories_category_id_idx").using("btree", table.topicId.asc().nullsLast().op("uuid_ops")),
 	foreignKey({
 			columns: [table.questionId],
 			foreignColumns: [theoryQuestionsInApp.id],
-			name: "theory_question_categories_question_id_fkey"
+			name: "theory_question_topics_question_id_fkey"
 		}).onDelete("cascade"),
-	primaryKey({ columns: [table.questionId, table.categoryId], name: "theory_question_categories_pkey"}),
+	foreignKey({
+			columns: [table.topicId],
+			foreignColumns: [topicsInApp.id],
+			name: "theory_question_topics_topic_id_fkey"
+		}),
+	primaryKey({ columns: [table.questionId, table.topicId], name: "theory_question_topics_pkey"}),
+]);
+
+export const exerciseLibraryItemsInApp = app.table("exercise_library_items", {
+	profileId: uuid("profile_id").notNull(),
+	exerciseId: uuid("exercise_id").notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	index("exercise_library_items_exercise_id_idx").using("btree", table.exerciseId.asc().nullsLast().op("uuid_ops")),
+	foreignKey({
+			columns: [table.exerciseId],
+			foreignColumns: [exercisesInApp.id],
+			name: "exercise_library_items_exercise_id_fkey"
+		}).onDelete("cascade"),
+	foreignKey({
+			columns: [table.profileId],
+			foreignColumns: [profilesInApp.id],
+			name: "exercise_library_items_profile_id_fkey"
+		}).onDelete("cascade"),
+	primaryKey({ columns: [table.profileId, table.exerciseId], name: "exercise_library_items_pkey"}),
 ]);
 
 export const theoryLibraryItemsInApp = app.table("theory_library_items", {

@@ -2,7 +2,7 @@ import 'server-only';
 
 import { asc, count, eq } from 'drizzle-orm';
 import { db } from '@/lib/drizzle/client';
-import { theoryCategoriesInApp, theoryQuestionCategoriesInApp } from '@/lib/drizzle/schema';
+import { topicsInApp, theoryQuestionTopicsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError } from '@/lib/errors';
 import { assertAdmin } from '@/features/auth/server/assert-admin';
 import type { AdminCategoryItem, ListAdminCategoriesResponse } from '@/features/admin/categories/api/contracts';
@@ -13,23 +13,23 @@ export async function listAdminCategories(): Promise<ListAdminCategoriesResponse
   try {
     const categories = await db
       .select({
-        id: theoryCategoriesInApp.id,
-        name: theoryCategoriesInApp.name,
-        slug: theoryCategoriesInApp.slug,
-        isActive: theoryCategoriesInApp.isActive,
+        id: topicsInApp.id,
+        name: topicsInApp.name,
+        slug: topicsInApp.slug,
+        isActive: topicsInApp.isActive,
       })
-      .from(theoryCategoriesInApp)
-      .orderBy(asc(theoryCategoriesInApp.name));
+      .from(topicsInApp)
+      .orderBy(asc(topicsInApp.name));
 
     const usageRows = await db
       .select({
-        categoryId: theoryQuestionCategoriesInApp.categoryId,
+        topicId: theoryQuestionTopicsInApp.topicId,
         questionCount: count(),
       })
-      .from(theoryQuestionCategoriesInApp)
-      .groupBy(theoryQuestionCategoriesInApp.categoryId);
+      .from(theoryQuestionTopicsInApp)
+      .groupBy(theoryQuestionTopicsInApp.topicId);
 
-    const questionCountByCategory = new Map(usageRows.map((row) => [row.categoryId, Number(row.questionCount)]));
+    const questionCountByCategory = new Map(usageRows.map((row) => [row.topicId, Number(row.questionCount)]));
 
     const items: AdminCategoryItem[] = categories.map((category) => ({
       ...category,

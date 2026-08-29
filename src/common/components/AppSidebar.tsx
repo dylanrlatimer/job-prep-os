@@ -1,6 +1,6 @@
 'use client';
 
-import { BookOpen, Compass, FolderTree, Layers, Settings, Shield } from 'lucide-react';
+import { BookOpen, Compass, FolderTree, Layers, Settings, Shield, Zap } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { Link, usePathname } from '@/i18n/navigation';
@@ -9,14 +9,14 @@ import { sessionQueryOptions } from '@/features/auth/api/queries';
 import { cn } from '@/lib/cn';
 
 type NavItem = {
-  href: '/' | '/browse';
+  href: '/' | '/browse' | '/exercises';
   label: string;
   icon: React.ReactNode;
   match: (pathname: string) => boolean;
 };
 
 type AdminNavItem = {
-  href: '/admin/questions' | '/admin/categories';
+  href: '/admin/questions' | '/admin/topics' | '/admin/exercises';
   label: string;
   icon: React.ReactNode;
   match: (pathname: string) => boolean;
@@ -36,6 +36,12 @@ export default function AppSidebar() {
       match: (path) => path === '/',
     },
     {
+      href: '/exercises',
+      label: t('exercises'),
+      icon: <Zap size={16} strokeWidth={1.75} aria-hidden='true' />,
+      match: (path) => path === '/exercises' || path.startsWith('/exercises/'),
+    },
+    {
       href: '/browse',
       label: t('browseQuestions'),
       icon: <Compass size={16} strokeWidth={1.75} aria-hidden='true' />,
@@ -51,10 +57,16 @@ export default function AppSidebar() {
       match: (path) => path.startsWith('/admin/questions'),
     },
     {
-      href: '/admin/categories',
-      label: t('categories'),
+      href: '/admin/exercises',
+      label: t('systemExercises'),
+      icon: <Zap size={16} strokeWidth={1.75} aria-hidden='true' />,
+      match: (path) => path.startsWith('/admin/exercises'),
+    },
+    {
+      href: '/admin/topics',
+      label: t('topics'),
       icon: <FolderTree size={16} strokeWidth={1.75} aria-hidden='true' />,
-      match: (path) => path.startsWith('/admin/categories'),
+      match: (path) => path.startsWith('/admin/topics'),
     },
   ];
 

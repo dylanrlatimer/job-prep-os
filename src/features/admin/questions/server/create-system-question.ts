@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { db } from '@/lib/drizzle/client';
-import { theoryQuestionCategoriesInApp, theoryQuestionsInApp } from '@/lib/drizzle/schema';
+import { theoryQuestionTopicsInApp, theoryQuestionsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError } from '@/lib/errors';
 import { assertAdmin } from '@/features/auth/server/assert-admin';
 import { validateQuestionInput } from '@/features/theory/builder/server/validate-question-input';
@@ -30,10 +30,10 @@ export async function createSystemQuestion(input: CreateSystemQuestionInput): Pr
       }
 
       if (input.categoryIds.length > 0) {
-        await tx.insert(theoryQuestionCategoriesInApp).values(
-          input.categoryIds.map((categoryId) => ({
+        await tx.insert(theoryQuestionTopicsInApp).values(
+          input.categoryIds.map((topicId) => ({
             questionId: created.id,
-            categoryId,
+            topicId,
           })),
         );
       }

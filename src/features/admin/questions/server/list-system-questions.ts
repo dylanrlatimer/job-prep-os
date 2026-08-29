@@ -2,7 +2,7 @@ import 'server-only';
 
 import { desc, eq, inArray, isNull } from 'drizzle-orm';
 import { db } from '@/lib/drizzle/client';
-import { theoryCategoriesInApp, theoryQuestionCategoriesInApp, theoryQuestionsInApp } from '@/lib/drizzle/schema';
+import { topicsInApp, theoryQuestionTopicsInApp, theoryQuestionsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError } from '@/lib/errors';
 import { assertAdmin } from '@/features/auth/server/assert-admin';
 import type { ListSystemQuestionsResponse, SystemQuestionListItem } from '@/features/admin/questions/api/contracts';
@@ -26,11 +26,11 @@ export async function listSystemQuestions(): Promise<ListSystemQuestionsResponse
     if (questionRows.length === 0) {
       const categories = await db
         .select({
-          id: theoryCategoriesInApp.id,
-          name: theoryCategoriesInApp.name,
-          slug: theoryCategoriesInApp.slug,
+          id: topicsInApp.id,
+          name: topicsInApp.name,
+          slug: topicsInApp.slug,
         })
-        .from(theoryCategoriesInApp);
+        .from(topicsInApp);
 
       return { questions: [], categories: categories.sort((a, b) => a.name.localeCompare(b.name)) };
     }
@@ -39,14 +39,14 @@ export async function listSystemQuestions(): Promise<ListSystemQuestionsResponse
 
     const categoryRows = await db
       .select({
-        questionId: theoryQuestionCategoriesInApp.questionId,
-        id: theoryCategoriesInApp.id,
-        name: theoryCategoriesInApp.name,
-        slug: theoryCategoriesInApp.slug,
+        questionId: theoryQuestionTopicsInApp.questionId,
+        id: topicsInApp.id,
+        name: topicsInApp.name,
+        slug: topicsInApp.slug,
       })
-      .from(theoryQuestionCategoriesInApp)
-      .innerJoin(theoryCategoriesInApp, eq(theoryQuestionCategoriesInApp.categoryId, theoryCategoriesInApp.id))
-      .where(inArray(theoryQuestionCategoriesInApp.questionId, questionIds));
+      .from(theoryQuestionTopicsInApp)
+      .innerJoin(topicsInApp, eq(theoryQuestionTopicsInApp.topicId, topicsInApp.id))
+      .where(inArray(theoryQuestionTopicsInApp.questionId, questionIds));
 
     const categoriesByQuestion = new Map<string, RepositoryCategory[]>();
     const categoryMap = new Map<string, RepositoryCategory>();

@@ -2,7 +2,7 @@ import 'server-only';
 
 import { eq } from 'drizzle-orm';
 import { db } from '@/lib/drizzle/client';
-import { theoryCategoriesInApp } from '@/lib/drizzle/schema';
+import { topicsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError, ValidationError } from '@/lib/errors';
 import { slugify } from '@/common/lib/slugify';
 import { assertAdmin } from '@/features/auth/server/assert-admin';
@@ -13,7 +13,7 @@ async function uniqueSlug(baseSlug: string) {
   let suffix = 2;
 
   while (true) {
-    const [existing] = await db.select({ id: theoryCategoriesInApp.id }).from(theoryCategoriesInApp).where(eq(theoryCategoriesInApp.slug, slug)).limit(1);
+    const [existing] = await db.select({ id: topicsInApp.id }).from(topicsInApp).where(eq(topicsInApp.slug, slug)).limit(1);
 
     if (!existing) {
       return slug;
@@ -36,12 +36,12 @@ export async function createCategory(input: CategoryInput): Promise<CreateCatego
     const slug = await uniqueSlug(baseSlug);
 
     const [created] = await db
-      .insert(theoryCategoriesInApp)
+      .insert(topicsInApp)
       .values({
         name: input.name,
         slug,
       })
-      .returning({ id: theoryCategoriesInApp.id });
+      .returning({ id: topicsInApp.id });
 
     if (!created) {
       throw new DatabaseError('DATABASE_ERROR');

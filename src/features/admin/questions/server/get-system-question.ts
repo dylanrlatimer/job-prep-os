@@ -1,8 +1,8 @@
 import 'server-only';
 
-import { and, eq, inArray, isNull } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '@/lib/drizzle/client';
-import { theoryQuestionCategoriesInApp, theoryQuestionsInApp } from '@/lib/drizzle/schema';
+import { theoryQuestionTopicsInApp, theoryQuestionsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError, NotFoundError } from '@/lib/errors';
 import { assertAdmin } from '@/features/auth/server/assert-admin';
 import type { SystemQuestionResponse } from '@/features/admin/questions/api/contracts';
@@ -30,15 +30,15 @@ export async function getSystemQuestion(id: string): Promise<SystemQuestionRespo
     }
 
     const categoryRows = await db
-      .select({ categoryId: theoryQuestionCategoriesInApp.categoryId })
-      .from(theoryQuestionCategoriesInApp)
-      .where(eq(theoryQuestionCategoriesInApp.questionId, id));
+      .select({ topicId: theoryQuestionTopicsInApp.topicId })
+      .from(theoryQuestionTopicsInApp)
+      .where(eq(theoryQuestionTopicsInApp.questionId, id));
 
     return {
       id: question.id,
       question: question.question,
       answer: parseTiptapDocument(question.answer),
-      categoryIds: categoryRows.map((row) => row.categoryId),
+      categoryIds: categoryRows.map((row) => row.topicId),
       sourceName: question.sourceName,
       sourceUrl: question.sourceUrl,
       isPublic: question.isPublic,
