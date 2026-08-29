@@ -10,6 +10,7 @@ import ConfirmDialog from '@/common/components/ConfirmDialog';
 import { invalidateRepositoryCaches } from '@/features/theory/api/invalidate-repository-caches';
 import { questionDetailQueryOptions } from '@/features/theory/detail/api/queries';
 import { unsaveRepositoryQuestion } from '@/features/theory/repository/api/mutations';
+import { attemptResultClassName } from '@/features/theory/lib/attempt-result-styles';
 import type { PracticeAttemptResult } from '@/features/theory/practice/api/contracts';
 import QuestionDetailSkeleton from './QuestionDetailSkeleton';
 import TiptapRenderer from '@/common/components/TiptapRenderer';
@@ -23,12 +24,6 @@ type QuestionDetailPageProps = {
 
 function hasAttempts(totals: { incorrect: number; partial: number; correct: number }) {
   return totals.incorrect + totals.partial + totals.correct > 0;
-}
-
-function resultClassName(result: PracticeAttemptResult) {
-  if (result === 'correct') return 'text-success';
-  if (result === 'incorrect') return 'text-destructive-bright';
-  return 'text-muted-foreground';
 }
 
 function resultLabelKey(result: PracticeAttemptResult) {
@@ -162,7 +157,7 @@ export default function QuestionDetailPage({ questionId }: QuestionDetailPagePro
                     <p className='m-0 text-sm'>
                       <span className='text-muted-foreground'>{formatDate(attempt.createdAt)}</span>
                       <span className='text-muted-foreground'> · </span>
-                      <span className={resultClassName(attempt.result)}>{t(resultLabelKey(attempt.result))}</span>
+                      <span className={attemptResultClassName(attempt.result)}>{t(resultLabelKey(attempt.result))}</span>
                     </p>
                     {attempt.response ? (
                       <div className='mt-2'>

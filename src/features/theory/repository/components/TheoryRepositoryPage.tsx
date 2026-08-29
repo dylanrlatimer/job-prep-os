@@ -14,6 +14,7 @@ import { repositoryQueryOptions } from '@/features/theory/repository/api/queries
 import type { RepositoryQuestionItem } from '@/features/theory/repository/api/contracts';
 import TheoryRepositorySkeleton from './TheoryRepositorySkeleton';
 import { useToastStore } from '@/lib/store/use-toast-store';
+import { attemptCountClassName } from '@/features/theory/lib/attempt-result-styles';
 import { cn } from '@/lib/cn';
 
 function matchesSearch(question: RepositoryQuestionItem, search: string) {
@@ -29,13 +30,6 @@ function matchesCategory(question: RepositoryQuestionItem, categoryId: string | 
 function hasAttempts(question: RepositoryQuestionItem) {
   const { incorrect, partial, correct } = question.attempts;
   return incorrect + partial + correct > 0;
-}
-
-function attemptCountClassName(count: number, type: 'incorrect' | 'partial' | 'correct') {
-  if (count === 0) return 'text-muted-foreground';
-  if (type === 'incorrect') return 'text-destructive-bright';
-  if (type === 'partial') return 'text-warning';
-  return 'text-success';
 }
 
 function AttemptTotals({ question }: { question: RepositoryQuestionItem }) {
