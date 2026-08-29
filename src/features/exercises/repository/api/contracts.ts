@@ -14,7 +14,7 @@ export type ExerciseAttemptTotals = {
 
 export type RepositoryExerciseItem = {
   id: string;
-  prompt: string;
+  title: string;
   topics: ExerciseTopic[];
   attempts: ExerciseAttemptTotals;
   canUnsave: boolean;

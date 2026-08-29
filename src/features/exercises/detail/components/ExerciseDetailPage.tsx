@@ -5,6 +5,7 @@ import { ChevronLeft } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import AppShell from '@/common/components/AppShell';
+import AttemptTotals from '@/common/components/AttemptTotals';
 import TiptapRenderer from '@/common/components/TiptapRenderer';
 import { exerciseDetailQueryOptions } from '@/features/exercises/detail/api/queries';
 import type { ExerciseAttemptResult } from '@/features/exercises/detail/api/contracts';
@@ -71,7 +72,7 @@ export default function ExerciseDetailPage({ exerciseId }: ExerciseDetailPagePro
         <header className='mt-4 border-b border-border pb-6'>
           <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
             <div className='min-w-0 flex-1'>
-              <TiptapRenderer content={data.prompt} className='text-lg font-medium leading-relaxed text-foreground' />
+              <h1 className='m-0 text-lg font-medium leading-relaxed text-foreground'>{data.title}</h1>
 
               <div className='mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs'>
                 {data.topics.length > 0 ? (
@@ -93,13 +94,12 @@ export default function ExerciseDetailPage({ exerciseId }: ExerciseDetailPagePro
                 ) : null}
 
                 {hasAttempts(data.attempts) ? (
-                  <span className='text-muted-foreground'>
-                    {t('attemptTotals', {
-                      incorrect: data.attempts.incorrect,
-                      partial: data.attempts.partial,
-                      correct: data.attempts.correct,
-                    })}
-                  </span>
+                  <AttemptTotals
+                    attempts={data.attempts}
+                    incorrectLabel={t('attemptIncorrect', { count: data.attempts.incorrect })}
+                    partialLabel={t('attemptPartial', { count: data.attempts.partial })}
+                    correctLabel={t('attemptCorrect', { count: data.attempts.correct })}
+                  />
                 ) : (
                   <span className='text-muted-foreground'>{t('noAttempts')}</span>
                 )}
@@ -121,6 +121,10 @@ export default function ExerciseDetailPage({ exerciseId }: ExerciseDetailPagePro
 
         <div className='mx-auto mt-8 max-w-2xl space-y-8'>
           <section>
+            <TiptapRenderer content={data.prompt} />
+          </section>
+
+          <section>
             <h2 className='m-0 text-xs text-secondary-foreground'>{t('choicesLabel')}</h2>
             <ul className='m-0 mt-3 list-none space-y-3 p-0'>
               {data.choices.map((choice) => (
@@ -128,9 +132,7 @@ export default function ExerciseDetailPage({ exerciseId }: ExerciseDetailPagePro
                   <span className='mt-0.5 shrink-0 text-sm text-muted-foreground'>{choice.position + 1}.</span>
                   <div className='min-w-0 flex-1'>
                     <TiptapRenderer content={choice.content} className={cn(choice.isCorrect && 'text-success')} />
-                    {choice.isCorrect ? (
-                      <p className='m-0 mt-1 text-xs text-success'>{t('correctChoice')}</p>
-                    ) : null}
+                    {choice.isCorrect ? <p className='m-0 mt-1 text-xs text-success'>{t('correctChoice')}</p> : null}
                   </div>
                 </li>
               ))}

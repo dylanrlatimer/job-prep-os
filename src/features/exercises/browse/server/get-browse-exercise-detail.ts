@@ -2,13 +2,7 @@ import 'server-only';
 
 import { and, count, eq } from 'drizzle-orm';
 import { db } from '@/lib/drizzle/client';
-import {
-  exerciseChoicesInApp,
-  exerciseLibraryItemsInApp,
-  exerciseTopicsInApp,
-  exercisesInApp,
-  topicsInApp,
-} from '@/lib/drizzle/schema';
+import { exerciseChoicesInApp, exerciseLibraryItemsInApp, exerciseTopicsInApp, exercisesInApp, topicsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError, NotFoundError } from '@/lib/errors';
 import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
 import type { BrowseExerciseDetailResponse } from '@/features/exercises/browse/api/contracts';
@@ -23,6 +17,7 @@ export async function getBrowseExerciseDetail(exerciseId: string): Promise<Brows
       .select({
         id: exercisesInApp.id,
         ownerProfileId: exercisesInApp.ownerProfileId,
+        title: exercisesInApp.title,
         prompt: exercisesInApp.prompt,
         sourceName: exercisesInApp.sourceName,
         sourceUrl: exercisesInApp.sourceUrl,
@@ -45,9 +40,7 @@ export async function getBrowseExerciseDetail(exerciseId: string): Promise<Brows
       .innerJoin(topicsInApp, eq(exerciseTopicsInApp.topicId, topicsInApp.id))
       .where(eq(exerciseTopicsInApp.exerciseId, exerciseId));
 
-    const topics: ExerciseTopic[] = topicRows
-      .map((row) => ({ id: row.id, name: row.name, slug: row.slug }))
-      .sort((a, b) => a.name.localeCompare(b.name));
+    const topics: ExerciseTopic[] = topicRows.map((row) => ({ id: row.id, name: row.name, slug: row.slug })).sort((a, b) => a.name.localeCompare(b.name));
 
     const [savedRow] = await db
       .select({ exerciseId: exerciseLibraryItemsInApp.exerciseId })
@@ -55,13 +48,11 @@ export async function getBrowseExerciseDetail(exerciseId: string): Promise<Brows
       .where(and(eq(exerciseLibraryItemsInApp.profileId, user.id), eq(exerciseLibraryItemsInApp.exerciseId, exerciseId)))
       .limit(1);
 
-    const [choiceCountRow] = await db
-      .select({ count: count() })
-      .from(exerciseChoicesInApp)
-      .where(eq(exerciseChoicesInApp.exerciseId, exerciseId));
+    const [choiceCountRow] = await db.select({ count: count() }).from(exerciseChoicesInApp).where(eq(exerciseChoicesInApp.exerciseId, exerciseId));
 
     return {
       id: exercise.id,
+      title: exercise.title,
       prompt: parseTiptapDocument(exercise.prompt),
       topics,
       sourceName: exercise.sourceName,

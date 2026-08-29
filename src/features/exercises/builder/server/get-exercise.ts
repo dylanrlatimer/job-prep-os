@@ -2,11 +2,7 @@ import 'server-only';
 
 import { asc, eq } from 'drizzle-orm';
 import { db } from '@/lib/drizzle/client';
-import {
-  exerciseChoicesInApp,
-  exerciseTopicsInApp,
-  exercisesInApp,
-} from '@/lib/drizzle/schema';
+import { exerciseChoicesInApp, exerciseTopicsInApp, exercisesInApp } from '@/lib/drizzle/schema';
 import { DatabaseError, ForbiddenError, NotFoundError } from '@/lib/errors';
 import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
 import type { ExerciseResponse } from '@/features/exercises/builder/api/contracts';
@@ -20,6 +16,7 @@ export async function getExercise(id: string): Promise<ExerciseResponse> {
       .select({
         id: exercisesInApp.id,
         ownerProfileId: exercisesInApp.ownerProfileId,
+        title: exercisesInApp.title,
         prompt: exercisesInApp.prompt,
         explanation: exercisesInApp.explanation,
         sourceName: exercisesInApp.sourceName,
@@ -39,10 +36,7 @@ export async function getExercise(id: string): Promise<ExerciseResponse> {
       throw new ForbiddenError('exerciseForbidden');
     }
 
-    const topicRows = await db
-      .select({ topicId: exerciseTopicsInApp.topicId })
-      .from(exerciseTopicsInApp)
-      .where(eq(exerciseTopicsInApp.exerciseId, id));
+    const topicRows = await db.select({ topicId: exerciseTopicsInApp.topicId }).from(exerciseTopicsInApp).where(eq(exerciseTopicsInApp.exerciseId, id));
 
     const choiceRows = await db
       .select({
@@ -56,6 +50,7 @@ export async function getExercise(id: string): Promise<ExerciseResponse> {
 
     return {
       id: exercise.id,
+      title: exercise.title,
       prompt: parseTiptapDocument(exercise.prompt),
       explanation: exercise.explanation ? parseTiptapDocument(exercise.explanation) : null,
       topicIds: topicRows.map((row) => row.topicId),

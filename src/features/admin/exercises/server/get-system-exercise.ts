@@ -15,6 +15,7 @@ export async function getSystemExercise(id: string): Promise<SystemExerciseRespo
     const [exercise] = await db
       .select({
         id: exercisesInApp.id,
+        title: exercisesInApp.title,
         prompt: exercisesInApp.prompt,
         explanation: exercisesInApp.explanation,
         sourceName: exercisesInApp.sourceName,
@@ -30,10 +31,7 @@ export async function getSystemExercise(id: string): Promise<SystemExerciseRespo
       throw new NotFoundError('exerciseNotFound');
     }
 
-    const topicRows = await db
-      .select({ topicId: exerciseTopicsInApp.topicId })
-      .from(exerciseTopicsInApp)
-      .where(eq(exerciseTopicsInApp.exerciseId, id));
+    const topicRows = await db.select({ topicId: exerciseTopicsInApp.topicId }).from(exerciseTopicsInApp).where(eq(exerciseTopicsInApp.exerciseId, id));
 
     const choiceRows = await db
       .select({
@@ -47,6 +45,7 @@ export async function getSystemExercise(id: string): Promise<SystemExerciseRespo
 
     return {
       id: exercise.id,
+      title: exercise.title,
       prompt: parseTiptapDocument(exercise.prompt),
       explanation: exercise.explanation ? parseTiptapDocument(exercise.explanation) : null,
       topicIds: topicRows.map((row) => row.topicId),

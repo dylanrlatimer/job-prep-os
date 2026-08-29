@@ -21,11 +21,7 @@ import {
   type ExerciseFormSnapshot,
   type ExerciseScalars,
 } from '@/features/exercises/builder/lib/exercise-form-values';
-import {
-  invalidateExerciseCaches,
-  invalidateExerciseRepositoryCache,
-  removeExerciseCaches,
-} from '@/features/exercises/api/invalidate-caches';
+import { invalidateExerciseCaches, invalidateExerciseRepositoryCache, removeExerciseCaches } from '@/features/exercises/api/invalidate-caches';
 import { useToastStore } from '@/lib/store/use-toast-store';
 
 export type { ExerciseFormValues } from '@/features/exercises/builder/lib/exercise-form-values';
@@ -34,6 +30,7 @@ type FormStatus = 'loading' | 'ready' | 'submitting';
 
 function toExerciseInput(snapshot: ExerciseFormSnapshot) {
   return {
+    title: snapshot.title,
     prompt: snapshot.prompt!,
     explanation: snapshot.explanation,
     topicIds: snapshot.topicIds,
@@ -72,7 +69,7 @@ type UseExerciseBuilderFormOptions = {
 
 export type ExerciseBuilderSubmitResult = { ok: true } | { ok: false; fieldErrors: Record<string, string> };
 
-export const exerciseBuilderFieldOrder = ['prompt', 'explanation', 'choices', 'topicIds', 'sourceName', 'sourceUrl'] as const;
+export const exerciseBuilderFieldOrder = ['title', 'prompt', 'explanation', 'choices', 'topicIds', 'sourceName', 'sourceUrl'] as const;
 
 export function useExerciseBuilderForm({ exerciseId }: UseExerciseBuilderFormOptions) {
   const t = useTranslations('ExerciseBuilderPage');
@@ -105,6 +102,7 @@ export function useExerciseBuilderForm({ exerciseId }: UseExerciseBuilderFormOpt
     if (!exerciseQuery.data) return null;
 
     return {
+      title: exerciseQuery.data.title,
       topicIds: exerciseQuery.data.topicIds,
       sourceName: exerciseQuery.data.sourceName ?? '',
       sourceUrl: exerciseQuery.data.sourceUrl ?? '',
@@ -114,10 +112,7 @@ export function useExerciseBuilderForm({ exerciseId }: UseExerciseBuilderFormOpt
     };
   }, [exerciseQuery.data]);
 
-  const expectedEditorIds = useMemo(
-    () => ['prompt', 'explanation', ...scalars.choices.map((choice) => choice.id)],
-    [scalars.choices],
-  );
+  const expectedEditorIds = useMemo(() => ['prompt', 'explanation', ...scalars.choices.map((choice) => choice.id)], [scalars.choices]);
 
   const isDataLoading = metadataQuery.isPending || (isEdit && exerciseQuery.isPending);
   const isDataError = metadataQuery.isError || (isEdit && exerciseQuery.isError);
@@ -141,12 +136,7 @@ export function useExerciseBuilderForm({ exerciseId }: UseExerciseBuilderFormOpt
   }, [scalars.choices]);
 
   const getSnapshot = useCallback((): ExerciseFormSnapshot => {
-    return toExerciseSnapshot(
-      scalars,
-      promptRef.current?.getJSON() ?? null,
-      explanationRef.current?.getJSON() ?? null,
-      getChoiceDocuments(),
-    );
+    return toExerciseSnapshot(scalars, promptRef.current?.getJSON() ?? null, explanationRef.current?.getJSON() ?? null, getChoiceDocuments());
   }, [getChoiceDocuments, scalars]);
 
   useEffect(() => {
@@ -270,9 +260,7 @@ export function useExerciseBuilderForm({ exerciseId }: UseExerciseBuilderFormOpt
 
   const toggleTopic = useCallback((topicId: string) => {
     setScalars((current) => {
-      const topicIds = current.topicIds.includes(topicId)
-        ? current.topicIds.filter((id) => id !== topicId)
-        : [...current.topicIds, topicId];
+      const topicIds = current.topicIds.includes(topicId) ? current.topicIds.filter((id) => id !== topicId) : [...current.topicIds, topicId];
 
       return { ...current, topicIds };
     });

@@ -27,6 +27,7 @@ export async function updateSystemExercise(id: string, input: UpdateSystemExerci
       const [updated] = await tx
         .update(exercisesInApp)
         .set({
+          title: input.title,
           prompt: input.prompt,
           explanation: input.explanation,
           sourceName: input.sourceName,

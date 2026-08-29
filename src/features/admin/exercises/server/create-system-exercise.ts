@@ -17,6 +17,7 @@ export async function createSystemExercise(input: CreateSystemExerciseInput): Pr
         .insert(exercisesInApp)
         .values({
           ownerProfileId: null,
+          title: input.title,
           prompt: input.prompt,
           explanation: input.explanation,
           sourceName: input.sourceName,

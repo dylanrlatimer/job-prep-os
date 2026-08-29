@@ -1,4 +1,4 @@
-import { pgTable, pgSchema, index, foreignKey, uuid, jsonb, boolean, text, timestamp, check, smallint, varchar, bigserial, uniqueIndex, json, inet, bigint, unique, primaryKey } from "drizzle-orm/pg-core"
+import { pgTable, pgSchema, index, foreignKey, check, uuid, jsonb, boolean, text, timestamp, smallint, varchar, bigserial, uniqueIndex, json, inet, bigint, unique, primaryKey } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 export const auth = pgSchema("auth");
@@ -28,6 +28,7 @@ export const exercisesInApp = app.table("exercises", {
 	sourceUrl: text("source_url"),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	title: text().notNull(),
 }, (table) => [
 	index("exercises_owner_profile_id_idx").using("btree", table.ownerProfileId.asc().nullsLast().op("uuid_ops")),
 	index("exercises_public_idx").using("btree", table.createdAt.desc().nullsFirst().op("timestamptz_ops")).where(sql`(is_public = true)`),
@@ -36,6 +37,7 @@ export const exercisesInApp = app.table("exercises", {
 			foreignColumns: [profilesInApp.id],
 			name: "exercises_owner_profile_id_fkey"
 		}),
+	check("exercises_title_check", sql`char_length(btrim(title)) > 0`),
 ]);
 
 export const samlRelayStatesInAuth = auth.table("saml_relay_states", {

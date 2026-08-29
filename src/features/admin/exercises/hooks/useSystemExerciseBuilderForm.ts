@@ -34,6 +34,7 @@ const emptyScalars: ExerciseScalars = {
 
 function toSystemExerciseInput(snapshot: ExerciseFormSnapshot) {
   return {
+    title: snapshot.title,
     prompt: snapshot.prompt!,
     explanation: snapshot.explanation,
     topicIds: snapshot.topicIds,
@@ -72,7 +73,7 @@ type UseSystemExerciseBuilderFormOptions = {
 
 export type SystemExerciseBuilderSubmitResult = { ok: true } | { ok: false; fieldErrors: Record<string, string> };
 
-export const systemExerciseBuilderFieldOrder = ['prompt', 'explanation', 'choices', 'topicIds', 'sourceName', 'sourceUrl'] as const;
+export const systemExerciseBuilderFieldOrder = ['title', 'prompt', 'explanation', 'choices', 'topicIds', 'sourceName', 'sourceUrl'] as const;
 
 export function useSystemExerciseBuilderForm({ exerciseId }: UseSystemExerciseBuilderFormOptions) {
   const t = useTranslations('AdminSystemExerciseBuilderPage');
@@ -105,6 +106,7 @@ export function useSystemExerciseBuilderForm({ exerciseId }: UseSystemExerciseBu
     if (!exerciseQuery.data) return null;
 
     return {
+      title: exerciseQuery.data.title,
       topicIds: exerciseQuery.data.topicIds,
       sourceName: exerciseQuery.data.sourceName ?? '',
       sourceUrl: exerciseQuery.data.sourceUrl ?? '',
@@ -114,10 +116,7 @@ export function useSystemExerciseBuilderForm({ exerciseId }: UseSystemExerciseBu
     };
   }, [exerciseQuery.data]);
 
-  const expectedEditorIds = useMemo(
-    () => ['prompt', 'explanation', ...scalars.choices.map((choice) => choice.id)],
-    [scalars.choices],
-  );
+  const expectedEditorIds = useMemo(() => ['prompt', 'explanation', ...scalars.choices.map((choice) => choice.id)], [scalars.choices]);
 
   const isDataLoading = metadataQuery.isPending || (isEdit && exerciseQuery.isPending);
   const isDataError = metadataQuery.isError || (isEdit && exerciseQuery.isError);
@@ -141,12 +140,7 @@ export function useSystemExerciseBuilderForm({ exerciseId }: UseSystemExerciseBu
   }, [scalars.choices]);
 
   const getSnapshot = useCallback((): ExerciseFormSnapshot => {
-    return toExerciseSnapshot(
-      scalars,
-      promptRef.current?.getJSON() ?? null,
-      explanationRef.current?.getJSON() ?? null,
-      getChoiceDocuments(),
-    );
+    return toExerciseSnapshot(scalars, promptRef.current?.getJSON() ?? null, explanationRef.current?.getJSON() ?? null, getChoiceDocuments());
   }, [getChoiceDocuments, scalars]);
 
   useEffect(() => {
@@ -265,9 +259,7 @@ export function useSystemExerciseBuilderForm({ exerciseId }: UseSystemExerciseBu
 
   const toggleTopic = useCallback((topicId: string) => {
     setScalars((current) => {
-      const topicIds = current.topicIds.includes(topicId)
-        ? current.topicIds.filter((id) => id !== topicId)
-        : [...current.topicIds, topicId];
+      const topicIds = current.topicIds.includes(topicId) ? current.topicIds.filter((id) => id !== topicId) : [...current.topicIds, topicId];
 
       return { ...current, topicIds };
     });

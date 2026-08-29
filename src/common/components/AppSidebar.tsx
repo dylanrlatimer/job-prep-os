@@ -9,7 +9,7 @@ import { sessionQueryOptions } from '@/features/auth/api/queries';
 import { cn } from '@/lib/cn';
 
 type NavItem = {
-  href: '/' | '/browse' | '/exercises';
+  href: '/' | '/browse' | '/exercises' | '/exercises/browse';
   label: string;
   icon: React.ReactNode;
   match: (pathname: string) => boolean;
@@ -39,7 +39,13 @@ export default function AppSidebar() {
       href: '/exercises',
       label: t('exercises'),
       icon: <Zap size={16} strokeWidth={1.75} aria-hidden='true' />,
-      match: (path) => path === '/exercises' || path.startsWith('/exercises/'),
+      match: (path) => path === '/exercises' || (path.startsWith('/exercises/') && !path.startsWith('/exercises/browse')),
+    },
+    {
+      href: '/exercises/browse',
+      label: t('browseExercises'),
+      icon: <Compass size={16} strokeWidth={1.75} aria-hidden='true' />,
+      match: (path) => path === '/exercises/browse' || path.startsWith('/exercises/browse/'),
     },
     {
       href: '/browse',

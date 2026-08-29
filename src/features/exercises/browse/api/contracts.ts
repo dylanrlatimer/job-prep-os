@@ -4,7 +4,7 @@ import type { ExerciseTopic } from '@/features/exercises/repository/api/contract
 
 export type BrowseExerciseItem = {
   id: string;
-  prompt: string;
+  title: string;
   topics: ExerciseTopic[];
   isSaved: boolean;
   isSystem: boolean;
@@ -25,6 +25,7 @@ export const BrowseExerciseDetailParamsSchema = z.object({
 
 export type BrowseExerciseDetailResponse = {
   id: string;
+  title: string;
   prompt: JSONContent;
   topics: ExerciseTopic[];
   sourceName: string | null;

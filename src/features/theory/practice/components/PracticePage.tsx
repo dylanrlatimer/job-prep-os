@@ -6,6 +6,7 @@ import { ChevronLeft } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/navigation';
 import AppShell from '@/common/components/AppShell';
+import AttemptTotals from '@/common/components/AttemptTotals';
 import { primaryButtonClassName, secondaryButtonClassName } from '@/common/styles/form';
 import { invalidateQuestionCaches } from '@/features/theory/api/invalidate-question-caches';
 import { createAttempt, fetchPracticeReview } from '@/features/theory/practice/api/mutations';
@@ -143,13 +144,12 @@ export default function PracticePage({ questionId }: PracticePageProps) {
             ) : null}
 
             {isGrading && hasAttempts(review.attempts) ? (
-              <span className='text-muted-foreground'>
-                {t('attemptTotals', {
-                  incorrect: review.attempts.incorrect,
-                  partial: review.attempts.partial,
-                  correct: review.attempts.correct,
-                })}
-              </span>
+              <AttemptTotals
+                attempts={review.attempts}
+                incorrectLabel={t('attemptIncorrect', { count: review.attempts.incorrect })}
+                partialLabel={t('attemptPartial', { count: review.attempts.partial })}
+                correctLabel={t('attemptCorrect', { count: review.attempts.correct })}
+              />
             ) : null}
           </div>
         </header>

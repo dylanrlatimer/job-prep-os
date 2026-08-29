@@ -18,7 +18,7 @@ export const GetSystemExerciseParamsSchema = z.object({
 
 export type SystemExerciseListItem = {
   id: string;
-  prompt: string;
+  title: string;
   isPublic: boolean;
   topics: ExerciseTopic[];
   updatedAt: string;
@@ -36,6 +36,7 @@ export type SystemExerciseChoiceResponse = {
 
 export type SystemExerciseResponse = {
   id: string;
+  title: string;
   prompt: JSONContent;
   explanation: JSONContent | null;
   topicIds: string[];

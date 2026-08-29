@@ -6,15 +6,13 @@ import { ChevronLeft } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import AppShell from '@/common/components/AppShell';
+import AttemptTotals from '@/common/components/AttemptTotals';
 import TiptapRenderer from '@/common/components/TiptapRenderer';
 import { primaryButtonClassName, secondaryButtonClassName } from '@/common/styles/form';
 import { invalidateExerciseCaches } from '@/features/exercises/api/invalidate-caches';
 import { submitExerciseAnswer } from '@/features/exercises/practice/api/mutations';
 import { exercisePracticeQueryOptions } from '@/features/exercises/practice/api/queries';
-import type {
-  ExercisePracticeAttemptResult,
-  SubmitExerciseAnswerResponse,
-} from '@/features/exercises/practice/api/contracts';
+import type { ExercisePracticeAttemptResult, SubmitExerciseAnswerResponse } from '@/features/exercises/practice/api/contracts';
 import { attemptResultClassName } from '@/features/theory/lib/attempt-result-styles';
 import ExercisePracticeSkeleton from './ExercisePracticeSkeleton';
 import { cn } from '@/lib/cn';
@@ -90,9 +88,7 @@ export default function ExercisePracticePage({ exerciseId }: ExercisePracticePag
     }
 
     if (data.allowMultiple) {
-      setSelectedChoiceIds((current) =>
-        current.includes(choiceId) ? current.filter((id) => id !== choiceId) : [...current, choiceId],
-      );
+      setSelectedChoiceIds((current) => (current.includes(choiceId) ? current.filter((id) => id !== choiceId) : [...current, choiceId]));
       return;
     }
 
@@ -132,18 +128,13 @@ export default function ExercisePracticePage({ exerciseId }: ExercisePracticePag
   return (
     <AppShell>
       <div className='px-4 py-8 md:px-8'>
-        <Link
-          href='/exercises'
-          className='inline-flex items-center gap-1 text-sm text-muted-foreground no-underline transition-colors hover:text-foreground'
-        >
+        <Link href='/exercises' className='inline-flex items-center gap-1 text-sm text-muted-foreground no-underline transition-colors hover:text-foreground'>
           <ChevronLeft size={16} strokeWidth={1.75} aria-hidden='true' />
           {t('backToRepository')}
         </Link>
 
         <header className='mt-4 border-b border-border pb-6'>
-          <div className='text-lg font-medium leading-relaxed text-foreground'>
-            <TiptapRenderer content={data.prompt} />
-          </div>
+          <h1 className='m-0 text-lg font-medium leading-relaxed text-foreground'>{data.title}</h1>
 
           <div className='mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs'>
             {data.topics.length > 0 ? (
@@ -165,19 +156,22 @@ export default function ExercisePracticePage({ exerciseId }: ExercisePracticePag
             ) : null}
 
             {hasAttempts(data.attempts) ? (
-              <span className='text-muted-foreground'>
-                {t('attemptTotals', {
-                  incorrect: data.attempts.incorrect,
-                  partial: data.attempts.partial,
-                  correct: data.attempts.correct,
-                })}
-              </span>
+              <AttemptTotals
+                attempts={data.attempts}
+                incorrectLabel={t('attemptIncorrect', { count: data.attempts.incorrect })}
+                partialLabel={t('attemptPartial', { count: data.attempts.partial })}
+                correctLabel={t('attemptCorrect', { count: data.attempts.correct })}
+              />
             ) : null}
           </div>
         </header>
 
         <div className='mx-auto mt-8 max-w-2xl space-y-6'>
-          <fieldset className='m-0 border-0 p-0'>
+          <div>
+            <TiptapRenderer content={data.prompt} />
+          </div>
+
+          <fieldset className='m-0 mb-6 border-0 p-0'>
             <legend className='mb-3 block text-xs text-secondary-foreground'>{t('choicesLabel')}</legend>
 
             <div className='space-y-3'>
@@ -199,8 +193,7 @@ export default function ExercisePracticePage({ exerciseId }: ExercisePracticePag
                         : isChecked
                           ? 'border-primary bg-primary/5'
                           : 'border-border bg-card hover:border-primary/40',
-                    )}
-                  >
+                    )}>
                     {!isResult ? (
                       <input
                         type={inputType}
@@ -220,16 +213,11 @@ export default function ExercisePracticePage({ exerciseId }: ExercisePracticePag
           </fieldset>
 
           {!isResult ? (
-            <button
-              type='button'
-              className={primaryButtonClassName}
-              onClick={() => submitAnswer()}
-              disabled={selectedChoiceIds.length === 0 || isSubmitting}
-            >
+            <button type='button' className={primaryButtonClassName} onClick={() => submitAnswer()} disabled={selectedChoiceIds.length === 0 || isSubmitting}>
               {isSubmitting ? t('submitting') : t('submit')}
             </button>
           ) : (
-            <div className='space-y-6'>
+            <div className='flex flex-col gap-6'>
               <p className='m-0 text-sm'>
                 <span className='text-secondary-foreground'>{t('resultLabel')}</span>
                 <span className='text-muted-foreground'> · </span>
@@ -243,7 +231,7 @@ export default function ExercisePracticePage({ exerciseId }: ExercisePracticePag
                 </div>
               ) : null}
 
-              <button type='button' className={secondaryButtonClassName} onClick={handleTryAgain}>
+              <button type='button' className={cn(secondaryButtonClassName, 'self-start')} onClick={handleTryAgain}>
                 {t('tryAgain')}
               </button>
             </div>

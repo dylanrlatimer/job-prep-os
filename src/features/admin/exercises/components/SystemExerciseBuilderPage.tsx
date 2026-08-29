@@ -4,7 +4,7 @@ import type { SubmitEvent, ReactNode } from 'react';
 import { useMemo, useRef, useState } from 'react';
 import type { JSONContent } from '@tiptap/core';
 import Fuse from 'fuse.js';
-import { ChevronLeft, Minus, Plus, Search, Trash2 } from 'lucide-react';
+import { ChevronLeft, Plus, Search, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import AppShell from '@/common/components/AppShell';
@@ -13,10 +13,7 @@ import AdminGate from '@/features/admin/components/AdminGate';
 import { useValidationMessage } from '@/common/hooks/use-validation-message';
 import { inputClassName, primaryButtonClassName, secondaryButtonClassName } from '@/common/styles/form';
 import TiptapEditor, { type TiptapEditorRef } from '@/common/components/TiptapEditor';
-import {
-  systemExerciseBuilderFieldOrder,
-  useSystemExerciseBuilderForm,
-} from '@/features/admin/exercises/hooks/useSystemExerciseBuilderForm';
+import { systemExerciseBuilderFieldOrder, useSystemExerciseBuilderForm } from '@/features/admin/exercises/hooks/useSystemExerciseBuilderForm';
 import type { BuilderTopic } from '@/features/exercises/builder/api/contracts';
 import ExerciseBuilderSkeleton from '@/features/exercises/builder/components/ExerciseBuilderSkeleton';
 import { scrollToFirstFormError } from '@/common/lib/scroll-to-first-form-error';
@@ -105,38 +102,38 @@ function ChoiceRow({
   const choiceErrorMessage = useValidationMessage(fieldError);
 
   return (
-    <div data-field={`choices.${index}`} className='rounded-sm border border-border bg-card p-3'>
-      <div className='mb-2 flex items-center justify-between gap-3'>
-        <span className='text-xs text-secondary-foreground'>{t('choiceLabel', { number: index + 1 })}</span>
-        <div className='flex items-center gap-3'>
-          <label className='flex cursor-pointer items-center gap-2 text-xs text-foreground'>
-            <input
-              type='checkbox'
-              className='size-3.5 cursor-pointer accent-primary'
-              checked={isCorrect}
-              onChange={(event) => setChoiceCorrect(choiceId, event.target.checked)}
-            />
-            {t('correctChoice')}
-          </label>
-          <button
-            type='button'
-            className='inline-flex cursor-pointer items-center justify-center rounded-sm p-1 text-muted-foreground transition-colors hover:bg-card-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40'
-            disabled={!canRemove || status !== 'ready'}
-            onClick={() => removeChoice(choiceId)}
-            aria-label={t('removeChoice')}>
-            <Minus size={14} strokeWidth={1.75} aria-hidden='true' />
-          </button>
+    <div data-field={`choices.${index}`}>
+      <div className='flex items-center'>
+        <label className='mr-3 flex shrink-0 cursor-pointer items-center gap-1.5 text-xs text-foreground whitespace-nowrap'>
+          <input
+            type='checkbox'
+            className='size-3.5 cursor-pointer accent-primary'
+            checked={isCorrect}
+            onChange={(event) => setChoiceCorrect(choiceId, event.target.checked)}
+          />
+          {t('correctChoice')}
+        </label>
+        <div className='min-w-0 flex-1'>
+          <TiptapEditor
+            key={`${choiceId}-${exerciseId ?? 'new'}`}
+            ref={setChoiceEditorRef(choiceId)}
+            id={`choice-${choiceId}`}
+            variant='inline'
+            initialContent={initialContent}
+            onEditorReady={onChoiceReady(choiceId)}
+            onUpdate={onDocumentUpdate}
+            disabled={status !== 'ready'}
+          />
         </div>
+        <button
+          type='button'
+          className='ml-3 inline-flex shrink-0 cursor-pointer items-center justify-center rounded-sm py-1 text-muted-foreground transition-colors hover:bg-card-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40'
+          disabled={!canRemove || status !== 'ready'}
+          onClick={() => removeChoice(choiceId)}
+          aria-label={t('removeChoice')}>
+          <Trash2 size={14} strokeWidth={1.75} aria-hidden='true' />
+        </button>
       </div>
-      <TiptapEditor
-        key={`${choiceId}-${exerciseId ?? 'new'}`}
-        ref={setChoiceEditorRef(choiceId)}
-        id={`choice-${choiceId}`}
-        initialContent={initialContent}
-        onEditorReady={onChoiceReady(choiceId)}
-        onUpdate={onDocumentUpdate}
-        disabled={status !== 'ready'}
-      />
       {choiceErrorMessage ? <span className='mt-1.5 block text-xs text-destructive-bright'>{choiceErrorMessage}</span> : null}
     </div>
   );
@@ -267,8 +264,20 @@ function SystemExerciseBuilderContent({ exerciseId }: SystemExerciseBuilderPageP
         </header>
 
         <form ref={formRef} onSubmit={handleSubmit} noValidate className='mx-auto mt-8 max-w-2xl space-y-6'>
+          <Field label={t('titleLabel')} htmlFor='title' error={fieldErrors.title}>
+            <input
+              id='title'
+              className={inputClassName}
+              type='text'
+              value={values.title}
+              onChange={(event) => setField('title', event.target.value)}
+              placeholder={t('titlePlaceholder')}
+              maxLength={200}
+            />
+          </Field>
+
           <div data-field='prompt'>
-            <span className='mb-1.5 block text-xs text-secondary-foreground'>{t('promptLabel')}</span>
+            <span className='mb-1.5 block text-xs text-secondary-foreground'>{t('questionLabel')}</span>
             <TiptapEditor
               key={exerciseId ? `prompt-${exerciseId}` : 'prompt-new'}
               ref={promptRef}
@@ -292,13 +301,11 @@ function SystemExerciseBuilderContent({ exerciseId }: SystemExerciseBuilderPageP
               onUpdate={onDocumentUpdate}
               disabled={status !== 'ready'}
             />
-            {explanationErrorMessage ? (
-              <span className='mt-1.5 block text-xs text-destructive-bright'>{explanationErrorMessage}</span>
-            ) : null}
+            {explanationErrorMessage ? <span className='mt-1.5 block text-xs text-destructive-bright'>{explanationErrorMessage}</span> : null}
           </div>
 
           <div data-field='choices'>
-            <div className='mb-1.5 flex items-center justify-between gap-3'>
+            <div className='mb-4 flex items-center justify-between gap-3'>
               <span className='text-xs text-secondary-foreground'>{t('choicesLabel')}</span>
               <button
                 type='button'
@@ -310,7 +317,7 @@ function SystemExerciseBuilderContent({ exerciseId }: SystemExerciseBuilderPageP
               </button>
             </div>
 
-            <div className='space-y-4'>
+            <div className='space-y-2'>
               {values.choices.map((choice, index) => (
                 <ChoiceRow
                   key={choice.id}

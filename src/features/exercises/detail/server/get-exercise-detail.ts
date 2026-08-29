@@ -2,12 +2,7 @@ import 'server-only';
 
 import { asc, eq } from 'drizzle-orm';
 import { db } from '@/lib/drizzle/client';
-import {
-  exerciseChoicesInApp,
-  exerciseTopicsInApp,
-  exercisesInApp,
-  topicsInApp,
-} from '@/lib/drizzle/schema';
+import { exerciseChoicesInApp, exerciseTopicsInApp, exercisesInApp, topicsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError, NotFoundError } from '@/lib/errors';
 import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
 import type { ExerciseDetailResponse } from '@/features/exercises/detail/api/contracts';
@@ -24,6 +19,7 @@ export async function getExerciseDetail(id: string): Promise<ExerciseDetailRespo
       .select({
         id: exercisesInApp.id,
         ownerProfileId: exercisesInApp.ownerProfileId,
+        title: exercisesInApp.title,
         prompt: exercisesInApp.prompt,
         explanation: exercisesInApp.explanation,
         sourceName: exercisesInApp.sourceName,
@@ -47,9 +43,7 @@ export async function getExerciseDetail(id: string): Promise<ExerciseDetailRespo
       .innerJoin(topicsInApp, eq(exerciseTopicsInApp.topicId, topicsInApp.id))
       .where(eq(exerciseTopicsInApp.exerciseId, id));
 
-    const topics = topicRows
-      .map((row) => ({ id: row.id, name: row.name, slug: row.slug }))
-      .sort((a, b) => a.name.localeCompare(b.name));
+    const topics = topicRows.map((row) => ({ id: row.id, name: row.name, slug: row.slug })).sort((a, b) => a.name.localeCompare(b.name));
 
     const choiceRows = await db
       .select({
@@ -73,6 +67,7 @@ export async function getExerciseDetail(id: string): Promise<ExerciseDetailRespo
 
     return {
       id: exercise.id,
+      title: exercise.title,
       prompt: parseTiptapDocument(exercise.prompt),
       explanation: exercise.explanation ? parseTiptapDocument(exercise.explanation) : null,
       choices,

@@ -7,6 +7,7 @@ export type ExerciseChoiceFormRow = {
 };
 
 export type ExerciseFormValues = {
+  title: string;
   prompt: JSONContent | null;
   explanation: JSONContent | null;
   topicIds: string[];
@@ -40,6 +41,7 @@ function createChoiceRow(isCorrect = false): ExerciseChoiceFormRow {
 export const defaultChoiceRows: ExerciseChoiceFormRow[] = [createChoiceRow(), createChoiceRow()];
 
 export const emptyExerciseScalars: ExerciseScalars = {
+  title: '',
   topicIds: [],
   sourceName: '',
   sourceUrl: '',
@@ -86,6 +88,7 @@ export function toExerciseSnapshot(
 
 export function areExerciseSnapshotsEqual(left: ExerciseFormSnapshot, right: ExerciseFormSnapshot) {
   if (
+    left.title !== right.title ||
     !documentsEqual(left.prompt, right.prompt) ||
     !documentsEqual(left.explanation, right.explanation) ||
     left.sourceName !== right.sourceName ||

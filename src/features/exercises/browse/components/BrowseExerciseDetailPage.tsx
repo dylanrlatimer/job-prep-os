@@ -58,7 +58,9 @@ export default function BrowseExerciseDetailPage({ exerciseId }: BrowseExerciseD
   return (
     <AppShell>
       <div className='px-4 py-8 md:px-8'>
-        <Link href='/exercises/browse' className='inline-flex items-center gap-1 text-sm text-muted-foreground no-underline transition-colors hover:text-foreground'>
+        <Link
+          href='/exercises/browse'
+          className='inline-flex items-center gap-1 text-sm text-muted-foreground no-underline transition-colors hover:text-foreground'>
           <ChevronLeft size={16} strokeWidth={1.75} aria-hidden='true' />
           {t('backToBrowse')}
         </Link>
@@ -66,7 +68,7 @@ export default function BrowseExerciseDetailPage({ exerciseId }: BrowseExerciseD
         <header className='mt-4 border-b border-border pb-6'>
           <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
             <div className='min-w-0 flex-1'>
-              <TiptapRenderer content={data.prompt} className='text-lg font-medium leading-relaxed text-foreground' />
+              <h1 className='m-0 text-lg font-medium leading-relaxed text-foreground'>{data.title}</h1>
 
               <div className='mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs'>
                 {data.isSystem ? <span className='text-secondary-foreground'>{tBrowse('systemExercise')}</span> : null}
@@ -107,6 +109,10 @@ export default function BrowseExerciseDetailPage({ exerciseId }: BrowseExerciseD
             </div>
           </div>
         </header>
+
+        <div className='mx-auto mt-8 max-w-2xl'>
+          <TiptapRenderer content={data.prompt} />
+        </div>
       </div>
     </AppShell>
   );

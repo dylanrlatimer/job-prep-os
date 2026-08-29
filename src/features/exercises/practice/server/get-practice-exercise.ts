@@ -2,12 +2,7 @@ import 'server-only';
 
 import { asc, eq } from 'drizzle-orm';
 import { db } from '@/lib/drizzle/client';
-import {
-  exerciseChoicesInApp,
-  exerciseTopicsInApp,
-  exercisesInApp,
-  topicsInApp,
-} from '@/lib/drizzle/schema';
+import { exerciseChoicesInApp, exerciseTopicsInApp, exercisesInApp, topicsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError, NotFoundError } from '@/lib/errors';
 import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
 import type { ExercisePracticeResponse } from '@/features/exercises/practice/api/contracts';
@@ -24,6 +19,7 @@ export async function getPracticeExercise(id: string): Promise<ExercisePracticeR
     const [exercise] = await db
       .select({
         id: exercisesInApp.id,
+        title: exercisesInApp.title,
         prompt: exercisesInApp.prompt,
         allowMultiple: exercisesInApp.allowMultiple,
         sourceName: exercisesInApp.sourceName,
@@ -59,12 +55,11 @@ export async function getPracticeExercise(id: string): Promise<ExercisePracticeR
       listExerciseAttempts(user.id, id),
     ]);
 
-    const topics: ExerciseTopic[] = topicRows
-      .map((row) => ({ id: row.id, name: row.name, slug: row.slug }))
-      .sort((a, b) => a.name.localeCompare(b.name));
+    const topics: ExerciseTopic[] = topicRows.map((row) => ({ id: row.id, name: row.name, slug: row.slug })).sort((a, b) => a.name.localeCompare(b.name));
 
     return {
       id: exercise.id,
+      title: exercise.title,
       prompt: parseTiptapDocument(exercise.prompt),
       allowMultiple: exercise.allowMultiple,
       choices: choiceRows.map((choice) => ({

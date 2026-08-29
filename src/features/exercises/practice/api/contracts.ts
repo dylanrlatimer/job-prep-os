@@ -22,6 +22,7 @@ export type ExercisePracticeChoiceItem = {
 
 export type ExercisePracticeResponse = {
   id: string;
+  title: string;
   prompt: JSONContent;
   allowMultiple: boolean;
   choices: ExercisePracticeChoiceItem[];

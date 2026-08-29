@@ -15,7 +15,7 @@ import { cn } from '@/lib/cn';
 
 function matchesSearch(exercise: SystemExerciseListItem, search: string) {
   if (!search) return true;
-  return exercise.prompt.toLowerCase().includes(search.toLowerCase());
+  return exercise.title.toLowerCase().includes(search.toLowerCase());
 }
 
 function matchesTopic(exercise: SystemExerciseListItem, topicId: string | null) {
@@ -49,9 +49,7 @@ function AdminExercisesContent() {
 
   const filteredExercises = useMemo(() => {
     if (!data) return [];
-    return data.exercises.filter(
-      (exercise) => matchesSearch(exercise, search) && matchesTopic(exercise, topicId) && matchesPublication(exercise, publication),
-    );
+    return data.exercises.filter((exercise) => matchesSearch(exercise, search) && matchesTopic(exercise, topicId) && matchesPublication(exercise, publication));
   }, [data, publication, search, topicId]);
 
   const topicOptions = useMemo(() => {
@@ -165,7 +163,7 @@ function AdminExercisesContent() {
               <li key={exercise.id} className='border-b border-border py-4 last:border-b-0'>
                 <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
                   <div className='min-w-0 flex-1'>
-                    <p className='m-0 text-sm leading-relaxed text-foreground'>{exercise.prompt}</p>
+                    <p className='m-0 text-sm leading-relaxed text-foreground'>{exercise.title}</p>
                     <div className='mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs'>
                       <span className={exercise.isPublic ? 'text-success' : 'text-muted-foreground'}>{exercise.isPublic ? t('published') : t('draft')}</span>
                       {exercise.topics.length > 0 ? (

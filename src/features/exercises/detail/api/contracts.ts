@@ -30,6 +30,7 @@ export type ExerciseDetailTopic = {
 
 export type ExerciseDetailResponse = {
   id: string;
+  title: string;
   prompt: JSONContent;
   explanation: JSONContent | null;
   choices: ExerciseDetailChoiceItem[];

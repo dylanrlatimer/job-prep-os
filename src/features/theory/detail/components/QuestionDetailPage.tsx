@@ -6,6 +6,7 @@ import { ChevronLeft } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/navigation';
 import AppShell from '@/common/components/AppShell';
+import AttemptTotals from '@/common/components/AttemptTotals';
 import ConfirmDialog from '@/common/components/ConfirmDialog';
 import { invalidateRepositoryCaches } from '@/features/theory/api/invalidate-repository-caches';
 import { questionDetailQueryOptions } from '@/features/theory/detail/api/queries';
@@ -113,13 +114,12 @@ export default function QuestionDetailPage({ questionId }: QuestionDetailPagePro
                 <span className='text-muted-foreground'>{data.isPublic ? t('visibilityPublic') : t('visibilityPrivate')}</span>
 
                 {hasAttempts(data.attempts) ? (
-                  <span className='text-muted-foreground'>
-                    {t('attemptTotals', {
-                      incorrect: data.attempts.incorrect,
-                      partial: data.attempts.partial,
-                      correct: data.attempts.correct,
-                    })}
-                  </span>
+                  <AttemptTotals
+                    attempts={data.attempts}
+                    incorrectLabel={t('attemptIncorrect', { count: data.attempts.incorrect })}
+                    partialLabel={t('attemptPartial', { count: data.attempts.partial })}
+                    correctLabel={t('attemptCorrect', { count: data.attempts.correct })}
+                  />
                 ) : (
                   <span className='text-muted-foreground'>{t('noAttempts')}</span>
                 )}

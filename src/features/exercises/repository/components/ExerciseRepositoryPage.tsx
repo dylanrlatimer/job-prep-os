@@ -19,7 +19,7 @@ import { cn } from '@/lib/cn';
 
 function matchesSearch(exercise: RepositoryExerciseItem, search: string) {
   if (!search) return true;
-  return exercise.prompt.toLowerCase().includes(search.toLowerCase());
+  return exercise.title.toLowerCase().includes(search.toLowerCase());
 }
 
 function matchesTopic(exercise: RepositoryExerciseItem, topicId: string | null) {
@@ -71,7 +71,7 @@ function ExerciseRow({ exercise }: { exercise: RepositoryExerciseItem }) {
       <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
         <div className='min-w-0 flex-1'>
           <Link href={`/exercises/${exercise.id}`} className='text-sm leading-relaxed text-foreground no-underline hover:underline'>
-            {exercise.prompt}
+            {exercise.title}
           </Link>
 
           <div className='mt-2 flex flex-wrap items-center gap-x-3 gap-y-1'>

@@ -2,11 +2,7 @@ import 'server-only';
 
 import { and, eq } from 'drizzle-orm';
 import { db } from '@/lib/drizzle/client';
-import {
-  exerciseChoicesInApp,
-  exerciseTopicsInApp,
-  exercisesInApp,
-} from '@/lib/drizzle/schema';
+import { exerciseChoicesInApp, exerciseTopicsInApp, exercisesInApp } from '@/lib/drizzle/schema';
 import { DatabaseError, ForbiddenError, NotFoundError } from '@/lib/errors';
 import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
 import { validateExerciseInput } from '@/features/exercises/builder/server/validate-exercise-input';
@@ -18,11 +14,7 @@ export async function updateExercise(id: string, input: UpdateExerciseInput): Pr
 
   try {
     return await db.transaction(async (tx) => {
-      const [existing] = await tx
-        .select({ ownerProfileId: exercisesInApp.ownerProfileId })
-        .from(exercisesInApp)
-        .where(eq(exercisesInApp.id, id))
-        .limit(1);
+      const [existing] = await tx.select({ ownerProfileId: exercisesInApp.ownerProfileId }).from(exercisesInApp).where(eq(exercisesInApp.id, id)).limit(1);
 
       if (!existing) {
         throw new NotFoundError('exerciseNotFound');
@@ -35,6 +27,7 @@ export async function updateExercise(id: string, input: UpdateExerciseInput): Pr
       const [updated] = await tx
         .update(exercisesInApp)
         .set({
+          title: input.title,
           prompt: input.prompt,
           explanation: input.explanation,
           sourceName: input.sourceName,

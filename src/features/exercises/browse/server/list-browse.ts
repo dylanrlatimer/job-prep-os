@@ -2,18 +2,11 @@ import 'server-only';
 
 import { desc, eq, inArray } from 'drizzle-orm';
 import { db } from '@/lib/drizzle/client';
-import {
-  exerciseLibraryItemsInApp,
-  exerciseTopicsInApp,
-  exercisesInApp,
-  topicsInApp,
-} from '@/lib/drizzle/schema';
+import { exerciseLibraryItemsInApp, exerciseTopicsInApp, exercisesInApp, topicsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError } from '@/lib/errors';
 import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
 import type { BrowseExerciseItem, GetBrowseExercisesResponse } from '@/features/exercises/browse/api/contracts';
 import type { ExerciseTopic } from '@/features/exercises/repository/api/contracts';
-import { extractPlainText } from '@/lib/tiptap/extract-text';
-import { parseTiptapDocument } from '@/lib/tiptap/parse-document';
 
 export async function listBrowse(): Promise<GetBrowseExercisesResponse> {
   const user = await getAuthenticatedUser();
@@ -22,7 +15,7 @@ export async function listBrowse(): Promise<GetBrowseExercisesResponse> {
     const exerciseRows = await db
       .select({
         id: exercisesInApp.id,
-        prompt: exercisesInApp.prompt,
+        title: exercisesInApp.title,
         ownerProfileId: exercisesInApp.ownerProfileId,
       })
       .from(exercisesInApp)
@@ -67,7 +60,7 @@ export async function listBrowse(): Promise<GetBrowseExercisesResponse> {
 
     const exercises: BrowseExerciseItem[] = exerciseRows.map((row) => ({
       id: row.id,
-      prompt: extractPlainText(parseTiptapDocument(row.prompt)),
+      title: row.title,
       topics: topicsByExercise.get(row.id) ?? [],
       isSaved: savedExerciseIds.has(row.id),
       isSystem: row.ownerProfileId === null,

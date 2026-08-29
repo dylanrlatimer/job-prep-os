@@ -3,13 +3,7 @@ import 'server-only';
 import { and, desc, eq, inArray } from 'drizzle-orm';
 import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
 import { db } from '@/lib/drizzle/client';
-import {
-  exerciseAttemptsInApp,
-  exerciseLibraryItemsInApp,
-  exerciseTopicsInApp,
-  exercisesInApp,
-  topicsInApp,
-} from '@/lib/drizzle/schema';
+import { exerciseAttemptsInApp, exerciseLibraryItemsInApp, exerciseTopicsInApp, exercisesInApp, topicsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError } from '@/lib/errors';
 import type {
   ExerciseAttemptTotals,
@@ -17,8 +11,6 @@ import type {
   GetExerciseRepositoryResponse,
   RepositoryExerciseItem,
 } from '@/features/exercises/repository/api/contracts';
-import { extractPlainText } from '@/lib/tiptap/extract-text';
-import { parseTiptapDocument } from '@/lib/tiptap/parse-document';
 
 const emptyTotals = (): ExerciseAttemptTotals => ({
   incorrect: 0,
@@ -33,7 +25,7 @@ export async function listRepository(): Promise<GetExerciseRepositoryResponse> {
     const libraryRows = await db
       .select({
         exerciseId: exerciseLibraryItemsInApp.exerciseId,
-        prompt: exercisesInApp.prompt,
+        title: exercisesInApp.title,
         ownerProfileId: exercisesInApp.ownerProfileId,
       })
       .from(exerciseLibraryItemsInApp)
@@ -88,7 +80,7 @@ export async function listRepository(): Promise<GetExerciseRepositoryResponse> {
 
     const exercises: RepositoryExerciseItem[] = libraryRows.map((row) => ({
       id: row.exerciseId,
-      prompt: extractPlainText(parseTiptapDocument(row.prompt)),
+      title: row.title,
       topics: topicsByExercise.get(row.exerciseId) ?? [],
       attempts: attemptsByExercise.get(row.exerciseId) ?? emptyTotals(),
       canUnsave: row.ownerProfileId !== user.id,

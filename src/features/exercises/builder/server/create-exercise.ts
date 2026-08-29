@@ -1,12 +1,7 @@
 import 'server-only';
 
 import { db } from '@/lib/drizzle/client';
-import {
-  exerciseChoicesInApp,
-  exerciseLibraryItemsInApp,
-  exerciseTopicsInApp,
-  exercisesInApp,
-} from '@/lib/drizzle/schema';
+import { exerciseChoicesInApp, exerciseLibraryItemsInApp, exerciseTopicsInApp, exercisesInApp } from '@/lib/drizzle/schema';
 import { DatabaseError } from '@/lib/errors';
 import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
 import { validateExerciseInput } from '@/features/exercises/builder/server/validate-exercise-input';
@@ -22,6 +17,7 @@ export async function createExercise(input: CreateExerciseInput): Promise<Create
         .insert(exercisesInApp)
         .values({
           ownerProfileId: user.id,
+          title: input.title,
           prompt: input.prompt,
           explanation: input.explanation,
           sourceName: input.sourceName,

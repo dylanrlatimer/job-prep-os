@@ -7,8 +7,6 @@ import { DatabaseError } from '@/lib/errors';
 import { assertAdmin } from '@/features/auth/server/assert-admin';
 import type { ListSystemExercisesResponse, SystemExerciseListItem } from '@/features/admin/exercises/api/contracts';
 import type { ExerciseTopic } from '@/features/exercises/repository/api/contracts';
-import { extractPlainText } from '@/lib/tiptap/extract-text';
-import { parseTiptapDocument } from '@/lib/tiptap/parse-document';
 
 export async function listSystemExercises(): Promise<ListSystemExercisesResponse> {
   await assertAdmin();
@@ -17,7 +15,7 @@ export async function listSystemExercises(): Promise<ListSystemExercisesResponse
     const exerciseRows = await db
       .select({
         id: exercisesInApp.id,
-        prompt: exercisesInApp.prompt,
+        title: exercisesInApp.title,
         isPublic: exercisesInApp.isPublic,
         updatedAt: exercisesInApp.updatedAt,
       })
@@ -64,7 +62,7 @@ export async function listSystemExercises(): Promise<ListSystemExercisesResponse
 
     const exercises: SystemExerciseListItem[] = exerciseRows.map((row) => ({
       id: row.id,
-      prompt: extractPlainText(parseTiptapDocument(row.prompt)),
+      title: row.title,
       isPublic: row.isPublic,
       topics: topicsByExercise.get(row.id) ?? [],
       updatedAt: row.updatedAt,

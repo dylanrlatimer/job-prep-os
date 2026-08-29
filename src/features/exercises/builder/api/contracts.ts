@@ -67,7 +67,8 @@ const ExerciseChoiceInputSchema = z.object({
 
 export const ExerciseInputSchema = z
   .object({
-    prompt: requiredTiptapDocSchema('promptRequired'),
+    title: z.string().trim().min(1, { error: 'titleRequired' }).max(200),
+    prompt: requiredTiptapDocSchema('questionRequired'),
     explanation: optionalTiptapDocSchema,
     topicIds: z.array(z.uuid()),
     sourceName: optionalTrimmedText(200),
@@ -116,6 +117,7 @@ export type ExerciseChoiceResponse = {
 
 export type ExerciseResponse = {
   id: string;
+  title: string;
   prompt: JSONContent;
   explanation: JSONContent | null;
   topicIds: string[];
