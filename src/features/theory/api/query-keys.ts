@@ -7,4 +7,5 @@ export const theoryKeys = {
   practice: (id: string) => [...theoryKeys.all(), 'practice', id] as const,
   questionDetail: (id: string) => [...theoryKeys.all(), 'question-detail', id] as const,
   browse: () => [...theoryKeys.all(), 'browse'] as const,
+  browseQuestion: (id: string) => [...theoryKeys.browse(), 'question', id] as const,
 };

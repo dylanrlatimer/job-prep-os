@@ -45,3 +45,7 @@ export type CreateSystemQuestionResponse = {
 export type UpdateSystemQuestionResponse = {
   id: string;
 };
+
+export type DeleteSystemQuestionResponse = {
+  id: string;
+};

@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import type { RepositoryCategory } from '@/features/theory/repository/api/contracts';
 
 export type BrowseQuestionItem = {
@@ -15,4 +16,19 @@ export type GetBrowseResponse = {
 
 export type SaveBrowseQuestionResponse = {
   questionId: string;
+};
+
+export const BrowseQuestionDetailParamsSchema = z.object({
+  id: z.uuid(),
+});
+
+export type BrowseQuestionDetailResponse = {
+  id: string;
+  question: string;
+  answer: string;
+  categories: RepositoryCategory[];
+  sourceName: string | null;
+  sourceUrl: string | null;
+  isSaved: boolean;
+  isSystem: boolean;
 };

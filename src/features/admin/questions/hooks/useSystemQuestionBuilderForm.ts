@@ -6,7 +6,7 @@ import { useRouter } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { useAllowUnsavedNavigation } from '@/common/unsaved-changes/use-unsaved-changes-guard';
 import { invalidateAdminQuestionCaches } from '@/features/admin/api/invalidate-admin-caches';
-import { createSystemQuestion, updateSystemQuestion } from '@/features/admin/questions/api/mutations';
+import { createSystemQuestion, deleteSystemQuestion, updateSystemQuestion } from '@/features/admin/questions/api/mutations';
 import { systemQuestionQueryOptions } from '@/features/admin/questions/api/queries';
 import { SystemQuestionInputSchema, type SystemQuestionInput } from '@/features/admin/questions/api/contracts';
 import { builderMetadataQueryOptions } from '@/features/theory/builder/api/queries';
@@ -104,6 +104,15 @@ export function useSystemQuestionBuilderForm({ questionId }: UseSystemQuestionBu
     onSuccess: (response) => onSuccess(response.id),
   });
 
+  const { mutate: mutateDelete, isPending: isDeleting } = useMutation({
+    mutationFn: () => deleteSystemQuestion(questionId!),
+    onSuccess: async () => {
+      await invalidateAdminQuestionCaches(queryClient, questionId);
+      useToastStore.getState().addToast(t('deleteSuccess'), 'success');
+      allowNavigation(() => router.push('/admin/questions'));
+    },
+  });
+
   const isSubmitting = isCreating || isUpdating;
 
   const submit = useCallback((): SystemQuestionBuilderSubmitResult => {
@@ -153,6 +162,11 @@ export function useSystemQuestionBuilderForm({ questionId }: UseSystemQuestionBu
     });
   }, []);
 
+  const remove = useCallback(() => {
+    if (!isEdit || isDeleting) return;
+    mutateDelete();
+  }, [isDeleting, isEdit, mutateDelete]);
+
   const isLoading = metadataQuery.isPending || (isEdit && questionQuery.isPending);
   const isError = metadataQuery.isError || (isEdit && questionQuery.isError);
 
@@ -166,14 +180,16 @@ export function useSystemQuestionBuilderForm({ questionId }: UseSystemQuestionBu
       isLoading,
       isError,
       isSubmitting,
+      isDeleting,
       submit,
       setField,
       toggleCategory,
+      remove,
       refetch: () => {
         void metadataQuery.refetch();
         if (isEdit) void questionQuery.refetch();
       },
     }),
-    [fieldErrors, isDirty, isEdit, isError, isLoading, isSubmitting, metadataQuery, questionQuery, setField, submit, toggleCategory, values],
+    [fieldErrors, isDeleting, isDirty, isEdit, isError, isLoading, isSubmitting, metadataQuery, questionQuery, remove, setField, submit, toggleCategory, values],
   );
 }

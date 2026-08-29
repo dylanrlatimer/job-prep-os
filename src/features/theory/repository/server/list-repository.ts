@@ -21,6 +21,7 @@ export async function listRepository(): Promise<GetRepositoryResponse> {
       .select({
         questionId: theoryLibraryItemsInApp.questionId,
         question: theoryQuestionsInApp.question,
+        ownerProfileId: theoryQuestionsInApp.ownerProfileId,
       })
       .from(theoryLibraryItemsInApp)
       .innerJoin(theoryQuestionsInApp, eq(theoryLibraryItemsInApp.questionId, theoryQuestionsInApp.id))
@@ -77,6 +78,7 @@ export async function listRepository(): Promise<GetRepositoryResponse> {
       question: row.question,
       categories: categoriesByQuestion.get(row.questionId) ?? [],
       attempts: attemptsByQuestion.get(row.questionId) ?? emptyTotals(),
+      canUnsave: row.ownerProfileId !== user.id,
     }));
 
     const categories = [...categoryMap.values()].sort((a, b) => a.name.localeCompare(b.name));

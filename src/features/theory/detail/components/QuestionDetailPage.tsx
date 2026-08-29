@@ -1,14 +1,19 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
-import { Link } from '@/i18n/navigation';
+import { Link, useRouter } from '@/i18n/navigation';
 import AppShell from '@/common/components/AppShell';
-import { primaryButtonClassName, secondaryButtonClassName } from '@/common/styles/form';
+import ConfirmDialog from '@/common/components/ConfirmDialog';
+import { invalidateRepositoryCaches } from '@/features/theory/api/invalidate-repository-caches';
 import { questionDetailQueryOptions } from '@/features/theory/detail/api/queries';
+import { unsaveRepositoryQuestion } from '@/features/theory/repository/api/mutations';
 import type { PracticeAttemptResult } from '@/features/theory/practice/api/contracts';
 import QuestionDetailSkeleton from './QuestionDetailSkeleton';
+import { primaryButtonClassName, secondaryButtonClassName } from '@/common/styles/form';
+import { useToastStore } from '@/lib/store/use-toast-store';
 import { cn } from '@/lib/cn';
 
 type QuestionDetailPageProps = {
@@ -33,8 +38,21 @@ function resultLabelKey(result: PracticeAttemptResult) {
 
 export default function QuestionDetailPage({ questionId }: QuestionDetailPageProps) {
   const t = useTranslations('QuestionDetailPage');
+  const tRepo = useTranslations('TheoryRepositoryPage');
   const locale = useLocale();
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
   const { data, isPending, isError, refetch, isFetching } = useQuery(questionDetailQueryOptions(questionId));
+
+  const { mutate: removeQuestion, isPending: isRemoving } = useMutation({
+    mutationFn: () => unsaveRepositoryQuestion(questionId),
+    onSuccess: async () => {
+      await invalidateRepositoryCaches(queryClient, questionId);
+      useToastStore.getState().addToast(tRepo('removeSuccess'), 'success');
+      router.push('/');
+    },
+  });
 
   const formatDate = (value: string) =>
     new Date(value).toLocaleString(locale, {
@@ -160,7 +178,29 @@ export default function QuestionDetailPage({ questionId }: QuestionDetailPagePro
               </ul>
             )}
           </section>
+
+          {!data.isOwner ? (
+            <section className='border-t border-border pt-6'>
+              <h2 className='m-0 text-sm font-medium text-foreground'>{t('removeSectionTitle')}</h2>
+              <p className='mt-2 text-sm text-muted-foreground'>{t('removeSectionDescription')}</p>
+              <button type='button' className={cn(secondaryButtonClassName, 'mt-4')} onClick={() => setRemoveDialogOpen(true)} disabled={isRemoving}>
+                {isRemoving ? tRepo('removing') : tRepo('removeFromRepository')}
+              </button>
+            </section>
+          ) : null}
         </div>
+
+        <ConfirmDialog
+          open={removeDialogOpen}
+          title={tRepo('removeConfirmTitle')}
+          description={tRepo('removeConfirmDescription')}
+          cancelLabel={tRepo('removeCancel')}
+          confirmLabel={isRemoving ? tRepo('removing') : tRepo('removeFromRepository')}
+          confirmVariant='destructive'
+          isConfirming={isRemoving}
+          onCancel={() => setRemoveDialogOpen(false)}
+          onConfirm={removeQuestion}
+        />
       </div>
     </AppShell>
   );

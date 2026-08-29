@@ -42,7 +42,13 @@
     "noMatchesDescription": "Try a different search term or category filter.",
     "loadError": "Could not load your repository.",
     "retry": "Try again",
-    "retrying": "Retrying…"
+    "retrying": "Retrying…",
+    "removeFromRepository": "Remove",
+    "removing": "Removing…",
+    "removeSuccess": "Question removed from your repository.",
+    "removeCancel": "Cancel",
+    "removeConfirmTitle": "Remove from repository?",
+    "removeConfirmDescription": "This question will leave your repository. Your attempt history is kept, and you can add it again from Browse anytime."
   },
   "BrowsePage": {
     "title": "Browse questions",
@@ -66,6 +72,10 @@
     "loadError": "Could not load the question bank.",
     "retry": "Try again",
     "retrying": "Retrying…"
+  },
+  "BrowseQuestionDetailPage": {
+    "backToBrowse": "Back to browse",
+    "loadError": "Could not load this question."
   },
   "UnsavedChangesDialog": {
     "title": "Discard unsaved changes?",
@@ -124,7 +134,9 @@
     "retrying": "Retrying…",
     "resultIncorrect": "Incorrect",
     "resultPartial": "Partial",
-    "resultCorrect": "Correct"
+    "resultCorrect": "Correct",
+    "removeSectionTitle": "Remove from repository",
+    "removeSectionDescription": "Remove this question from your repository without deleting your attempt history. You can add it again from Browse anytime."
   },
   "PracticePage": {
     "title": "Practice",
@@ -208,6 +220,11 @@
     "saving": "Saving…",
     "createSuccess": "System question created.",
     "updateSuccess": "System question updated.",
+    "deleteQuestion": "Delete",
+    "deleteConfirmTitle": "Delete system question?",
+    "deleteConfirmDescription": "Users who saved this question will lose it from their library. This cannot be undone.",
+    "deleting": "Deleting…",
+    "deleteSuccess": "System question deleted.",
     "loadError": "Could not load the system question builder.",
     "retry": "Try again",
     "forbidden": "You do not have permission to access administration."
@@ -319,6 +336,7 @@
     "questionNotFound": "Question not found.",
     "questionForbidden": "You can only edit your own questions.",
     "questionNotInRepository": "This question is not in your repository.",
+    "cannotUnsaveOwnedQuestion": "You cannot remove your own questions from the repository.",
     "adminForbidden": "You do not have permission to access administration.",
     "categoryNotFound": "Category not found.",
     "categoryInUse": "This category is used by questions and cannot be deleted.",

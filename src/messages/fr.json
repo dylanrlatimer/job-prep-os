@@ -42,7 +42,13 @@
     "noMatchesDescription": "Essayez un autre terme de recherche ou un autre filtre de catégorie.",
     "loadError": "Impossible de charger vos questions.",
     "retry": "Réessayer",
-    "retrying": "Nouvelle tentative…"
+    "retrying": "Nouvelle tentative…",
+    "removeFromRepository": "Retirer",
+    "removing": "Retrait…",
+    "removeSuccess": "Question retirée de vos questions.",
+    "removeCancel": "Annuler",
+    "removeConfirmTitle": "Retirer de vos questions ?",
+    "removeConfirmDescription": "Cette question quittera vos questions enregistrées. Votre historique de tentatives est conservé, et vous pourrez la rajouter depuis la banque à tout moment."
   },
   "BrowsePage": {
     "title": "Parcourir les questions",
@@ -66,6 +72,10 @@
     "loadError": "Impossible de charger la banque de questions.",
     "retry": "Réessayer",
     "retrying": "Nouvelle tentative…"
+  },
+  "BrowseQuestionDetailPage": {
+    "backToBrowse": "Retour à la banque",
+    "loadError": "Impossible de charger cette question."
   },
   "UnsavedChangesDialog": {
     "title": "Abandonner les modifications ?",
@@ -124,7 +134,9 @@
     "retrying": "Nouvelle tentative…",
     "resultIncorrect": "Incorrect",
     "resultPartial": "Partiel",
-    "resultCorrect": "Correct"
+    "resultCorrect": "Correct",
+    "removeSectionTitle": "Retirer de vos questions",
+    "removeSectionDescription": "Retirez cette question de vos questions enregistrées sans supprimer votre historique de tentatives. Vous pourrez la rajouter depuis la banque à tout moment."
   },
   "PracticePage": {
     "title": "Pratique",
@@ -208,6 +220,11 @@
     "saving": "Enregistrement…",
     "createSuccess": "Question système créée.",
     "updateSuccess": "Question système mise à jour.",
+    "deleteQuestion": "Supprimer",
+    "deleteConfirmTitle": "Supprimer la question système ?",
+    "deleteConfirmDescription": "Les utilisateurs qui ont enregistré cette question la perdront de leur bibliothèque. Cette action est irréversible.",
+    "deleting": "Suppression…",
+    "deleteSuccess": "Question système supprimée.",
     "loadError": "Impossible de charger l'éditeur de questions système.",
     "retry": "Réessayer",
     "forbidden": "Vous n'avez pas accès à l'administration."
@@ -319,6 +336,7 @@
     "questionNotFound": "Question introuvable.",
     "questionForbidden": "Vous ne pouvez modifier que vos propres questions.",
     "questionNotInRepository": "Cette question n'est pas dans vos questions enregistrées.",
+    "cannotUnsaveOwnedQuestion": "Vous ne pouvez pas retirer vos propres questions de vos questions enregistrées.",
     "adminForbidden": "Vous n'avez pas accès à l'administration.",
     "categoryNotFound": "Catégorie introuvable.",
     "categoryInUse": "Cette catégorie est utilisée par des questions et ne peut pas être supprimée.",

@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 import AppShell from '@/common/components/AppShell';
 import Select from '@/common/components/Select';
 import { invalidateBrowseCaches } from '@/features/admin/api/invalidate-admin-caches';
@@ -31,7 +32,7 @@ function BrowseQuestionRow({ question }: { question: BrowseQuestionItem }) {
   const { mutate: saveQuestion, isPending } = useMutation({
     mutationFn: () => saveBrowseQuestion(question.id),
     onSuccess: async () => {
-      await invalidateBrowseCaches(queryClient);
+      await invalidateBrowseCaches(queryClient, question.id);
       useToastStore.getState().addToast(t('saveSuccess'), 'success');
     },
   });
@@ -40,7 +41,9 @@ function BrowseQuestionRow({ question }: { question: BrowseQuestionItem }) {
     <li className='border-b border-border py-4 last:border-b-0'>
       <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
         <div className='min-w-0 flex-1'>
-          <p className='m-0 text-sm leading-relaxed text-foreground'>{question.question}</p>
+          <Link href={`/browse/${question.id}`} className='text-sm leading-relaxed text-foreground no-underline hover:underline'>
+            {question.question}
+          </Link>
 
           <div className='mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs'>
             {question.isSystem ? <span className='text-secondary-foreground'>{t('systemQuestion')}</span> : null}

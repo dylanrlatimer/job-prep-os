@@ -1,15 +1,19 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import AppShell from '@/common/components/AppShell';
+import ConfirmDialog from '@/common/components/ConfirmDialog';
 import Select from '@/common/components/Select';
+import { invalidateRepositoryCaches } from '@/features/theory/api/invalidate-repository-caches';
+import { unsaveRepositoryQuestion } from '@/features/theory/repository/api/mutations';
 import { inputClassName, primaryButtonClassName, secondaryButtonClassName } from '@/common/styles/form';
 import { repositoryQueryOptions } from '@/features/theory/repository/api/queries';
 import type { RepositoryQuestionItem } from '@/features/theory/repository/api/contracts';
 import TheoryRepositorySkeleton from './TheoryRepositorySkeleton';
+import { useToastStore } from '@/lib/store/use-toast-store';
 import { cn } from '@/lib/cn';
 
 function matchesSearch(question: RepositoryQuestionItem, search: string) {
@@ -41,6 +45,17 @@ function AttemptTotals({ question }: { question: RepositoryQuestionItem }) {
 
 function QuestionRow({ question }: { question: RepositoryQuestionItem }) {
   const t = useTranslations('TheoryRepositoryPage');
+  const queryClient = useQueryClient();
+  const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
+
+  const { mutate: removeQuestion, isPending: isRemoving } = useMutation({
+    mutationFn: () => unsaveRepositoryQuestion(question.id),
+    onSuccess: async () => {
+      await invalidateRepositoryCaches(queryClient, question.id);
+      useToastStore.getState().addToast(t('removeSuccess'), 'success');
+      setRemoveDialogOpen(false);
+    },
+  });
 
   return (
     <li className='border-b border-border py-4 last:border-b-0'>
@@ -60,10 +75,29 @@ function QuestionRow({ question }: { question: RepositoryQuestionItem }) {
           </div>
         </div>
 
-        <Link href={`/theory/${question.id}/practice`} className={cn(secondaryButtonClassName, 'shrink-0 self-start sm:ml-4')}>
-          {t('practice')}
-        </Link>
+        <div className='flex shrink-0 flex-wrap gap-2 self-start sm:ml-4'>
+          {question.canUnsave ? (
+            <button type='button' className={secondaryButtonClassName} onClick={() => setRemoveDialogOpen(true)} disabled={isRemoving}>
+              {isRemoving ? t('removing') : t('removeFromRepository')}
+            </button>
+          ) : null}
+          <Link href={`/theory/${question.id}/practice`} className={primaryButtonClassName}>
+            {t('practice')}
+          </Link>
+        </div>
       </div>
+
+      <ConfirmDialog
+        open={removeDialogOpen}
+        title={t('removeConfirmTitle')}
+        description={t('removeConfirmDescription')}
+        cancelLabel={t('removeCancel')}
+        confirmLabel={isRemoving ? t('removing') : t('removeFromRepository')}
+        confirmVariant='destructive'
+        isConfirming={isRemoving}
+        onCancel={() => setRemoveDialogOpen(false)}
+        onConfirm={removeQuestion}
+      />
     </li>
   );
 }

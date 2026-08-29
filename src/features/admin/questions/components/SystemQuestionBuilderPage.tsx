@@ -3,10 +3,11 @@
 import type { SubmitEvent, ReactNode } from 'react';
 import { useMemo, useRef, useState } from 'react';
 import Fuse from 'fuse.js';
-import { ChevronLeft, Search } from 'lucide-react';
+import { ChevronLeft, Search, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import AppShell from '@/common/components/AppShell';
+import ConfirmDialog from '@/common/components/ConfirmDialog';
 import AdminGate from '@/features/admin/components/AdminGate';
 import { useValidationMessage } from '@/common/hooks/use-validation-message';
 import { inputClassName, primaryButtonClassName, secondaryButtonClassName, textareaClassName } from '@/common/styles/form';
@@ -74,7 +75,8 @@ function SystemQuestionBuilderContent({ questionId }: SystemQuestionBuilderPageP
   const t = useTranslations('AdminSystemQuestionBuilderPage');
   const formRef = useRef<HTMLFormElement>(null);
   const [categorySearch, setCategorySearch] = useState('');
-  const { isEdit, values, fieldErrors, isDirty, metadata, isLoading, isError, isSubmitting, submit, setField, toggleCategory, refetch } =
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const { isEdit, values, fieldErrors, isDirty, metadata, isLoading, isError, isSubmitting, isDeleting, submit, setField, toggleCategory, remove, refetch } =
     useSystemQuestionBuilderForm({ questionId });
 
   useUnsavedChangesGuard(isDirty && !isLoading && !isError);
@@ -126,8 +128,25 @@ function SystemQuestionBuilderContent({ questionId }: SystemQuestionBuilderPageP
         </Link>
 
         <header className='mt-4 border-b border-border pb-6'>
-          <h1 className='m-0 text-lg font-medium text-foreground'>{isEdit ? t('editTitle') : t('createTitle')}</h1>
-          <p className='mt-1 max-w-2xl text-sm text-muted-foreground'>{isEdit ? t('editDescription') : t('createDescription')}</p>
+          <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
+            <div className='min-w-0 flex-1'>
+              <h1 className='m-0 text-lg font-medium text-foreground'>{isEdit ? t('editTitle') : t('createTitle')}</h1>
+              <p className='mt-1 max-w-2xl text-sm text-muted-foreground'>{isEdit ? t('editDescription') : t('createDescription')}</p>
+            </div>
+
+            {isEdit ? (
+              <button
+                type='button'
+                className={cn(
+                  'inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-sm border border-destructive-border bg-destructive-subtle px-3 py-2 text-sm text-destructive-bright transition-colors hover:bg-destructive-subtle/80 disabled:cursor-not-allowed disabled:opacity-60',
+                )}
+                disabled={isDeleting}
+                onClick={() => setDeleteDialogOpen(true)}>
+                <Trash2 size={14} strokeWidth={1.75} aria-hidden='true' />
+                {isDeleting ? t('deleting') : t('deleteQuestion')}
+              </button>
+            ) : null}
+          </div>
         </header>
 
         <form ref={formRef} onSubmit={handleSubmit} noValidate className='mx-auto mt-8 max-w-2xl space-y-6'>
@@ -270,6 +289,18 @@ function SystemQuestionBuilderContent({ questionId }: SystemQuestionBuilderPageP
             </button>
           </div>
         </form>
+
+        <ConfirmDialog
+          open={deleteDialogOpen}
+          title={t('deleteConfirmTitle')}
+          description={t('deleteConfirmDescription')}
+          cancelLabel={t('cancel')}
+          confirmLabel={isDeleting ? t('deleting') : t('deleteQuestion')}
+          confirmVariant='destructive'
+          isConfirming={isDeleting}
+          onCancel={() => setDeleteDialogOpen(false)}
+          onConfirm={remove}
+        />
       </div>
     </AppShell>
   );

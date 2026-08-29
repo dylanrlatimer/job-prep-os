@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 export type RepositoryCategory = {
   id: string;
   name: string;
@@ -15,9 +17,18 @@ export type RepositoryQuestionItem = {
   question: string;
   categories: RepositoryCategory[];
   attempts: RepositoryAttemptTotals;
+  canUnsave: boolean;
 };
 
 export type GetRepositoryResponse = {
   questions: RepositoryQuestionItem[];
   categories: RepositoryCategory[];
+};
+
+export const UnsaveRepositoryQuestionParamsSchema = z.object({
+  id: z.uuid(),
+});
+
+export type UnsaveRepositoryQuestionResponse = {
+  questionId: string;
 };

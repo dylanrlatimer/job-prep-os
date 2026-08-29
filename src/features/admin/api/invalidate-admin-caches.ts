@@ -2,9 +2,10 @@ import type { QueryClient } from '@tanstack/react-query';
 import { adminKeys } from '@/features/admin/api/query-keys';
 import { theoryKeys } from '@/features/theory/api/query-keys';
 
-export async function invalidateBrowseCaches(queryClient: QueryClient) {
+export async function invalidateBrowseCaches(queryClient: QueryClient, questionId?: string) {
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: theoryKeys.browse(), refetchType: 'all' }),
+    questionId ? queryClient.invalidateQueries({ queryKey: theoryKeys.browseQuestion(questionId), refetchType: 'all' }) : Promise.resolve(),
     queryClient.invalidateQueries({ queryKey: theoryKeys.repository(), refetchType: 'all' }),
   ]);
 }
