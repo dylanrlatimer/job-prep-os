@@ -14,6 +14,6 @@ export const SignUpSchema = z.object({
 
 export type SignUpInput = z.infer<typeof SignUpSchema>;
 
-export type SessionUser = { id: string; email: string | null };
+export type SessionUser = { id: string; email: string | null; isAdmin: boolean };
 
 export type SessionResponse = { user: SessionUser | null };

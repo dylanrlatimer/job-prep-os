@@ -1,16 +1,166 @@
 'use client';
 
-import AppShell from '@/common/components/AppShell';
+import { useMemo, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
+import AppShell from '@/common/components/AppShell';
+import Select from '@/common/components/Select';
+import { invalidateBrowseCaches } from '@/features/admin/api/invalidate-admin-caches';
+import { saveBrowseQuestion } from '@/features/theory/browse/api/mutations';
+import { browseQueryOptions } from '@/features/theory/browse/api/queries';
+import type { BrowseQuestionItem } from '@/features/theory/browse/api/contracts';
+import TheoryRepositorySkeleton from '@/features/theory/repository/components/TheoryRepositorySkeleton';
+import { inputClassName, secondaryButtonClassName } from '@/common/styles/form';
+import { useToastStore } from '@/lib/store/use-toast-store';
+import { cn } from '@/lib/cn';
+
+function matchesSearch(question: BrowseQuestionItem, search: string) {
+  if (!search) return true;
+  return question.question.toLowerCase().includes(search.toLowerCase());
+}
+
+function matchesCategory(question: BrowseQuestionItem, categoryId: string | null) {
+  if (!categoryId) return true;
+  return question.categories.some((category) => category.id === categoryId);
+}
+
+function BrowseQuestionRow({ question }: { question: BrowseQuestionItem }) {
+  const t = useTranslations('BrowsePage');
+  const queryClient = useQueryClient();
+
+  const { mutate: saveQuestion, isPending } = useMutation({
+    mutationFn: () => saveBrowseQuestion(question.id),
+    onSuccess: async () => {
+      await invalidateBrowseCaches(queryClient);
+      useToastStore.getState().addToast(t('saveSuccess'), 'success');
+    },
+  });
+
+  return (
+    <li className='border-b border-border py-4 last:border-b-0'>
+      <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
+        <div className='min-w-0 flex-1'>
+          <p className='m-0 text-sm leading-relaxed text-foreground'>{question.question}</p>
+
+          <div className='mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs'>
+            {question.isSystem ? <span className='text-secondary-foreground'>{t('systemQuestion')}</span> : null}
+            {question.categories.length > 0 ? (
+              <span className='text-secondary-foreground'>{question.categories.map((category) => category.name).join(' · ')}</span>
+            ) : (
+              <span className='text-muted-foreground'>{t('uncategorized')}</span>
+            )}
+            {question.isSaved ? <span className='text-muted-foreground'>{t('saved')}</span> : null}
+          </div>
+        </div>
+
+        <button
+          type='button'
+          className={cn(secondaryButtonClassName, 'shrink-0 self-start sm:ml-4')}
+          onClick={() => saveQuestion()}
+          disabled={question.isSaved || isPending}>
+          {question.isSaved ? t('saved') : isPending ? t('saving') : t('addToRepository')}
+        </button>
+      </div>
+    </li>
+  );
+}
 
 export default function BrowsePage() {
   const t = useTranslations('BrowsePage');
+  const { data, isPending, isError, refetch, isFetching } = useQuery(browseQueryOptions);
+
+  const [search, setSearch] = useState('');
+  const [categoryId, setCategoryId] = useState<string | null>(null);
+
+  const filteredQuestions = useMemo(() => {
+    if (!data) return [];
+    return data.questions.filter((question) => matchesSearch(question, search) && matchesCategory(question, categoryId));
+  }, [categoryId, data, search]);
+
+  const categoryOptions = useMemo(() => {
+    if (!data) return [{ value: '', label: t('allCategories') }];
+    return [{ value: '', label: t('allCategories') }, ...data.categories.map((category) => ({ value: category.id, label: category.name }))];
+  }, [data, t]);
+
+  if (isPending) {
+    return (
+      <AppShell>
+        <TheoryRepositorySkeleton />
+      </AppShell>
+    );
+  }
+
+  if (isError || !data) {
+    return (
+      <AppShell>
+        <div className='px-4 py-8 md:px-8'>
+          <h1 className='m-0 text-lg font-medium text-foreground'>{t('title')}</h1>
+          <p className='mt-2 text-sm text-muted-foreground'>{t('loadError')}</p>
+          <button type='button' className={cn(secondaryButtonClassName, 'mt-4')} onClick={() => refetch()} disabled={isFetching}>
+            {isFetching ? t('retrying') : t('retry')}
+          </button>
+        </div>
+      </AppShell>
+    );
+  }
+
+  const isEmpty = data.questions.length === 0;
+  const hasNoMatches = !isEmpty && filteredQuestions.length === 0;
 
   return (
     <AppShell>
       <div className='px-4 py-8 md:px-8'>
-        <h1 className='m-0 text-lg font-medium text-foreground'>{t('title')}</h1>
-        <p className='mt-1 max-w-2xl text-sm text-muted-foreground'>{t('description')}</p>
+        <header className='border-b border-border pb-6'>
+          <h1 className='m-0 text-lg font-medium text-foreground'>{t('title')}</h1>
+          <p className='mt-1 max-w-2xl text-sm text-muted-foreground'>{t('description')}</p>
+        </header>
+
+        {!isEmpty && (
+          <div className='mt-6 flex flex-col gap-3 sm:flex-row sm:items-center'>
+            <label className='block flex-1'>
+              <span className='sr-only'>{t('searchLabel')}</span>
+              <input
+                className={inputClassName}
+                type='search'
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder={t('searchPlaceholder')}
+              />
+            </label>
+
+            {data.categories.length > 0 && (
+              <Select
+                className='w-full sm:w-44'
+                aria-label={t('categoryFilterLabel')}
+                value={categoryId ?? ''}
+                onValueChange={(value) => setCategoryId(value || null)}
+                options={categoryOptions}
+              />
+            )}
+          </div>
+        )}
+
+        <p className='mt-4 border-b border-border pb-4 text-xs text-muted-foreground'>
+          {isEmpty ? t('questionCountEmpty') : t('questionCount', { count: data.questions.length })}
+        </p>
+
+        {isEmpty ? (
+          <div className='py-12'>
+            <p className='m-0 text-sm text-foreground'>{t('emptyTitle')}</p>
+            <p className='mt-1 text-sm text-muted-foreground'>{t('emptyDescription')}</p>
+          </div>
+        ) : hasNoMatches ? (
+          <div className='py-12'>
+            <p className='m-0 text-sm text-foreground'>{t('noMatchesTitle')}</p>
+            <p className='mt-1 text-sm text-muted-foreground'>{t('noMatchesDescription')}</p>
+          </div>
+        ) : (
+          <ul className='m-0 list-none p-0'>
+            {filteredQuestions.map((question) => (
+              <BrowseQuestionRow key={question.id} question={question} />
+            ))}
+          </ul>
+        )}
       </div>
     </AppShell>
   );

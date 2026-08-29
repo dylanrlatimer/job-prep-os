@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { asc } from 'drizzle-orm';
+import { asc, eq } from 'drizzle-orm';
 import { db } from '@/lib/drizzle/client';
 import { theoryCategoriesInApp } from '@/lib/drizzle/schema';
 import { DatabaseError } from '@/lib/errors';
@@ -18,6 +18,7 @@ export async function getBuilderMetadata(): Promise<BuilderMetadataResponse> {
         slug: theoryCategoriesInApp.slug,
       })
       .from(theoryCategoriesInApp)
+      .where(eq(theoryCategoriesInApp.isActive, true))
       .orderBy(asc(theoryCategoriesInApp.name));
 
     return { categories };

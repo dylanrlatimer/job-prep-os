@@ -1,0 +1,57 @@
+import 'server-only';
+
+import { eq } from 'drizzle-orm';
+import { db } from '@/lib/drizzle/client';
+import { theoryCategoriesInApp } from '@/lib/drizzle/schema';
+import { DatabaseError, ValidationError } from '@/lib/errors';
+import { slugify } from '@/common/lib/slugify';
+import { assertAdmin } from '@/features/auth/server/assert-admin';
+import type { CategoryInput, CreateCategoryResponse } from '@/features/admin/categories/api/contracts';
+
+async function uniqueSlug(baseSlug: string) {
+  let slug = baseSlug;
+  let suffix = 2;
+
+  while (true) {
+    const [existing] = await db.select({ id: theoryCategoriesInApp.id }).from(theoryCategoriesInApp).where(eq(theoryCategoriesInApp.slug, slug)).limit(1);
+
+    if (!existing) {
+      return slug;
+    }
+
+    slug = `${baseSlug}-${suffix}`;
+    suffix += 1;
+  }
+}
+
+export async function createCategory(input: CategoryInput): Promise<CreateCategoryResponse> {
+  await assertAdmin();
+
+  const baseSlug = slugify(input.name);
+  if (!baseSlug) {
+    throw new ValidationError('categoryNameRequired');
+  }
+
+  try {
+    const slug = await uniqueSlug(baseSlug);
+
+    const [created] = await db
+      .insert(theoryCategoriesInApp)
+      .values({
+        name: input.name,
+        slug,
+      })
+      .returning({ id: theoryCategoriesInApp.id });
+
+    if (!created) {
+      throw new DatabaseError('DATABASE_ERROR');
+    }
+
+    return { id: created.id };
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      throw error;
+    }
+    throw new DatabaseError('DATABASE_ERROR', { cause: error });
+  }
+}

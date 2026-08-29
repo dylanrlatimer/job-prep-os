@@ -546,7 +546,9 @@ export const theoryCategoriesInApp = app.table("theory_categories", {
 	slug: text().notNull(),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	isActive: boolean("is_active").default(true).notNull(),
 }, (table) => [
+	index("theory_categories_active_idx").using("btree", table.isActive.asc().nullsLast().op("bool_ops")).where(sql`(is_active = true)`),
 	unique("theory_categories_name_key").on(table.name),
 	unique("theory_categories_slug_key").on(table.slug),
 	check("theory_categories_name_check", sql`length(btrim(name)) > 0`),

@@ -26,6 +26,6 @@ export function apiPatch<T>(url: string, payload: unknown): Promise<T> {
   });
 }
 
-export function apiDelete(url: string): Promise<void> {
-  return apiRequest<void>(url, { method: 'DELETE' });
+export function apiDelete<T = void>(url: string): Promise<T> {
+  return apiRequest<T>(url, { method: 'DELETE' });
 }
