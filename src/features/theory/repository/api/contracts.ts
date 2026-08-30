@@ -4,6 +4,7 @@ export type RepositoryTopic = {
   id: string;
   name: string;
   slug: string;
+  iconKey: string | null;
 };
 
 export type RepositoryAttemptTotals = {

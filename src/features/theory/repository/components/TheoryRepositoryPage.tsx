@@ -7,6 +7,7 @@ import { Link } from '@/i18n/navigation';
 import AppShell from '@/common/components/AppShell';
 import ConfirmDialog from '@/common/components/ConfirmDialog';
 import Select from '@/common/components/Select';
+import TopicList from '@/common/components/TopicList';
 import { invalidateRepositoryCaches } from '@/features/theory/api/invalidate-repository-caches';
 import { unsaveRepositoryQuestion } from '@/features/theory/repository/api/mutations';
 import { inputClassName, primaryButtonClassName, secondaryButtonClassName } from '@/common/styles/form';
@@ -76,7 +77,7 @@ function QuestionRow({ question }: { question: RepositoryQuestionItem }) {
 
           <div className='mt-2 flex flex-wrap items-center gap-x-3 gap-y-1'>
             {question.topics.length > 0 ? (
-              <span className='text-xs text-secondary-foreground'>{question.topics.map((topic) => topic.name).join(' · ')}</span>
+              <TopicList className='text-xs text-secondary-foreground' topics={question.topics} />
             ) : (
               <span className='text-xs text-muted-foreground'>{t('noTopics')}</span>
             )}

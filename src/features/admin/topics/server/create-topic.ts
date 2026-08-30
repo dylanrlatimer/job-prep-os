@@ -40,6 +40,7 @@ export async function createTopic(input: TopicInput): Promise<CreateTopicRespons
       .values({
         name: input.name,
         slug,
+        iconKey: input.iconKey,
       })
       .returning({ id: topicsInApp.id });
 

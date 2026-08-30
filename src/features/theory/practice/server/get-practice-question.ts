@@ -34,13 +34,14 @@ export async function getPracticeQuestion(id: string): Promise<PracticeQuestionR
         id: topicsInApp.id,
         name: topicsInApp.name,
         slug: topicsInApp.slug,
+        iconKey: topicsInApp.iconKey,
       })
       .from(theoryQuestionTopicsInApp)
       .innerJoin(topicsInApp, eq(theoryQuestionTopicsInApp.topicId, topicsInApp.id))
       .where(eq(theoryQuestionTopicsInApp.questionId, id));
 
     const topics: RepositoryTopic[] = topicRows
-      .map((row) => ({ id: row.id, name: row.name, slug: row.slug }))
+      .map((row) => ({ id: row.id, name: row.name, slug: row.slug, iconKey: row.iconKey }))
       .sort((a, b) => a.name.localeCompare(b.name));
 
     return {

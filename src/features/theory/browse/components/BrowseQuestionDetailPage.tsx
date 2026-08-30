@@ -5,6 +5,7 @@ import { ChevronLeft } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import AppShell from '@/common/components/AppShell';
+import TopicList from '@/common/components/TopicList';
 import { invalidateBrowseCaches } from '@/features/admin/api/invalidate-admin-caches';
 import { saveBrowseQuestion } from '@/features/theory/browse/api/mutations';
 import { browseQuestionDetailQueryOptions } from '@/features/theory/browse/api/queries';
@@ -71,7 +72,7 @@ export default function BrowseQuestionDetailPage({ questionId }: BrowseQuestionD
               <div className='mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs'>
                 {data.isSystem ? <span className='text-secondary-foreground'>{tBrowse('appLabel')}</span> : null}
                 {data.topics.length > 0 ? (
-                  <span className='text-secondary-foreground'>{data.topics.map((topic) => topic.name).join(' · ')}</span>
+                  <TopicList className='text-secondary-foreground' topics={data.topics} />
                 ) : (
                   <span className='text-muted-foreground'>{tDetail('noTopics')}</span>
                 )}

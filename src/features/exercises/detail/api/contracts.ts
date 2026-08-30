@@ -26,6 +26,7 @@ export type ExerciseDetailTopic = {
   id: string;
   name: string;
   slug: string;
+  iconKey: string | null;
 };
 
 export type ExerciseDetailResponse = {

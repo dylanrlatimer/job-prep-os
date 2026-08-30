@@ -8,8 +8,12 @@ import { Link } from '@/i18n/navigation';
 import AppShell from '@/common/components/AppShell';
 import AdminGate from '@/features/admin/components/AdminGate';
 import { useValidationMessage } from '@/common/hooks/use-validation-message';
+import Select from '@/common/components/Select';
+import TopicIcon from '@/common/components/TopicIcon';
 import { inputClassName, primaryButtonClassName, secondaryButtonClassName } from '@/common/styles/form';
+import { isTopicIconKey, TOPIC_ICON_KEYS, TOPIC_ICON_LABELS } from '@/common/topics/icon-keys';
 import { topicBuilderFieldOrder, useTopicBuilderForm } from '@/features/admin/topics/hooks/useTopicBuilderForm';
+import { hardcoded } from '@/utils/hardcoded';
 import { scrollToFirstFormError } from '@/common/lib/scroll-to-first-form-error';
 import { useFormGuard } from '@/common/form/use-form-guard';
 import { cn } from '@/lib/cn';
@@ -107,6 +111,14 @@ function TopicBuilderContent({ topicId }: TopicBuilderPageProps) {
   }
 
   const canDelete = isEdit && questionCount === 0 && exerciseCount === 0;
+  const iconOptions = [
+    { value: '', label: t('iconNone') },
+    ...TOPIC_ICON_KEYS.map((key) => ({
+      value: key,
+      label: hardcoded(TOPIC_ICON_LABELS[key]),
+      icon: <TopicIcon iconKey={key} />,
+    })),
+  ];
 
   return (
     <AppShell>
@@ -134,6 +146,16 @@ function TopicBuilderContent({ topicId }: TopicBuilderPageProps) {
               placeholder={t('namePlaceholder')}
             />
           </Field>
+
+          <div data-field='iconKey'>
+            <p className='m-0 mb-1.5 text-xs text-secondary-foreground'>{t('iconLabel')}</p>
+            <Select
+              aria-label={t('iconLabel')}
+              value={values.iconKey ?? ''}
+              onValueChange={(value) => setField('iconKey', isTopicIconKey(value) ? value : null)}
+              options={iconOptions}
+            />
+          </div>
 
           {isEdit ? (
             <>

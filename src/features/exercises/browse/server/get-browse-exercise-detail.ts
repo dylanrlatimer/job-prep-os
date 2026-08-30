@@ -36,12 +36,15 @@ export async function getBrowseExerciseDetail(exerciseId: string): Promise<Brows
         id: topicsInApp.id,
         name: topicsInApp.name,
         slug: topicsInApp.slug,
+        iconKey: topicsInApp.iconKey,
       })
       .from(exerciseTopicsInApp)
       .innerJoin(topicsInApp, eq(exerciseTopicsInApp.topicId, topicsInApp.id))
       .where(eq(exerciseTopicsInApp.exerciseId, exerciseId));
 
-    const topics: ExerciseTopic[] = topicRows.map((row) => ({ id: row.id, name: row.name, slug: row.slug })).sort((a, b) => a.name.localeCompare(b.name));
+    const topics: ExerciseTopic[] = topicRows
+      .map((row) => ({ id: row.id, name: row.name, slug: row.slug, iconKey: row.iconKey }))
+      .sort((a, b) => a.name.localeCompare(b.name));
 
     const [savedRow] = await db
       .select({ exerciseId: exerciseLibraryItemsInApp.exerciseId })

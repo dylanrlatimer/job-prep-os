@@ -6,6 +6,7 @@ import { ChevronLeft } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import AppShell from '@/common/components/AppShell';
+import TopicList from '@/common/components/TopicList';
 import AttemptTotals from '@/common/components/AttemptTotals';
 import TiptapRenderer from '@/common/components/TiptapRenderer';
 import { exerciseDetailQueryOptions } from '@/features/exercises/detail/api/queries';
@@ -78,7 +79,7 @@ export default function ExerciseDetailPage({ exerciseId }: ExerciseDetailPagePro
 
               <div className='mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs'>
                 {data.topics.length > 0 ? (
-                  <span className='text-secondary-foreground'>{data.topics.map((topic) => topic.name).join(' · ')}</span>
+                  <TopicList className='text-secondary-foreground' topics={data.topics} />
                 ) : (
                   <span className='text-muted-foreground'>{t('noTopics')}</span>
                 )}

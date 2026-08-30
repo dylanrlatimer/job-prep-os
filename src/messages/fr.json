@@ -499,6 +499,8 @@
     "backToList": "Retour aux sujets",
     "nameLabel": "Nom",
     "namePlaceholder": "p. ex. React, PostgreSQL",
+    "iconLabel": "Icône",
+    "iconNone": "Aucune",
     "slugLabel": "Identifiant",
     "usageLabel": "Utilisation",
     "questionCount": "{count, plural, one {# question} other {# questions}}",

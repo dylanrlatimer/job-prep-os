@@ -36,12 +36,15 @@ export async function getBrowseQuestionDetail(questionId: string): Promise<Brows
         id: topicsInApp.id,
         name: topicsInApp.name,
         slug: topicsInApp.slug,
+        iconKey: topicsInApp.iconKey,
       })
       .from(theoryQuestionTopicsInApp)
       .innerJoin(topicsInApp, eq(theoryQuestionTopicsInApp.topicId, topicsInApp.id))
       .where(eq(theoryQuestionTopicsInApp.questionId, questionId));
 
-    const topics: RepositoryTopic[] = topicRows.map((row) => ({ id: row.id, name: row.name, slug: row.slug })).sort((a, b) => a.name.localeCompare(b.name));
+    const topics: RepositoryTopic[] = topicRows
+      .map((row) => ({ id: row.id, name: row.name, slug: row.slug, iconKey: row.iconKey }))
+      .sort((a, b) => a.name.localeCompare(b.name));
 
     const [savedRow] = await db
       .select({ questionId: theoryLibraryItemsInApp.questionId })

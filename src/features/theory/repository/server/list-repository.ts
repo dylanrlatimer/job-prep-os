@@ -41,6 +41,7 @@ export async function listRepository(): Promise<GetRepositoryResponse> {
         id: topicsInApp.id,
         name: topicsInApp.name,
         slug: topicsInApp.slug,
+        iconKey: topicsInApp.iconKey,
       })
       .from(theoryQuestionTopicsInApp)
       .innerJoin(topicsInApp, eq(theoryQuestionTopicsInApp.topicId, topicsInApp.id))
@@ -58,7 +59,7 @@ export async function listRepository(): Promise<GetRepositoryResponse> {
     const topicMap = new Map<string, RepositoryTopic>();
 
     for (const row of topicRows) {
-      const topic = { id: row.id, name: row.name, slug: row.slug };
+      const topic = { id: row.id, name: row.name, slug: row.slug, iconKey: row.iconKey };
       topicMap.set(topic.id, topic);
 
       const existing = topicsByQuestion.get(row.questionId) ?? [];

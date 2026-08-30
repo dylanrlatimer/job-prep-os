@@ -8,6 +8,7 @@ import { ChevronLeft, Plus, Search, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import AppShell from '@/common/components/AppShell';
+import TopicIcon from '@/common/components/TopicIcon';
 import TypeToConfirmDialog from '@/common/components/TypeToConfirmDialog';
 import { useValidationMessage } from '@/common/hooks/use-validation-message';
 import { inputClassName, primaryButtonClassName, secondaryButtonClassName } from '@/common/styles/form';
@@ -371,7 +372,10 @@ export default function ExerciseBuilderPage({ exerciseId }: ExerciseBuilderPageP
                                 checked={checked}
                                 onChange={() => toggleTopic(topic.id)}
                               />
-                              <span className='text-foreground'>{topic.name}</span>
+                              <span className='inline-flex items-center gap-1.5 text-foreground'>
+                                <TopicIcon iconKey={topic.iconKey} />
+                                <span className='-translate-y-px'>{topic.name}</span>
+                              </span>
                             </label>
                           </li>
                         );

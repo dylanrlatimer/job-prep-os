@@ -7,6 +7,7 @@ import { Link } from '@/i18n/navigation';
 import AppShell from '@/common/components/AppShell';
 import ConfirmDialog from '@/common/components/ConfirmDialog';
 import Select from '@/common/components/Select';
+import TopicList from '@/common/components/TopicList';
 import { invalidateExerciseCaches } from '@/features/exercises/api/invalidate-caches';
 import { unsaveExercise } from '@/features/exercises/repository/api/mutations';
 import { inputClassName, primaryButtonClassName, secondaryButtonClassName } from '@/common/styles/form';
@@ -76,7 +77,7 @@ function ExerciseRow({ exercise }: { exercise: RepositoryExerciseItem }) {
 
           <div className='mt-2 flex flex-wrap items-center gap-x-3 gap-y-1'>
             {exercise.topics.length > 0 ? (
-              <span className='text-xs text-secondary-foreground'>{exercise.topics.map((topic) => topic.name).join(' · ')}</span>
+              <TopicList className='text-xs text-secondary-foreground' topics={exercise.topics} />
             ) : (
               <span className='text-xs text-muted-foreground'>{t('noTopics')}</span>
             )}

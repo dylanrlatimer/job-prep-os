@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import AppShell from '@/common/components/AppShell';
 import Select from '@/common/components/Select';
+import TopicList from '@/common/components/TopicList';
 import AdminGate from '@/features/admin/components/AdminGate';
 import { systemQuestionsQueryOptions } from '@/features/admin/questions/api/queries';
 import type { SystemQuestionListItem } from '@/features/admin/questions/api/contracts';
@@ -49,9 +50,7 @@ function AdminQuestionsContent() {
 
   const filteredQuestions = useMemo(() => {
     if (!data) return [];
-    return data.questions.filter(
-      (question) => matchesSearch(question, search) && matchesTopic(question, topicId) && matchesPublication(question, publication),
-    );
+    return data.questions.filter((question) => matchesSearch(question, search) && matchesTopic(question, topicId) && matchesPublication(question, publication));
   }, [topicId, data, publication, search]);
 
   const topicOptions = useMemo(() => {
@@ -169,7 +168,7 @@ function AdminQuestionsContent() {
                     <div className='mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs'>
                       <span className={question.isPublic ? 'text-success' : 'text-muted-foreground'}>{question.isPublic ? t('published') : t('draft')}</span>
                       {question.topics.length > 0 ? (
-                        <span className='text-secondary-foreground'>{question.topics.map((topic) => topic.name).join(' · ')}</span>
+                        <TopicList className='text-secondary-foreground' topics={question.topics} />
                       ) : (
                         <span className='text-muted-foreground'>{t('noTopics')}</span>
                       )}

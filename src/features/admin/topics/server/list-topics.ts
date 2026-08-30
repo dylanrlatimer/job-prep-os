@@ -16,6 +16,7 @@ export async function listAdminTopics(): Promise<ListAdminTopicsResponse> {
         id: topicsInApp.id,
         name: topicsInApp.name,
         slug: topicsInApp.slug,
+        iconKey: topicsInApp.iconKey,
         isActive: topicsInApp.isActive,
       })
       .from(topicsInApp)

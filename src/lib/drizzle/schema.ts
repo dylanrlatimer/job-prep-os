@@ -610,6 +610,7 @@ export const topicsInApp = app.table("topics", {
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	isActive: boolean("is_active").default(true).notNull(),
+	iconKey: text("icon_key"),
 }, (table) => [
 	index("topics_active_idx").using("btree", table.isActive.asc().nullsLast().op("bool_ops")).where(sql`(is_active = true)`),
 	unique("topics_name_key").on(table.name),

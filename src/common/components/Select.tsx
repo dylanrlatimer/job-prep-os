@@ -7,6 +7,7 @@ import { cn } from '@/lib/cn';
 export type SelectOption = {
   value: string;
   label: string;
+  icon?: React.ReactNode;
 };
 
 type SelectProps = {
@@ -18,14 +19,7 @@ type SelectProps = {
   'aria-label'?: string;
 };
 
-export default function Select({
-  value,
-  onValueChange,
-  options,
-  className,
-  placement = 'bottom',
-  'aria-label': ariaLabel,
-}: SelectProps) {
+export default function Select({ value, onValueChange, options, className, placement = 'bottom', 'aria-label': ariaLabel }: SelectProps) {
   const listboxId = useId();
   const containerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
@@ -122,7 +116,10 @@ export default function Select({
           'hover:border-tertiary-foreground focus:border-tertiary-foreground focus:outline-none',
           open && 'border-tertiary-foreground',
         )}>
-        <span className='truncate'>{displayLabel}</span>
+        <span className='flex min-w-0 items-center gap-2'>
+          {selectedOption?.icon ? <span className='shrink-0 text-secondary-foreground'>{selectedOption.icon}</span> : null}
+          <span className='truncate'>{displayLabel}</span>
+        </span>
         <ChevronDown
           size={14}
           strokeWidth={1.75}
@@ -159,7 +156,10 @@ export default function Select({
                   isHighlighted ? 'bg-card-muted text-foreground' : 'text-foreground',
                   isSelected && !isHighlighted && 'text-foreground',
                 )}>
-                <span className='truncate'>{option.label}</span>
+                <span className='flex min-w-0 items-center gap-2'>
+                  {option.icon ? <span className='shrink-0 text-secondary-foreground'>{option.icon}</span> : null}
+                  <span className='truncate'>{option.label}</span>
+                </span>
                 {isSelected ? <Check size={14} strokeWidth={1.75} aria-hidden='true' className='shrink-0 text-muted-foreground' /> : null}
               </li>
             );

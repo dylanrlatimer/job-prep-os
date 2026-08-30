@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl';
 import { useReleaseUnsavedGuard } from '@/common/unsaved-changes/use-unsaved-changes-guard';
 import { useSnapshotForm } from '@/common/form/use-snapshot-form';
 import { invalidateAdminTopicCaches } from '@/features/admin/api/invalidate-admin-caches';
+import { isTopicIconKey, type TopicIconKey } from '@/common/topics/icon-keys';
 import { TopicInputSchema, UpdateTopicSchema, type TopicInput, type UpdateTopicInput } from '@/features/admin/topics/api/contracts';
 import { createTopic, deleteTopic, updateTopic } from '@/features/admin/topics/api/mutations';
 import { topicQueryOptions } from '@/features/admin/topics/api/queries';
@@ -14,24 +15,26 @@ import { useToastStore } from '@/lib/store/use-toast-store';
 
 export type TopicFormValues = {
   name: string;
+  iconKey: TopicIconKey | null;
   isActive: boolean;
 };
 
 const emptyValues: TopicFormValues = {
   name: '',
+  iconKey: null,
   isActive: true,
 };
 
 function toCreateInput(values: TopicFormValues): TopicInput {
-  return { name: values.name };
+  return { name: values.name, iconKey: values.iconKey };
 }
 
 function toUpdateInput(values: TopicFormValues): UpdateTopicInput {
-  return { name: values.name, isActive: values.isActive };
+  return { name: values.name, isActive: values.isActive, iconKey: values.iconKey };
 }
 
 function areTopicFormValuesEqual(left: TopicFormValues, right: TopicFormValues) {
-  return left.name === right.name && left.isActive === right.isActive;
+  return left.name === right.name && left.iconKey === right.iconKey && left.isActive === right.isActive;
 }
 
 function mapZodFieldErrors(error: { issues: Array<{ path: PropertyKey[]; message: string }> }) {
@@ -53,7 +56,7 @@ type UseTopicBuilderFormOptions = {
 
 export type TopicBuilderSubmitResult = { ok: true } | { ok: false; fieldErrors: Partial<Record<keyof TopicFormValues, string>> };
 
-export const topicBuilderFieldOrder = ['name'] as const;
+export const topicBuilderFieldOrder = ['name', 'iconKey'] as const;
 
 export function useTopicBuilderForm({ topicId }: UseTopicBuilderFormOptions) {
   const t = useTranslations('AdminTopicBuilderPage');
@@ -77,6 +80,7 @@ export function useTopicBuilderForm({ topicId }: UseTopicBuilderFormOptions) {
 
     return {
       name: topicQuery.data.name,
+      iconKey: isTopicIconKey(topicQuery.data.iconKey) ? topicQuery.data.iconKey : null,
       isActive: topicQuery.data.isActive,
     };
   }, [topicQuery.data]);
@@ -196,21 +200,6 @@ export function useTopicBuilderForm({ topicId }: UseTopicBuilderFormOptions) {
         if (isEdit) void topicQuery.refetch();
       },
     }),
-    [
-      exerciseCount,
-      fieldErrors,
-      form,
-      isDataError,
-      isDataLoading,
-      isDeleting,
-      isEdit,
-      isSubmitting,
-      questionCount,
-      remove,
-      setField,
-      slug,
-      submit,
-      topicQuery,
-    ],
+    [exerciseCount, fieldErrors, form, isDataError, isDataLoading, isDeleting, isEdit, isSubmitting, questionCount, remove, setField, slug, submit, topicQuery],
   );
 }

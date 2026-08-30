@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import AppShell from '@/common/components/AppShell';
 import Select from '@/common/components/Select';
+import TopicList from '@/common/components/TopicList';
 import AdminGate from '@/features/admin/components/AdminGate';
 import { systemExercisesQueryOptions } from '@/features/admin/exercises/api/queries';
 import type { SystemExerciseListItem } from '@/features/admin/exercises/api/contracts';
@@ -167,7 +168,7 @@ function AdminExercisesContent() {
                     <div className='mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs'>
                       <span className={exercise.isPublic ? 'text-success' : 'text-muted-foreground'}>{exercise.isPublic ? t('published') : t('draft')}</span>
                       {exercise.topics.length > 0 ? (
-                        <span className='text-secondary-foreground'>{exercise.topics.map((topic) => topic.name).join(' · ')}</span>
+                        <TopicList className='text-secondary-foreground' topics={exercise.topics} />
                       ) : (
                         <span className='text-muted-foreground'>{t('noTopics')}</span>
                       )}

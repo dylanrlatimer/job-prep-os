@@ -30,6 +30,7 @@ export async function listSystemQuestions(): Promise<ListSystemQuestionsResponse
           id: topicsInApp.id,
           name: topicsInApp.name,
           slug: topicsInApp.slug,
+          iconKey: topicsInApp.iconKey,
         })
         .from(topicsInApp);
 
@@ -44,6 +45,7 @@ export async function listSystemQuestions(): Promise<ListSystemQuestionsResponse
         id: topicsInApp.id,
         name: topicsInApp.name,
         slug: topicsInApp.slug,
+        iconKey: topicsInApp.iconKey,
       })
       .from(theoryQuestionTopicsInApp)
       .innerJoin(topicsInApp, eq(theoryQuestionTopicsInApp.topicId, topicsInApp.id))
@@ -53,7 +55,7 @@ export async function listSystemQuestions(): Promise<ListSystemQuestionsResponse
     const topicMap = new Map<string, RepositoryTopic>();
 
     for (const row of topicRows) {
-      const topic = { id: row.id, name: row.name, slug: row.slug };
+      const topic = { id: row.id, name: row.name, slug: row.slug, iconKey: row.iconKey };
       topicMap.set(topic.id, topic);
 
       const existing = topicsByQuestion.get(row.questionId) ?? [];

@@ -16,6 +16,7 @@ export async function updateTopic(id: string, input: UpdateTopicInput): Promise<
       .set({
         name: input.name,
         isActive: input.isActive,
+        iconKey: input.iconKey,
       })
       .where(eq(topicsInApp.id, id))
       .returning({ id: topicsInApp.id });

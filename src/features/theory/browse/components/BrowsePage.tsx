@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/navigation';
 import AppShell from '@/common/components/AppShell';
 import Select from '@/common/components/Select';
+import TopicList from '@/common/components/TopicList';
 import { invalidateBrowseCaches } from '@/features/admin/api/invalidate-admin-caches';
 import { invalidateExerciseBrowseCaches } from '@/features/exercises/api/invalidate-caches';
 import { saveExercise } from '@/features/exercises/browse/api/mutations';
@@ -63,7 +64,7 @@ function BrowseQuestionRow({ question }: { question: BrowseQuestionItem }) {
           <div className='mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs'>
             {question.isSystem ? <span className='text-secondary-foreground'>{t('appLabel')}</span> : null}
             {question.topics.length > 0 ? (
-              <span className='text-secondary-foreground'>{question.topics.map((topic) => topic.name).join(' · ')}</span>
+              <TopicList className='text-secondary-foreground' topics={question.topics} />
             ) : (
               <span className='text-muted-foreground'>{t('noTopics')}</span>
             )}
@@ -106,7 +107,7 @@ function BrowseExerciseRow({ exercise }: { exercise: BrowseExerciseItem }) {
           <div className='mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs'>
             {exercise.isSystem ? <span className='text-secondary-foreground'>{t('appLabel')}</span> : null}
             {exercise.topics.length > 0 ? (
-              <span className='text-secondary-foreground'>{exercise.topics.map((topic) => topic.name).join(' · ')}</span>
+              <TopicList className='text-secondary-foreground' topics={exercise.topics} />
             ) : (
               <span className='text-muted-foreground'>{t('noTopics')}</span>
             )}

@@ -4,6 +4,7 @@ export type ExerciseTopic = {
   id: string;
   name: string;
   slug: string;
+  iconKey: string | null;
 };
 
 export type ExerciseAttemptTotals = {

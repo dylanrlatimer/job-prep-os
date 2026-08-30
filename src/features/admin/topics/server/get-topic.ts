@@ -16,6 +16,7 @@ export async function getTopic(id: string): Promise<TopicResponse> {
         id: topicsInApp.id,
         name: topicsInApp.name,
         slug: topicsInApp.slug,
+        iconKey: topicsInApp.iconKey,
         isActive: topicsInApp.isActive,
       })
       .from(topicsInApp)
@@ -26,15 +27,9 @@ export async function getTopic(id: string): Promise<TopicResponse> {
       throw new NotFoundError('topicNotFound');
     }
 
-    const [questionUsage] = await db
-      .select({ questionCount: count() })
-      .from(theoryQuestionTopicsInApp)
-      .where(eq(theoryQuestionTopicsInApp.topicId, id));
+    const [questionUsage] = await db.select({ questionCount: count() }).from(theoryQuestionTopicsInApp).where(eq(theoryQuestionTopicsInApp.topicId, id));
 
-    const [exerciseUsage] = await db
-      .select({ exerciseCount: count() })
-      .from(exerciseTopicsInApp)
-      .where(eq(exerciseTopicsInApp.topicId, id));
+    const [exerciseUsage] = await db.select({ exerciseCount: count() }).from(exerciseTopicsInApp).where(eq(exerciseTopicsInApp.topicId, id));
 
     return {
       ...topic,

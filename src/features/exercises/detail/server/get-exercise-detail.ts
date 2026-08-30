@@ -38,12 +38,13 @@ export async function getExerciseDetail(id: string): Promise<ExerciseDetailRespo
         id: topicsInApp.id,
         name: topicsInApp.name,
         slug: topicsInApp.slug,
+        iconKey: topicsInApp.iconKey,
       })
       .from(exerciseTopicsInApp)
       .innerJoin(topicsInApp, eq(exerciseTopicsInApp.topicId, topicsInApp.id))
       .where(eq(exerciseTopicsInApp.exerciseId, id));
 
-    const topics = topicRows.map((row) => ({ id: row.id, name: row.name, slug: row.slug })).sort((a, b) => a.name.localeCompare(b.name));
+    const topics = topicRows.map((row) => ({ id: row.id, name: row.name, slug: row.slug, iconKey: row.iconKey })).sort((a, b) => a.name.localeCompare(b.name));
 
     const choiceRows = await db
       .select({

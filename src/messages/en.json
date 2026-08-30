@@ -499,6 +499,8 @@
     "backToList": "Back to topics",
     "nameLabel": "Name",
     "namePlaceholder": "e.g. React, PostgreSQL",
+    "iconLabel": "Icon",
+    "iconNone": "None",
     "slugLabel": "Slug",
     "usageLabel": "Usage",
     "questionCount": "{count, plural, one {# question} other {# questions}}",

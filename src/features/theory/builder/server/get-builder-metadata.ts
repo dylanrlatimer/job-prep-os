@@ -16,6 +16,7 @@ export async function getBuilderMetadata(): Promise<BuilderMetadataResponse> {
         id: topicsInApp.id,
         name: topicsInApp.name,
         slug: topicsInApp.slug,
+        iconKey: topicsInApp.iconKey,
       })
       .from(topicsInApp)
       .where(eq(topicsInApp.isActive, true))
