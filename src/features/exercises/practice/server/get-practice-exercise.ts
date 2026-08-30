@@ -7,7 +7,7 @@ import { DatabaseError, NotFoundError } from '@/lib/errors';
 import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
 import type { ExercisePracticeResponse } from '@/features/exercises/practice/api/contracts';
 import type { ExerciseTopic } from '@/features/exercises/repository/api/contracts';
-import { assertExerciseInLibrary } from '@/features/exercises/practice/server/assert-exercise-in-library';
+import { assertExerciseInLibrary } from '@/features/exercises/server/access';
 import { listExerciseAttempts } from '@/features/exercises/practice/server/list-exercise-attempts';
 import { parseTiptapDocument } from '@/lib/tiptap/parse-document';
 

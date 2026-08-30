@@ -5,6 +5,7 @@ import { db } from '@/lib/drizzle/client';
 import { exerciseChoicesInApp, exerciseTopicsInApp, exercisesInApp } from '@/lib/drizzle/schema';
 import { DatabaseError, ForbiddenError, NotFoundError } from '@/lib/errors';
 import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
+import { assertExerciseOwnedBy } from '@/features/exercises/server/access';
 import type { ExerciseResponse } from '@/features/exercises/builder/api/contracts';
 import { parseTiptapDocument } from '@/lib/tiptap/parse-document';
 
@@ -28,13 +29,7 @@ export async function getExercise(id: string): Promise<ExerciseResponse> {
       .where(eq(exercisesInApp.id, id))
       .limit(1);
 
-    if (!exercise) {
-      throw new NotFoundError('exerciseNotFound');
-    }
-
-    if (exercise.ownerProfileId !== user.id) {
-      throw new ForbiddenError('exerciseForbidden');
-    }
+    assertExerciseOwnedBy(user.id, exercise);
 
     const topicRows = await db.select({ topicId: exerciseTopicsInApp.topicId }).from(exerciseTopicsInApp).where(eq(exerciseTopicsInApp.exerciseId, id));
 

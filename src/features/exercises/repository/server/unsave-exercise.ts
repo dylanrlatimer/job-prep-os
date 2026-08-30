@@ -5,6 +5,7 @@ import { db } from '@/lib/drizzle/client';
 import { exerciseLibraryItemsInApp, exercisesInApp } from '@/lib/drizzle/schema';
 import { DatabaseError, ForbiddenError, NotFoundError } from '@/lib/errors';
 import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
+import { assertExerciseCanUnsave } from '@/features/exercises/server/access';
 import type { UnsaveExerciseResponse } from '@/features/exercises/repository/api/contracts';
 
 export async function unsaveExercise(exerciseId: string): Promise<UnsaveExerciseResponse> {
@@ -25,9 +26,7 @@ export async function unsaveExercise(exerciseId: string): Promise<UnsaveExercise
       throw new NotFoundError('exerciseNotInRepository');
     }
 
-    if (libraryItem.ownerProfileId === user.id) {
-      throw new ForbiddenError('cannotUnsaveOwnedExercise');
-    }
+    assertExerciseCanUnsave(user.id, libraryItem.ownerProfileId);
 
     await db
       .delete(exerciseLibraryItemsInApp)

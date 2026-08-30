@@ -1,10 +1,11 @@
 import 'server-only';
 
-import { and, eq, isNotNull } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db } from '@/lib/drizzle/client';
 import { exerciseAttemptsInApp, exercisesInApp } from '@/lib/drizzle/schema';
 import { DatabaseError, ForbiddenError, NotFoundError } from '@/lib/errors';
 import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
+import { assertExerciseOwnedBy, exerciseAccess } from '@/features/exercises/server/access';
 import type { DeleteExerciseResponse } from '@/features/exercises/builder/api/contracts';
 
 export async function deleteExercise(id: string): Promise<DeleteExerciseResponse> {
@@ -15,19 +16,13 @@ export async function deleteExercise(id: string): Promise<DeleteExerciseResponse
       const [existing] = await tx
         .select({ id: exercisesInApp.id, ownerProfileId: exercisesInApp.ownerProfileId })
         .from(exercisesInApp)
-        .where(and(eq(exercisesInApp.id, id), isNotNull(exercisesInApp.ownerProfileId)))
+        .where(eq(exercisesInApp.id, id))
         .limit(1);
 
-      if (!existing) {
-        throw new NotFoundError('exerciseNotFound');
-      }
-
-      if (existing.ownerProfileId !== user.id) {
-        throw new ForbiddenError('exerciseForbidden');
-      }
+      assertExerciseOwnedBy(user.id, existing);
 
       await tx.delete(exerciseAttemptsInApp).where(eq(exerciseAttemptsInApp.exerciseId, id));
-      await tx.delete(exercisesInApp).where(eq(exercisesInApp.id, id));
+      await tx.delete(exercisesInApp).where(and(eq(exercisesInApp.id, id), exerciseAccess.ownedBy(user.id)));
 
       return { id };
     });

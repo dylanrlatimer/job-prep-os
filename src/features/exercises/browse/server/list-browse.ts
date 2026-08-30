@@ -5,6 +5,7 @@ import { db } from '@/lib/drizzle/client';
 import { exerciseLibraryItemsInApp, exerciseTopicsInApp, exercisesInApp, topicsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError } from '@/lib/errors';
 import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
+import { exerciseAccess, isExerciseAppOwned } from '@/features/exercises/server/access';
 import type { BrowseExerciseItem, GetBrowseExercisesResponse } from '@/features/exercises/browse/api/contracts';
 import type { ExerciseTopic } from '@/features/exercises/repository/api/contracts';
 
@@ -19,7 +20,7 @@ export async function listBrowse(): Promise<GetBrowseExercisesResponse> {
         ownerProfileId: exercisesInApp.ownerProfileId,
       })
       .from(exercisesInApp)
-      .where(eq(exercisesInApp.isPublic, true))
+      .where(exerciseAccess.public())
       .orderBy(desc(exercisesInApp.createdAt));
 
     if (exerciseRows.length === 0) {
@@ -63,7 +64,7 @@ export async function listBrowse(): Promise<GetBrowseExercisesResponse> {
       title: row.title,
       topics: topicsByExercise.get(row.id) ?? [],
       isSaved: savedExerciseIds.has(row.id),
-      isSystem: row.ownerProfileId === null,
+      isSystem: isExerciseAppOwned(row.ownerProfileId),
     }));
 
     const topics = [...topicMap.values()].sort((a, b) => a.name.localeCompare(b.name));

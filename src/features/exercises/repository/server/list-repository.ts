@@ -5,6 +5,7 @@ import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
 import { db } from '@/lib/drizzle/client';
 import { exerciseAttemptsInApp, exerciseLibraryItemsInApp, exerciseTopicsInApp, exercisesInApp, topicsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError } from '@/lib/errors';
+import { isExerciseOwnedBy } from '@/features/exercises/server/access';
 import type {
   ExerciseAttemptTotals,
   ExerciseTopic,
@@ -83,7 +84,7 @@ export async function listRepository(): Promise<GetExerciseRepositoryResponse> {
       title: row.title,
       topics: topicsByExercise.get(row.exerciseId) ?? [],
       attempts: attemptsByExercise.get(row.exerciseId) ?? emptyTotals(),
-      canUnsave: row.ownerProfileId !== user.id,
+      canUnsave: !isExerciseOwnedBy(user.id, row.ownerProfileId),
     }));
 
     const topics = [...topicMap.values()].sort((a, b) => a.name.localeCompare(b.name));

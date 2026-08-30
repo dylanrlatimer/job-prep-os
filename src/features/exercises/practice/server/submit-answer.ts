@@ -5,12 +5,8 @@ import { db } from '@/lib/drizzle/client';
 import { exerciseAttemptsInApp, exerciseChoicesInApp, exercisesInApp } from '@/lib/drizzle/schema';
 import { DatabaseError, NotFoundError, ValidationError } from '@/lib/errors';
 import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
-import type {
-  ExercisePracticeAttemptResult,
-  SubmitExerciseAnswerInput,
-  SubmitExerciseAnswerResponse,
-} from '@/features/exercises/practice/api/contracts';
-import { assertExerciseInLibrary } from '@/features/exercises/practice/server/assert-exercise-in-library';
+import type { ExercisePracticeAttemptResult, SubmitExerciseAnswerInput, SubmitExerciseAnswerResponse } from '@/features/exercises/practice/api/contracts';
+import { assertExerciseInLibrary } from '@/features/exercises/server/access';
 import { parseTiptapDocument } from '@/lib/tiptap/parse-document';
 
 function setsEqual<T>(left: Set<T>, right: Set<T>): boolean {
@@ -27,10 +23,7 @@ function setsEqual<T>(left: Set<T>, right: Set<T>): boolean {
   return true;
 }
 
-function gradeExerciseAnswer(
-  selectedChoiceIds: string[],
-  correctChoiceIds: string[],
-): ExercisePracticeAttemptResult {
+function gradeExerciseAnswer(selectedChoiceIds: string[], correctChoiceIds: string[]): ExercisePracticeAttemptResult {
   const selected = new Set(selectedChoiceIds);
   const correct = new Set(correctChoiceIds);
 
@@ -46,10 +39,7 @@ function gradeExerciseAnswer(
   return 'incorrect';
 }
 
-export async function submitAnswer(
-  exerciseId: string,
-  input: SubmitExerciseAnswerInput,
-): Promise<SubmitExerciseAnswerResponse> {
+export async function submitAnswer(exerciseId: string, input: SubmitExerciseAnswerInput): Promise<SubmitExerciseAnswerResponse> {
   const user = await getAuthenticatedUser();
   await assertExerciseInLibrary(user.id, exerciseId);
 

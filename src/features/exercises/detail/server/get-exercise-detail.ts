@@ -6,7 +6,7 @@ import { exerciseChoicesInApp, exerciseTopicsInApp, exercisesInApp, topicsInApp 
 import { DatabaseError, NotFoundError } from '@/lib/errors';
 import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
 import type { ExerciseDetailResponse } from '@/features/exercises/detail/api/contracts';
-import { assertExerciseInLibrary } from '@/features/exercises/practice/server/assert-exercise-in-library';
+import { assertExerciseInLibrary, isExerciseOwnedBy } from '@/features/exercises/server/access';
 import { listExerciseAttempts } from '@/features/exercises/practice/server/list-exercise-attempts';
 import { parseTiptapDocument } from '@/lib/tiptap/parse-document';
 
@@ -74,7 +74,7 @@ export async function getExerciseDetail(id: string): Promise<ExerciseDetailRespo
       topics,
       sourceName: exercise.sourceName,
       sourceUrl: exercise.sourceUrl,
-      isOwner: exercise.ownerProfileId === user.id,
+      isOwner: isExerciseOwnedBy(user.id, exercise.ownerProfileId),
       attempts,
       attemptHistory,
     };

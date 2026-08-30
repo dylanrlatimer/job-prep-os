@@ -5,6 +5,7 @@ import { db } from '@/lib/drizzle/client';
 import { exerciseChoicesInApp, exerciseTopicsInApp, exercisesInApp } from '@/lib/drizzle/schema';
 import { DatabaseError, ForbiddenError, NotFoundError } from '@/lib/errors';
 import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
+import { assertExerciseOwnedBy, exerciseAccess } from '@/features/exercises/server/access';
 import { validateExerciseInput } from '@/features/exercises/builder/server/validate-exercise-input';
 import type { UpdateExerciseInput, UpdateExerciseResponse } from '@/features/exercises/builder/api/contracts';
 
@@ -16,13 +17,7 @@ export async function updateExercise(id: string, input: UpdateExerciseInput): Pr
     return await db.transaction(async (tx) => {
       const [existing] = await tx.select({ ownerProfileId: exercisesInApp.ownerProfileId }).from(exercisesInApp).where(eq(exercisesInApp.id, id)).limit(1);
 
-      if (!existing) {
-        throw new NotFoundError('exerciseNotFound');
-      }
-
-      if (existing.ownerProfileId !== user.id) {
-        throw new ForbiddenError('exerciseForbidden');
-      }
+      assertExerciseOwnedBy(user.id, existing);
 
       const [updated] = await tx
         .update(exercisesInApp)
@@ -35,7 +30,7 @@ export async function updateExercise(id: string, input: UpdateExerciseInput): Pr
           isPublic: input.isPublic,
           allowMultiple: input.allowMultiple,
         })
-        .where(and(eq(exercisesInApp.id, id), eq(exercisesInApp.ownerProfileId, user.id)))
+        .where(and(eq(exercisesInApp.id, id), exerciseAccess.ownedBy(user.id)))
         .returning({ id: exercisesInApp.id });
 
       if (!updated) {

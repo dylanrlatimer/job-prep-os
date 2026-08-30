@@ -5,6 +5,7 @@ import { db } from '@/lib/drizzle/client';
 import { exerciseChoicesInApp, exerciseLibraryItemsInApp, exerciseTopicsInApp, exercisesInApp, topicsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError, NotFoundError } from '@/lib/errors';
 import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
+import { exerciseAccess, isExerciseAppOwned } from '@/features/exercises/server/access';
 import type { BrowseExerciseDetailResponse } from '@/features/exercises/browse/api/contracts';
 import type { ExerciseTopic } from '@/features/exercises/repository/api/contracts';
 import { parseTiptapDocument } from '@/lib/tiptap/parse-document';
@@ -23,7 +24,7 @@ export async function getBrowseExerciseDetail(exerciseId: string): Promise<Brows
         sourceUrl: exercisesInApp.sourceUrl,
       })
       .from(exercisesInApp)
-      .where(and(eq(exercisesInApp.id, exerciseId), eq(exercisesInApp.isPublic, true)))
+      .where(and(eq(exercisesInApp.id, exerciseId), exerciseAccess.public()))
       .limit(1);
 
     if (!exercise) {
@@ -58,7 +59,7 @@ export async function getBrowseExerciseDetail(exerciseId: string): Promise<Brows
       sourceName: exercise.sourceName,
       sourceUrl: exercise.sourceUrl,
       isSaved: !!savedRow,
-      isSystem: exercise.ownerProfileId === null,
+      isSystem: isExerciseAppOwned(exercise.ownerProfileId),
       choiceCount: choiceCountRow?.count ?? 0,
     };
   } catch (error) {
