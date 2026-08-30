@@ -8,7 +8,7 @@ import { ChevronLeft, Plus, Search, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import AppShell from '@/common/components/AppShell';
-import ConfirmDialog from '@/common/components/ConfirmDialog';
+import TypeToConfirmDialog from '@/common/components/TypeToConfirmDialog';
 import AdminGate from '@/features/admin/components/AdminGate';
 import { useValidationMessage } from '@/common/hooks/use-validation-message';
 import { inputClassName, primaryButtonClassName, secondaryButtonClassName } from '@/common/styles/form';
@@ -250,20 +250,17 @@ function SystemExerciseBuilderContent({ exerciseId }: SystemExerciseBuilderPageP
 
             {isEdit ? (
               <button
-                type='button'
-                className={cn(
-                  'inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-sm border border-destructive-border bg-destructive-subtle px-3 py-2 text-sm text-destructive-bright transition-colors hover:bg-destructive-subtle/80 disabled:cursor-not-allowed disabled:opacity-60',
-                )}
-                disabled={isDeleting}
-                onClick={() => setDeleteDialogOpen(true)}>
-                <Trash2 size={14} strokeWidth={1.75} aria-hidden='true' />
-                {isDeleting ? t('deleting') : t('deleteExercise')}
+                type='submit'
+                form='system-exercise-builder-form'
+                className={cn(primaryButtonClassName, 'shrink-0')}
+                disabled={isSubmitting || status !== 'ready'}>
+                {isSubmitting ? t('saving') : t('saveChanges')}
               </button>
             ) : null}
           </div>
         </header>
 
-        <form ref={formRef} onSubmit={handleSubmit} noValidate className='mx-auto mt-8 max-w-2xl space-y-6'>
+        <form id='system-exercise-builder-form' ref={formRef} onSubmit={handleSubmit} noValidate className='mx-auto mt-8 max-w-2xl space-y-6'>
           <Field label={t('titleLabel')} htmlFor='title' error={fieldErrors.title}>
             <input
               id='title'
@@ -459,6 +456,22 @@ function SystemExerciseBuilderContent({ exerciseId }: SystemExerciseBuilderPageP
             </div>
           </div>
 
+          {isEdit ? (
+            <section className='border-t border-border pt-6'>
+              <h2 className='m-0 text-sm font-medium text-foreground'>{t('dangerZoneTitle')}</h2>
+              <p className='mt-2 text-sm text-muted-foreground'>{t('deleteDescription')}</p>
+              <button
+                type='button'
+                className={cn(
+                  'mt-4 inline-flex cursor-pointer items-center justify-center rounded-sm border border-destructive-border bg-destructive-subtle px-3 py-2 text-sm text-destructive-bright transition-colors hover:bg-destructive-subtle/80 disabled:cursor-not-allowed disabled:opacity-60',
+                )}
+                disabled={isDeleting}
+                onClick={() => setDeleteDialogOpen(true)}>
+                {isDeleting ? t('deleting') : t('deleteExercise')}
+              </button>
+            </section>
+          ) : null}
+
           <div className='flex flex-col-reverse gap-2 border-t border-border pt-6 sm:flex-row sm:justify-end'>
             <Link href='/admin/exercises' className={cn(secondaryButtonClassName, 'text-center')}>
               {t('cancel')}
@@ -469,13 +482,14 @@ function SystemExerciseBuilderContent({ exerciseId }: SystemExerciseBuilderPageP
           </div>
         </form>
 
-        <ConfirmDialog
+        <TypeToConfirmDialog
           open={deleteDialogOpen}
           title={t('deleteConfirmTitle')}
           description={t('deleteConfirmDescription')}
+          inputLabel={t('deleteConfirmTypeLabel', { word: t('deleteConfirmWord') })}
+          confirmWord={t('deleteConfirmWord')}
           cancelLabel={t('cancel')}
           confirmLabel={isDeleting ? t('deleting') : t('deleteExercise')}
-          confirmVariant='destructive'
           isConfirming={isDeleting}
           onCancel={() => setDeleteDialogOpen(false)}
           onConfirm={remove}

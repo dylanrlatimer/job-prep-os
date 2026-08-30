@@ -7,7 +7,7 @@ import { ChevronLeft, Search } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import AppShell from '@/common/components/AppShell';
-import ConfirmDialog from '@/common/components/ConfirmDialog';
+import TypeToConfirmDialog from '@/common/components/TypeToConfirmDialog';
 import { useValidationMessage } from '@/common/hooks/use-validation-message';
 import { inputClassName, primaryButtonClassName, secondaryButtonClassName, textareaClassName } from '@/common/styles/form';
 import TiptapEditor from '@/common/components/TiptapEditor';
@@ -139,11 +139,25 @@ export default function QuestionBuilderPage({ questionId }: QuestionBuilderPageP
         </Link>
 
         <header className='mt-4 border-b border-border pb-6'>
-          <h1 className='m-0 text-lg font-medium text-foreground'>{isEdit ? t('editTitle') : t('createTitle')}</h1>
-          <p className='mt-1 max-w-2xl text-sm text-muted-foreground'>{isEdit ? t('editDescription') : t('createDescription')}</p>
+          <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
+            <div className='min-w-0 flex-1'>
+              <h1 className='m-0 text-lg font-medium text-foreground'>{isEdit ? t('editTitle') : t('createTitle')}</h1>
+              <p className='mt-1 max-w-2xl text-sm text-muted-foreground'>{isEdit ? t('editDescription') : t('createDescription')}</p>
+            </div>
+
+            {isEdit ? (
+              <button
+                type='submit'
+                form='question-builder-form'
+                className={cn(primaryButtonClassName, 'shrink-0')}
+                disabled={isSubmitting || status !== 'ready'}>
+                {isSubmitting ? t('saving') : t('saveChanges')}
+              </button>
+            ) : null}
+          </div>
         </header>
 
-        <form ref={formRef} onSubmit={handleSubmit} noValidate className='mx-auto mt-8 max-w-2xl space-y-6'>
+        <form id='question-builder-form' ref={formRef} onSubmit={handleSubmit} noValidate className='mx-auto mt-8 max-w-2xl space-y-6'>
           <Field label={t('questionLabel')} htmlFor='question' error={fieldErrors.question}>
             <textarea
               id='question'
@@ -303,13 +317,14 @@ export default function QuestionBuilderPage({ questionId }: QuestionBuilderPageP
           </div>
         </form>
 
-        <ConfirmDialog
+        <TypeToConfirmDialog
           open={deleteDialogOpen}
           title={t('deleteConfirmTitle')}
           description={t('deleteConfirmDescription')}
+          inputLabel={t('deleteConfirmTypeLabel', { word: t('deleteConfirmWord') })}
+          confirmWord={t('deleteConfirmWord')}
           cancelLabel={t('cancel')}
           confirmLabel={isDeleting ? t('deleting') : t('deleteQuestion')}
-          confirmVariant='destructive'
           isConfirming={isDeleting}
           onCancel={() => setDeleteDialogOpen(false)}
           onConfirm={remove}
