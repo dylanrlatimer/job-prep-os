@@ -524,6 +524,7 @@ feature/
   api/
     query-keys.ts   ← shared namespace for the whole feature (enables broad invalidation)
   server/
+    access.ts       ← resource policy for the whole feature (predicates + asserts)
     get-feature.ts  ← server-only read/write operations shared by routes, RSC pages, metadata, hydration, etc.
   sub-entity-a/
     api/
@@ -567,6 +568,42 @@ Avoid naming these files `prefetch.ts`, because prefetching is a caller behavior
 
 Single-entity features (e.g. `auth`, `categories`) keep the original flat `api/` structure — no change needed until there is mixing or reusable server-only logic.
 
+# Access
+
+Identity is already named (`getAuthenticatedUser`). Roles are already named (`assertAdmin`). Resource policy is the same class of artifact as a query key.
+
+A policy fact that appears in more than one operation — public, owned, app-owned, membership — lives in `server/access.ts` at the feature root. Operations import it. They do not inline it. Inlining a policy condition is the same class of mistake as raw `fetch` in a `queryFn`.
+
+`import 'server-only'` at the top. Sub-entity operations import from `../../server/access`. Single-entity features add this file when the first policy fact appears. Features that only need a signed-in user do not.
+
+The file exports two things, and they sit next to each other:
+
+1. **Predicates** — query conditions for `WHERE`. Used by lists, and as a second check on writes.
+2. **Asserts** — throw `NotFoundError` or `ForbiddenError` after a row is loaded by id.
+
+```ts
+// features/posts/server/access.ts
+export const postAccess = {
+  public: () => eq(posts.isPublic, true),
+  ownedBy: (userId: string) => eq(posts.userId, userId),
+};
+
+export function assertPostOwnedBy(userId: string, post: { userId: string } | undefined): asserts post is { userId: string } {
+  if (!post) throw new NotFoundError('postNotFound');
+  if (post.userId !== userId) throw new ForbiddenError('postForbidden');
+}
+```
+
+Do not put `ownedBy` in the load-by-id `WHERE`. That collapses missing and not-yours into 404. Load by id, then assert. The matching predicate still belongs on the `UPDATE` / `DELETE` `WHERE`.
+
+An assert that needs its own lookup (membership, and similar) still lives in this file.
+
+Access is not disclosure. Operations keep their own `SELECT` lists. Access is not validation. Access never returns a response DTO. A create that only inserts as the current user has nothing to import. `orderBy`, joins, id equality, and column lists are not policy.
+
+Admin operations stay separate files and separate flows. They import the same predicates. They are not merged into the user operation.
+
+When a new kind of access appears, add it to `access.ts` first, then use it. When a rule changes, the file you open is `access.ts`.
+
 # Acknowledgments
 
 This document is likely to evolve over time. These are just some notes, in no particular order:
@@ -577,12 +614,12 @@ This document is likely to evolve over time. These are just some notes, in no pa
 
 ---
 
-**Last modified:** 27/08/2026  
-**Version:** v2.6.0:
+**Last modified:** 30/08/2026  
+**Version:** v2.7.0:
 
-- Errors are i18n keys end-to-end: server emits keys, client resolves via `Errors` namespace.
-- Documented `ApiClientError`, `resolveApiErrorToastKey`, toast `errorCode` flow, and `useValidationMessage`.
-- Examples updated: Zod messages, `AppError` defaults, and `NotFoundError` with camelCase keys.
+- Resource policy is a named artifact (`server/access.ts`): predicates for `WHERE`, asserts for load-by-id.
+- Inlining a policy condition is forbidden, same class as raw `fetch` in a `queryFn`.
+- Admin stays a separate flow and imports the same predicates.
 
 © 2026 Dylan Latimer. All rights reserved.
 

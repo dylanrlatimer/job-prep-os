@@ -46,7 +46,7 @@ export async function getBrowseQuestionDetail(questionId: string): Promise<Brows
     const [savedRow] = await db
       .select({ questionId: theoryLibraryItemsInApp.questionId })
       .from(theoryLibraryItemsInApp)
-      .where(and(eq(theoryLibraryItemsInApp.profileId, user.id), eq(theoryLibraryItemsInApp.questionId, questionId)))
+      .where(and(questionAccess.inLibrary(user.id), eq(theoryLibraryItemsInApp.questionId, questionId)))
       .limit(1);
 
     return {

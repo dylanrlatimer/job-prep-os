@@ -5,7 +5,7 @@ import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
 import { db } from '@/lib/drizzle/client';
 import { theoryAttemptsInApp, topicsInApp, theoryLibraryItemsInApp, theoryQuestionTopicsInApp, theoryQuestionsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError } from '@/lib/errors';
-import { isQuestionOwnedBy } from '@/features/theory/server/access';
+import { isQuestionOwnedBy, questionAccess } from '@/features/theory/server/access';
 import type { GetRepositoryResponse, RepositoryAttemptTotals, RepositoryTopic, RepositoryQuestionItem } from '@/features/theory/repository/api/contracts';
 
 const emptyTotals = (): RepositoryAttemptTotals => ({
@@ -26,7 +26,7 @@ export async function listRepository(): Promise<GetRepositoryResponse> {
       })
       .from(theoryLibraryItemsInApp)
       .innerJoin(theoryQuestionsInApp, eq(theoryLibraryItemsInApp.questionId, theoryQuestionsInApp.id))
-      .where(eq(theoryLibraryItemsInApp.profileId, user.id))
+      .where(questionAccess.inLibrary(user.id))
       .orderBy(desc(theoryLibraryItemsInApp.createdAt));
 
     if (libraryRows.length === 0) {

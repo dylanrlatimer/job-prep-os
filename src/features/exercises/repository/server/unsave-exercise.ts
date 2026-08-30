@@ -5,7 +5,7 @@ import { db } from '@/lib/drizzle/client';
 import { exerciseLibraryItemsInApp, exercisesInApp } from '@/lib/drizzle/schema';
 import { DatabaseError, ForbiddenError, NotFoundError } from '@/lib/errors';
 import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
-import { assertExerciseCanUnsave } from '@/features/exercises/server/access';
+import { assertExerciseCanUnsave, exerciseAccess } from '@/features/exercises/server/access';
 import type { UnsaveExerciseResponse } from '@/features/exercises/repository/api/contracts';
 
 export async function unsaveExercise(exerciseId: string): Promise<UnsaveExerciseResponse> {
@@ -19,7 +19,7 @@ export async function unsaveExercise(exerciseId: string): Promise<UnsaveExercise
       })
       .from(exerciseLibraryItemsInApp)
       .innerJoin(exercisesInApp, eq(exerciseLibraryItemsInApp.exerciseId, exercisesInApp.id))
-      .where(and(eq(exerciseLibraryItemsInApp.profileId, user.id), eq(exerciseLibraryItemsInApp.exerciseId, exerciseId)))
+      .where(and(exerciseAccess.inLibrary(user.id), eq(exerciseLibraryItemsInApp.exerciseId, exerciseId)))
       .limit(1);
 
     if (!libraryItem) {
@@ -28,9 +28,7 @@ export async function unsaveExercise(exerciseId: string): Promise<UnsaveExercise
 
     assertExerciseCanUnsave(user.id, libraryItem.ownerProfileId);
 
-    await db
-      .delete(exerciseLibraryItemsInApp)
-      .where(and(eq(exerciseLibraryItemsInApp.profileId, user.id), eq(exerciseLibraryItemsInApp.exerciseId, exerciseId)));
+    await db.delete(exerciseLibraryItemsInApp).where(and(exerciseAccess.inLibrary(user.id), eq(exerciseLibraryItemsInApp.exerciseId, exerciseId)));
 
     return { exerciseId };
   } catch (error) {

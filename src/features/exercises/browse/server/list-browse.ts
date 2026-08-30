@@ -32,7 +32,7 @@ export async function listBrowse(): Promise<GetBrowseExercisesResponse> {
     const savedRows = await db
       .select({ exerciseId: exerciseLibraryItemsInApp.exerciseId })
       .from(exerciseLibraryItemsInApp)
-      .where(eq(exerciseLibraryItemsInApp.profileId, user.id));
+      .where(exerciseAccess.inLibrary(user.id));
 
     const savedExerciseIds = new Set(savedRows.map((row) => row.exerciseId));
 

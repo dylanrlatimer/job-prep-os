@@ -46,7 +46,7 @@ export async function getBrowseExerciseDetail(exerciseId: string): Promise<Brows
     const [savedRow] = await db
       .select({ exerciseId: exerciseLibraryItemsInApp.exerciseId })
       .from(exerciseLibraryItemsInApp)
-      .where(and(eq(exerciseLibraryItemsInApp.profileId, user.id), eq(exerciseLibraryItemsInApp.exerciseId, exerciseId)))
+      .where(and(exerciseAccess.inLibrary(user.id), eq(exerciseLibraryItemsInApp.exerciseId, exerciseId)))
       .limit(1);
 
     const [choiceCountRow] = await db.select({ count: count() }).from(exerciseChoicesInApp).where(eq(exerciseChoicesInApp.exerciseId, exerciseId));

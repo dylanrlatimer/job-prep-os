@@ -9,6 +9,7 @@ export const questionAccess = {
   public: () => eq(theoryQuestionsInApp.isPublic, true),
   ownedBy: (userId: string) => eq(theoryQuestionsInApp.ownerProfileId, userId),
   appOwned: () => isNull(theoryQuestionsInApp.ownerProfileId),
+  inLibrary: (userId: string) => eq(theoryLibraryItemsInApp.profileId, userId),
 };
 
 export function isQuestionOwnedBy(userId: string, ownerProfileId: string | null): boolean {
@@ -39,7 +40,7 @@ export async function assertQuestionInLibrary(profileId: string, questionId: str
   const [libraryItem] = await db
     .select({ questionId: theoryLibraryItemsInApp.questionId })
     .from(theoryLibraryItemsInApp)
-    .where(and(eq(theoryLibraryItemsInApp.profileId, profileId), eq(theoryLibraryItemsInApp.questionId, questionId)))
+    .where(and(questionAccess.inLibrary(profileId), eq(theoryLibraryItemsInApp.questionId, questionId)))
     .limit(1);
 
   if (!libraryItem) {

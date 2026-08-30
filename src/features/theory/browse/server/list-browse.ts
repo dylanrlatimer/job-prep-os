@@ -32,7 +32,7 @@ export async function listBrowse(): Promise<GetBrowseResponse> {
     const savedRows = await db
       .select({ questionId: theoryLibraryItemsInApp.questionId })
       .from(theoryLibraryItemsInApp)
-      .where(eq(theoryLibraryItemsInApp.profileId, user.id));
+      .where(questionAccess.inLibrary(user.id));
 
     const savedQuestionIds = new Set(savedRows.map((row) => row.questionId));
 

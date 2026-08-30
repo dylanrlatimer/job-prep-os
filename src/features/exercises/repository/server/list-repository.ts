@@ -5,7 +5,7 @@ import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
 import { db } from '@/lib/drizzle/client';
 import { exerciseAttemptsInApp, exerciseLibraryItemsInApp, exerciseTopicsInApp, exercisesInApp, topicsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError } from '@/lib/errors';
-import { isExerciseOwnedBy } from '@/features/exercises/server/access';
+import { exerciseAccess, isExerciseOwnedBy } from '@/features/exercises/server/access';
 import type {
   ExerciseAttemptTotals,
   ExerciseTopic,
@@ -31,7 +31,7 @@ export async function listRepository(): Promise<GetExerciseRepositoryResponse> {
       })
       .from(exerciseLibraryItemsInApp)
       .innerJoin(exercisesInApp, eq(exerciseLibraryItemsInApp.exerciseId, exercisesInApp.id))
-      .where(eq(exerciseLibraryItemsInApp.profileId, user.id))
+      .where(exerciseAccess.inLibrary(user.id))
       .orderBy(desc(exerciseLibraryItemsInApp.createdAt));
 
     if (libraryRows.length === 0) {
