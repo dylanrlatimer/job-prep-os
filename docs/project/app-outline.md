@@ -12,7 +12,7 @@ The application records practice. It does not decide what the user should study 
 
 The platform contains three kinds of questions and three kinds of exercises:
 
-- **System:** Created and maintained by administrators for the shared bank.
+- **App:** Created and maintained by administrators for the shared bank.
 - **Public user:** Created by users and available for others to add.
 - **Private user:** Visible only to their creator.
 
@@ -35,11 +35,11 @@ The user's theory repository is the default Theory Practice view. It lists saved
 
 Removing a question from the repository does not delete the question or its attempt history.
 
-### Browse Questions
+### Browse
 
-The browse area contains published system questions and published user questions. Users can search and filter the bank, inspect questions, and add useful ones to their repository.
+The browse area is a single shared bank for published questions and exercises. Users choose Questions or Exercises, then search and filter by topic, inspect items, and add useful ones to the matching personal repository.
 
-The interface clearly indicates which questions are already saved. Private questions belonging to other users never appear.
+The interface clearly indicates which items are already saved. Private content belonging to other users never appears.
 
 ### Question Builder
 
@@ -72,7 +72,7 @@ The same page shows result totals and the complete attempt history, including da
 
 ### Exercises
 
-Exercises follow the same repository, browse, builder, and practice surfaces as theory, with a separate personal repository.
+Exercises follow the same repository, builder, and practice surfaces as theory, with a separate personal repository. Discovery uses the shared Browse area (filtered to Exercises).
 
 Practice shows a multiple-choice prompt, accepts selected choices, and grades the attempt on the server. Correctness and any explanation are revealed only after submit. Result totals and attempt history are kept on the practice and detail pages.
 
@@ -83,17 +83,17 @@ Builders support a title, rich-text prompt, ordered choices (one or more correct
 Administrators have a plain management area for:
 
 - topics (active or disabled);
-- system questions;
-- system exercises;
+- app questions;
+- app exercises;
 - publication state via public or private visibility.
 
-Normal users cannot create or modify system-owned content.
+Normal users cannot create or modify app-owned content.
 
 ## Access Rules
 
 - Authentication is required for the application.
 - Users can always read and edit their own questions and exercises.
-- Users can read published content created by the system or other users.
+- Users can read published content created by the app or other users.
 - Users can modify only their own repositories and attempts.
 - Administrative operations require an administrator profile.
 - Visibility and ownership are enforced by the server, not merely hidden in the interface.

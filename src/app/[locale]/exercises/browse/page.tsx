@@ -1,5 +1,10 @@
-import BrowseExercisesPage from '@/features/exercises/browse/components/BrowseExercisesPage';
+import { redirect } from '@/i18n/navigation';
 
-export default function BrowseExercisesPageEntry() {
-  return <BrowseExercisesPage />;
+type PageProps = {
+  params: Promise<{ locale: string }>;
+};
+
+export default async function ExercisesBrowseRedirect({ params }: PageProps) {
+  const { locale } = await params;
+  redirect({ href: '/browse?kind=exercises', locale });
 }

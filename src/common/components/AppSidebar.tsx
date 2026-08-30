@@ -9,7 +9,7 @@ import { sessionQueryOptions } from '@/features/auth/api/queries';
 import { cn } from '@/lib/cn';
 
 type NavItem = {
-  href: '/' | '/browse' | '/exercises' | '/exercises/browse';
+  href: '/' | '/browse' | '/exercises';
   label: string;
   icon: React.ReactNode;
   match: (pathname: string) => boolean;
@@ -42,29 +42,23 @@ export default function AppSidebar() {
       match: (path) => path === '/exercises' || (path.startsWith('/exercises/') && !path.startsWith('/exercises/browse')),
     },
     {
-      href: '/exercises/browse',
-      label: t('browseExercises'),
-      icon: <Compass size={16} strokeWidth={1.75} aria-hidden='true' />,
-      match: (path) => path === '/exercises/browse' || path.startsWith('/exercises/browse/'),
-    },
-    {
       href: '/browse',
-      label: t('browseQuestions'),
+      label: t('browse'),
       icon: <Compass size={16} strokeWidth={1.75} aria-hidden='true' />,
-      match: (path) => path === '/browse' || path.startsWith('/browse/'),
+      match: (path) => path === '/browse' || path.startsWith('/browse/') || path.startsWith('/exercises/browse'),
     },
   ];
 
   const adminNavItems: AdminNavItem[] = [
     {
       href: '/admin/questions',
-      label: t('systemQuestions'),
+      label: t('appQuestions'),
       icon: <Layers size={16} strokeWidth={1.75} aria-hidden='true' />,
       match: (path) => path.startsWith('/admin/questions'),
     },
     {
       href: '/admin/exercises',
-      label: t('systemExercises'),
+      label: t('appExercises'),
       icon: <Zap size={16} strokeWidth={1.75} aria-hidden='true' />,
       match: (path) => path.startsWith('/admin/exercises'),
     },

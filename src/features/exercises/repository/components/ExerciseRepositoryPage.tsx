@@ -165,8 +165,8 @@ export default function ExerciseRepositoryPage() {
             </div>
 
             <div className='flex shrink-0 flex-wrap gap-2'>
-              <Link href='/exercises/browse' className={secondaryButtonClassName}>
-                {t('browseExercises')}
+              <Link href='/browse?kind=exercises' className={secondaryButtonClassName}>
+                {t('browseBank')}
               </Link>
               <Link href='/exercises/new' className={primaryButtonClassName}>
                 {t('createExercise')}
@@ -214,8 +214,8 @@ export default function ExerciseRepositoryPage() {
             <p className='m-0 text-sm text-foreground'>{t('emptyTitle')}</p>
             <p className='mt-1 text-sm text-muted-foreground'>{t('emptyDescription')}</p>
             <div className='mt-4 flex flex-wrap gap-2'>
-              <Link href='/exercises/browse' className={secondaryButtonClassName}>
-                {t('browseExercises')}
+              <Link href='/browse?kind=exercises' className={secondaryButtonClassName}>
+                {t('browseBank')}
               </Link>
               <Link href='/exercises/new' className={primaryButtonClassName}>
                 {t('createExercise')}

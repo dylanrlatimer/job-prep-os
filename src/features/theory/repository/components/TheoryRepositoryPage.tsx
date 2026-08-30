@@ -166,7 +166,7 @@ export default function TheoryRepositoryPage() {
 
             <div className='flex shrink-0 flex-wrap gap-2'>
               <Link href='/browse' className={secondaryButtonClassName}>
-                {t('browseQuestions')}
+                {t('browseBank')}
               </Link>
               <Link href='/theory/new' className={primaryButtonClassName}>
                 {t('createQuestion')}
@@ -215,7 +215,7 @@ export default function TheoryRepositoryPage() {
             <p className='mt-1 text-sm text-muted-foreground'>{t('emptyDescription')}</p>
             <div className='mt-4 flex flex-wrap gap-2'>
               <Link href='/browse' className={secondaryButtonClassName}>
-                {t('browseQuestions')}
+                {t('browseBank')}
               </Link>
               <Link href='/theory/new' className={primaryButtonClassName}>
                 {t('createQuestion')}

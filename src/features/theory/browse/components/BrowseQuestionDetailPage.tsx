@@ -29,7 +29,7 @@ export default function BrowseQuestionDetailPage({ questionId }: BrowseQuestionD
     mutationFn: () => saveBrowseQuestion(questionId),
     onSuccess: async () => {
       await invalidateBrowseCaches(queryClient, questionId);
-      useToastStore.getState().addToast(tBrowse('saveSuccess'), 'success');
+      useToastStore.getState().addToast(tBrowse('saveQuestionSuccess'), 'success');
     },
   });
 
@@ -69,7 +69,7 @@ export default function BrowseQuestionDetailPage({ questionId }: BrowseQuestionD
               <h1 className='m-0 text-lg font-medium leading-relaxed text-foreground'>{data.question}</h1>
 
               <div className='mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs'>
-                {data.isSystem ? <span className='text-secondary-foreground'>{tBrowse('systemQuestion')}</span> : null}
+                {data.isSystem ? <span className='text-secondary-foreground'>{tBrowse('appLabel')}</span> : null}
                 {data.topics.length > 0 ? (
                   <span className='text-secondary-foreground'>{data.topics.map((topic) => topic.name).join(' · ')}</span>
                 ) : (
@@ -99,7 +99,7 @@ export default function BrowseQuestionDetailPage({ questionId }: BrowseQuestionD
                 </Link>
               ) : (
                 <button type='button' className={primaryButtonClassName} onClick={() => saveQuestion()} disabled={isSaving}>
-                  {isSaving ? tBrowse('saving') : tBrowse('addToRepository')}
+                  {isSaving ? tBrowse('saving') : tBrowse('addQuestionToRepository')}
                 </button>
               )}
             </div>

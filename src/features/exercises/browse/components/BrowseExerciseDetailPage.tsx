@@ -20,7 +20,7 @@ type BrowseExerciseDetailPageProps = {
 
 export default function BrowseExerciseDetailPage({ exerciseId }: BrowseExerciseDetailPageProps) {
   const t = useTranslations('BrowseExerciseDetailPage');
-  const tBrowse = useTranslations('BrowseExercisesPage');
+  const tBrowse = useTranslations('BrowsePage');
   const tDetail = useTranslations('ExerciseDetailPage');
   const queryClient = useQueryClient();
   const { data, isPending, isError, refetch, isFetching } = useQuery(browseExerciseDetailQueryOptions(exerciseId));
@@ -29,7 +29,7 @@ export default function BrowseExerciseDetailPage({ exerciseId }: BrowseExerciseD
     mutationFn: () => saveExercise(exerciseId),
     onSuccess: async () => {
       await invalidateExerciseBrowseCaches(queryClient, exerciseId);
-      useToastStore.getState().addToast(tBrowse('saveSuccess'), 'success');
+      useToastStore.getState().addToast(tBrowse('saveExerciseSuccess'), 'success');
     },
   });
 
@@ -59,7 +59,7 @@ export default function BrowseExerciseDetailPage({ exerciseId }: BrowseExerciseD
     <AppShell>
       <div className='px-4 py-8 md:px-8'>
         <Link
-          href='/exercises/browse'
+          href='/browse?kind=exercises'
           className='inline-flex items-center gap-1 text-sm text-muted-foreground no-underline transition-colors hover:text-foreground'>
           <ChevronLeft size={16} strokeWidth={1.75} aria-hidden='true' />
           {t('backToBrowse')}
@@ -71,7 +71,7 @@ export default function BrowseExerciseDetailPage({ exerciseId }: BrowseExerciseD
               <h1 className='m-0 text-lg font-medium leading-relaxed text-foreground'>{data.title}</h1>
 
               <div className='mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs'>
-                {data.isSystem ? <span className='text-secondary-foreground'>{tBrowse('systemExercise')}</span> : null}
+                {data.isSystem ? <span className='text-secondary-foreground'>{tBrowse('appLabel')}</span> : null}
                 {data.topics.length > 0 ? (
                   <span className='text-secondary-foreground'>{data.topics.map((topic) => topic.name).join(' · ')}</span>
                 ) : (
@@ -103,7 +103,7 @@ export default function BrowseExerciseDetailPage({ exerciseId }: BrowseExerciseD
                 </Link>
               ) : (
                 <button type='button' className={primaryButtonClassName} onClick={() => saveExerciseToLibrary()} disabled={isSaving}>
-                  {isSaving ? tBrowse('saving') : tBrowse('addToRepository')}
+                  {isSaving ? tBrowse('saving') : tBrowse('addExerciseToRepository')}
                 </button>
               )}
             </div>
