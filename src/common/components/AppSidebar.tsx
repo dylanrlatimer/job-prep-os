@@ -39,13 +39,13 @@ export default function AppSidebar() {
       href: '/exercises',
       label: t('exercises'),
       icon: <Zap size={16} strokeWidth={1.75} aria-hidden='true' />,
-      match: (path) => path === '/exercises' || (path.startsWith('/exercises/') && !path.startsWith('/exercises/browse')),
+      match: (path) => path === '/exercises' || path.startsWith('/exercises/'),
     },
     {
       href: '/browse',
       label: t('browse'),
       icon: <Compass size={16} strokeWidth={1.75} aria-hidden='true' />,
-      match: (path) => path === '/browse' || path.startsWith('/browse/') || path.startsWith('/exercises/browse'),
+      match: (path) => path === '/browse' || path.startsWith('/browse/'),
     },
   ];
 

@@ -56,7 +56,7 @@ function BrowseQuestionRow({ question }: { question: BrowseQuestionItem }) {
     <li className='border-b border-border py-4 last:border-b-0'>
       <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
         <div className='min-w-0 flex-1'>
-          <Link href={`/browse/${question.id}`} className='text-sm leading-relaxed text-foreground no-underline hover:underline'>
+          <Link href={`/browse/questions/${question.id}`} className='text-sm leading-relaxed text-foreground no-underline hover:underline'>
             {question.question}
           </Link>
 
@@ -99,7 +99,7 @@ function BrowseExerciseRow({ exercise }: { exercise: BrowseExerciseItem }) {
     <li className='border-b border-border py-4 last:border-b-0'>
       <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
         <div className='min-w-0 flex-1'>
-          <Link href={`/exercises/browse/${exercise.id}`} className='text-sm leading-relaxed text-foreground no-underline hover:underline'>
+          <Link href={`/browse/exercises/${exercise.id}`} className='text-sm leading-relaxed text-foreground no-underline hover:underline'>
             {exercise.title}
           </Link>
 
