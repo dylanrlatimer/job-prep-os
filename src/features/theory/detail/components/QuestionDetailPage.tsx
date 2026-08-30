@@ -93,10 +93,10 @@ export default function QuestionDetailPage({ questionId }: QuestionDetailPagePro
               <h1 className='m-0 text-lg font-medium leading-relaxed text-foreground'>{data.question}</h1>
 
               <div className='mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs'>
-                {data.categories.length > 0 ? (
-                  <span className='text-secondary-foreground'>{data.categories.map((category) => category.name).join(' · ')}</span>
+                {data.topics.length > 0 ? (
+                  <span className='text-secondary-foreground'>{data.topics.map((topic) => topic.name).join(' · ')}</span>
                 ) : (
-                  <span className='text-muted-foreground'>{t('uncategorized')}</span>
+                  <span className='text-muted-foreground'>{t('noTopics')}</span>
                 )}
 
                 {data.sourceName ? (

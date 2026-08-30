@@ -4,7 +4,7 @@ import { documentsEqual } from '@/lib/tiptap/serialize-document';
 export type QuestionFormValues = {
   question: string;
   answer: JSONContent | null;
-  categoryIds: string[];
+  topicIds: string[];
   sourceName: string;
   sourceUrl: string;
   isPublic: boolean;
@@ -15,7 +15,7 @@ export type QuestionFormSnapshot = QuestionFormValues;
 
 export const emptyQuestionScalars: QuestionScalars = {
   question: '',
-  categoryIds: [],
+  topicIds: [],
   sourceName: '',
   sourceUrl: '',
   isPublic: false,
@@ -44,7 +44,7 @@ export function areQuestionSnapshotsEqual(left: QuestionFormSnapshot, right: Que
     left.sourceName === right.sourceName &&
     left.sourceUrl === right.sourceUrl &&
     left.isPublic === right.isPublic &&
-    sameIdSet(left.categoryIds, right.categoryIds)
+    sameIdSet(left.topicIds, right.topicIds)
   );
 }
 

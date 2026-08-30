@@ -6,7 +6,7 @@ import { topicsInApp, theoryQuestionTopicsInApp, theoryQuestionsInApp } from '@/
 import { DatabaseError, NotFoundError } from '@/lib/errors';
 import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
 import type { QuestionDetailResponse } from '@/features/theory/detail/api/contracts';
-import type { RepositoryCategory } from '@/features/theory/repository/api/contracts';
+import type { RepositoryTopic } from '@/features/theory/repository/api/contracts';
 import { assertQuestionInLibrary } from '@/features/theory/practice/server/assert-question-in-library';
 import { listQuestionAttempts } from '@/features/theory/practice/server/list-question-attempts';
 import { parseTiptapDocument } from '@/lib/tiptap/parse-document';
@@ -34,7 +34,7 @@ export async function getQuestionDetail(id: string): Promise<QuestionDetailRespo
       throw new NotFoundError('questionNotFound');
     }
 
-    const categoryRows = await db
+    const topicRows = await db
       .select({
         id: topicsInApp.id,
         name: topicsInApp.name,
@@ -44,7 +44,7 @@ export async function getQuestionDetail(id: string): Promise<QuestionDetailRespo
       .innerJoin(topicsInApp, eq(theoryQuestionTopicsInApp.topicId, topicsInApp.id))
       .where(eq(theoryQuestionTopicsInApp.questionId, id));
 
-    const categories: RepositoryCategory[] = categoryRows
+    const topics: RepositoryTopic[] = topicRows
       .map((row) => ({ id: row.id, name: row.name, slug: row.slug }))
       .sort((a, b) => a.name.localeCompare(b.name));
 
@@ -54,7 +54,7 @@ export async function getQuestionDetail(id: string): Promise<QuestionDetailRespo
       id: question.id,
       question: question.question,
       answer: parseTiptapDocument(question.answer),
-      categories,
+      topics,
       sourceName: question.sourceName,
       sourceUrl: question.sourceUrl,
       isPublic: question.isPublic,

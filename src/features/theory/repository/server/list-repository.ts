@@ -5,7 +5,7 @@ import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
 import { db } from '@/lib/drizzle/client';
 import { theoryAttemptsInApp, topicsInApp, theoryLibraryItemsInApp, theoryQuestionTopicsInApp, theoryQuestionsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError } from '@/lib/errors';
-import type { GetRepositoryResponse, RepositoryAttemptTotals, RepositoryCategory, RepositoryQuestionItem } from '@/features/theory/repository/api/contracts';
+import type { GetRepositoryResponse, RepositoryAttemptTotals, RepositoryTopic, RepositoryQuestionItem } from '@/features/theory/repository/api/contracts';
 
 const emptyTotals = (): RepositoryAttemptTotals => ({
   incorrect: 0,
@@ -29,12 +29,12 @@ export async function listRepository(): Promise<GetRepositoryResponse> {
       .orderBy(desc(theoryLibraryItemsInApp.createdAt));
 
     if (libraryRows.length === 0) {
-      return { questions: [], categories: [] };
+      return { questions: [], topics: [] };
     }
 
     const questionIds = libraryRows.map((row) => row.questionId);
 
-    const categoryRows = await db
+    const topicRows = await db
       .select({
         questionId: theoryQuestionTopicsInApp.questionId,
         id: topicsInApp.id,
@@ -53,16 +53,16 @@ export async function listRepository(): Promise<GetRepositoryResponse> {
       .from(theoryAttemptsInApp)
       .where(and(eq(theoryAttemptsInApp.profileId, user.id), inArray(theoryAttemptsInApp.questionId, questionIds)));
 
-    const categoriesByQuestion = new Map<string, RepositoryCategory[]>();
-    const categoryMap = new Map<string, RepositoryCategory>();
+    const topicsByQuestion = new Map<string, RepositoryTopic[]>();
+    const topicMap = new Map<string, RepositoryTopic>();
 
-    for (const row of categoryRows) {
-      const category = { id: row.id, name: row.name, slug: row.slug };
-      categoryMap.set(category.id, category);
+    for (const row of topicRows) {
+      const topic = { id: row.id, name: row.name, slug: row.slug };
+      topicMap.set(topic.id, topic);
 
-      const existing = categoriesByQuestion.get(row.questionId) ?? [];
-      existing.push(category);
-      categoriesByQuestion.set(row.questionId, existing);
+      const existing = topicsByQuestion.get(row.questionId) ?? [];
+      existing.push(topic);
+      topicsByQuestion.set(row.questionId, existing);
     }
 
     const attemptsByQuestion = new Map<string, RepositoryAttemptTotals>();
@@ -76,14 +76,14 @@ export async function listRepository(): Promise<GetRepositoryResponse> {
     const questions: RepositoryQuestionItem[] = libraryRows.map((row) => ({
       id: row.questionId,
       question: row.question,
-      categories: categoriesByQuestion.get(row.questionId) ?? [],
+      topics: topicsByQuestion.get(row.questionId) ?? [],
       attempts: attemptsByQuestion.get(row.questionId) ?? emptyTotals(),
       canUnsave: row.ownerProfileId !== user.id,
     }));
 
-    const categories = [...categoryMap.values()].sort((a, b) => a.name.localeCompare(b.name));
+    const topics = [...topicMap.values()].sort((a, b) => a.name.localeCompare(b.name));
 
-    return { questions, categories };
+    return { questions, topics };
   } catch (error) {
     throw new DatabaseError('DATABASE_ERROR', { cause: error });
   }

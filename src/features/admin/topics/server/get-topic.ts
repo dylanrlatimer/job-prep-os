@@ -2,16 +2,16 @@ import 'server-only';
 
 import { count, eq } from 'drizzle-orm';
 import { db } from '@/lib/drizzle/client';
-import { topicsInApp, theoryQuestionTopicsInApp } from '@/lib/drizzle/schema';
+import { exerciseTopicsInApp, topicsInApp, theoryQuestionTopicsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError, NotFoundError } from '@/lib/errors';
 import { assertAdmin } from '@/features/auth/server/assert-admin';
-import type { CategoryResponse } from '@/features/admin/categories/api/contracts';
+import type { TopicResponse } from '@/features/admin/topics/api/contracts';
 
-export async function getCategory(id: string): Promise<CategoryResponse> {
+export async function getTopic(id: string): Promise<TopicResponse> {
   await assertAdmin();
 
   try {
-    const [category] = await db
+    const [topic] = await db
       .select({
         id: topicsInApp.id,
         name: topicsInApp.name,
@@ -22,18 +22,24 @@ export async function getCategory(id: string): Promise<CategoryResponse> {
       .where(eq(topicsInApp.id, id))
       .limit(1);
 
-    if (!category) {
-      throw new NotFoundError('categoryNotFound');
+    if (!topic) {
+      throw new NotFoundError('topicNotFound');
     }
 
-    const [usage] = await db
+    const [questionUsage] = await db
       .select({ questionCount: count() })
       .from(theoryQuestionTopicsInApp)
       .where(eq(theoryQuestionTopicsInApp.topicId, id));
 
+    const [exerciseUsage] = await db
+      .select({ exerciseCount: count() })
+      .from(exerciseTopicsInApp)
+      .where(eq(exerciseTopicsInApp.topicId, id));
+
     return {
-      ...category,
-      questionCount: Number(usage?.questionCount ?? 0),
+      ...topic,
+      questionCount: Number(questionUsage?.questionCount ?? 0),
+      exerciseCount: Number(exerciseUsage?.exerciseCount ?? 0),
     };
   } catch (error) {
     if (error instanceof NotFoundError) {

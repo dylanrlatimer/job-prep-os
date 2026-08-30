@@ -611,7 +611,7 @@ export const topicsInApp = app.table("topics", {
 	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	isActive: boolean("is_active").default(true).notNull(),
 }, (table) => [
-	index("theory_categories_active_idx").using("btree", table.isActive.asc().nullsLast().op("bool_ops")).where(sql`(is_active = true)`),
+	index("topics_active_idx").using("btree", table.isActive.asc().nullsLast().op("bool_ops")).where(sql`(is_active = true)`),
 	unique("topics_name_key").on(table.name),
 	unique("topics_slug_key").on(table.slug),
 	check("topics_name_check", sql`length(btrim(name)) > 0`),
@@ -698,7 +698,7 @@ export const theoryQuestionTopicsInApp = app.table("theory_question_topics", {
 	questionId: uuid("question_id").notNull(),
 	topicId: uuid("topic_id").notNull(),
 }, (table) => [
-	index("theory_question_categories_category_id_idx").using("btree", table.topicId.asc().nullsLast().op("uuid_ops")),
+	index("theory_question_topics_topic_id_idx").using("btree", table.topicId.asc().nullsLast().op("uuid_ops")),
 	foreignKey({
 			columns: [table.questionId],
 			foreignColumns: [theoryQuestionsInApp.id],

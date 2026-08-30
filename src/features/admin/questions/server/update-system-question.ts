@@ -42,9 +42,9 @@ export async function updateSystemQuestion(id: string, input: UpdateSystemQuesti
 
       await tx.delete(theoryQuestionTopicsInApp).where(eq(theoryQuestionTopicsInApp.questionId, id));
 
-      if (input.categoryIds.length > 0) {
+      if (input.topicIds.length > 0) {
         await tx.insert(theoryQuestionTopicsInApp).values(
-          input.categoryIds.map((topicId) => ({
+          input.topicIds.map((topicId) => ({
             questionId: id,
             topicId,
           })),

@@ -6,84 +6,85 @@ import { useRouter } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { useReleaseUnsavedGuard } from '@/common/unsaved-changes/use-unsaved-changes-guard';
 import { useSnapshotForm } from '@/common/form/use-snapshot-form';
-import { invalidateAdminCategoryCaches } from '@/features/admin/api/invalidate-admin-caches';
-import { CategoryInputSchema, UpdateCategorySchema, type CategoryInput, type UpdateCategoryInput } from '@/features/admin/categories/api/contracts';
-import { createCategory, deleteCategory, updateCategory } from '@/features/admin/categories/api/mutations';
-import { categoryQueryOptions } from '@/features/admin/categories/api/queries';
+import { invalidateAdminTopicCaches } from '@/features/admin/api/invalidate-admin-caches';
+import { TopicInputSchema, UpdateTopicSchema, type TopicInput, type UpdateTopicInput } from '@/features/admin/topics/api/contracts';
+import { createTopic, deleteTopic, updateTopic } from '@/features/admin/topics/api/mutations';
+import { topicQueryOptions } from '@/features/admin/topics/api/queries';
 import { useToastStore } from '@/lib/store/use-toast-store';
 
-export type CategoryFormValues = {
+export type TopicFormValues = {
   name: string;
   isActive: boolean;
 };
 
-const emptyValues: CategoryFormValues = {
+const emptyValues: TopicFormValues = {
   name: '',
   isActive: true,
 };
 
-function toCreateInput(values: CategoryFormValues): CategoryInput {
+function toCreateInput(values: TopicFormValues): TopicInput {
   return { name: values.name };
 }
 
-function toUpdateInput(values: CategoryFormValues): UpdateCategoryInput {
+function toUpdateInput(values: TopicFormValues): UpdateTopicInput {
   return { name: values.name, isActive: values.isActive };
 }
 
-function areCategoryFormValuesEqual(left: CategoryFormValues, right: CategoryFormValues) {
+function areTopicFormValuesEqual(left: TopicFormValues, right: TopicFormValues) {
   return left.name === right.name && left.isActive === right.isActive;
 }
 
 function mapZodFieldErrors(error: { issues: Array<{ path: PropertyKey[]; message: string }> }) {
-  const fieldErrors: Partial<Record<keyof CategoryFormValues, string>> = {};
+  const fieldErrors: Partial<Record<keyof TopicFormValues, string>> = {};
 
   for (const issue of error.issues) {
     const field = issue.path[0];
     if (typeof field === 'string' && !(field in fieldErrors)) {
-      fieldErrors[field as keyof CategoryFormValues] = issue.message;
+      fieldErrors[field as keyof TopicFormValues] = issue.message;
     }
   }
 
   return fieldErrors;
 }
 
-type UseCategoryBuilderFormOptions = {
-  categoryId?: string;
+type UseTopicBuilderFormOptions = {
+  topicId?: string;
 };
 
-export type CategoryBuilderSubmitResult = { ok: true } | { ok: false; fieldErrors: Partial<Record<keyof CategoryFormValues, string>> };
+export type TopicBuilderSubmitResult = { ok: true } | { ok: false; fieldErrors: Partial<Record<keyof TopicFormValues, string>> };
 
-export const categoryBuilderFieldOrder = ['name'] as const;
+export const topicBuilderFieldOrder = ['name'] as const;
 
-export function useCategoryBuilderForm({ categoryId }: UseCategoryBuilderFormOptions) {
-  const t = useTranslations('AdminCategoryBuilderPage');
+export function useTopicBuilderForm({ topicId }: UseTopicBuilderFormOptions) {
+  const t = useTranslations('AdminTopicBuilderPage');
   const router = useRouter();
   const releaseGuard = useReleaseUnsavedGuard();
   const queryClient = useQueryClient();
-  const isEdit = !!categoryId;
+  const isEdit = !!topicId;
 
-  const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof CategoryFormValues, string>>>({});
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof TopicFormValues, string>>>({});
   const [slug, setSlug] = useState('');
   const [questionCount, setQuestionCount] = useState(0);
+  const [exerciseCount, setExerciseCount] = useState(0);
 
-  const categoryQuery = useQuery({
-    ...categoryQueryOptions(categoryId ?? ''),
+  const topicQuery = useQuery({
+    ...topicQueryOptions(topicId ?? ''),
     enabled: isEdit,
   });
 
-  const loadedScalars = useMemo((): CategoryFormValues | null => {
-    if (!categoryQuery.data) return null;
+  const loadedScalars = useMemo((): TopicFormValues | null => {
+    if (!topicQuery.data) return null;
 
     return {
-      name: categoryQuery.data.name,
-      isActive: categoryQuery.data.isActive,
+      name: topicQuery.data.name,
+      isActive: topicQuery.data.isActive,
     };
-  }, [categoryQuery.data]);
+  }, [topicQuery.data]);
 
-  const isDataLoading = isEdit && categoryQuery.isPending;
-  const isDataError = isEdit && categoryQuery.isError;
+  const isDataLoading = isEdit && topicQuery.isPending;
+  const isDataError = isEdit && topicQuery.isError;
 
-  const form = useSnapshotForm<CategoryFormValues, CategoryFormValues>({
+  const form = useSnapshotForm<TopicFormValues, TopicFormValues>({
     isEdit,
     emptyScalars: emptyValues,
     loadedScalars,
@@ -91,14 +92,15 @@ export function useCategoryBuilderForm({ categoryId }: UseCategoryBuilderFormOpt
     isDataError,
     hasDocumentField: false,
     toSnapshot: (scalars) => scalars,
-    snapshotsEqual: areCategoryFormValuesEqual,
+    snapshotsEqual: areTopicFormValuesEqual,
   });
 
   useEffect(() => {
-    if (!categoryQuery.data) return;
-    setSlug(categoryQuery.data.slug);
-    setQuestionCount(categoryQuery.data.questionCount);
-  }, [categoryQuery.data]);
+    if (!topicQuery.data) return;
+    setSlug(topicQuery.data.slug);
+    setQuestionCount(topicQuery.data.questionCount);
+    setExerciseCount(topicQuery.data.exerciseCount);
+  }, [topicQuery.data]);
 
   const onSaveSuccess = useCallback(
     (id: string) => {
@@ -106,36 +108,36 @@ export function useCategoryBuilderForm({ categoryId }: UseCategoryBuilderFormOpt
       releaseGuard();
       useToastStore.getState().addToast(isEdit ? t('updateSuccess') : t('createSuccess'), 'success');
       router.push('/admin/topics');
-      void invalidateAdminCategoryCaches(queryClient, id);
+      void invalidateAdminTopicCaches(queryClient, id);
     },
     [form, isEdit, queryClient, releaseGuard, router, t],
   );
 
   const { mutate: mutateCreate, isPending: isCreating } = useMutation({
-    mutationFn: createCategory,
+    mutationFn: createTopic,
     onSuccess: (response) => onSaveSuccess(response.id),
   });
 
   const { mutate: mutateUpdate, isPending: isUpdating } = useMutation({
-    mutationFn: (payload: UpdateCategoryInput) => updateCategory(categoryId!, payload),
+    mutationFn: (payload: UpdateTopicInput) => updateTopic(topicId!, payload),
     onSuccess: (response) => onSaveSuccess(response.id),
   });
 
   const { mutate: mutateDelete, isPending: isDeleting } = useMutation({
-    mutationFn: () => deleteCategory(categoryId!),
+    mutationFn: () => deleteTopic(topicId!),
     onSuccess: () => {
       releaseGuard();
       useToastStore.getState().addToast(t('deleteSuccess'), 'success');
       router.push('/admin/topics');
-      void invalidateAdminCategoryCaches(queryClient, categoryId);
+      void invalidateAdminTopicCaches(queryClient, topicId);
     },
   });
 
   const isSubmitting = isCreating || isUpdating;
 
-  const submit = useCallback((): CategoryBuilderSubmitResult => {
+  const submit = useCallback((): TopicBuilderSubmitResult => {
     const snapshot = form.getSnapshot();
-    const parsed = isEdit ? UpdateCategorySchema.safeParse(toUpdateInput(snapshot)) : CategoryInputSchema.safeParse(toCreateInput(snapshot));
+    const parsed = isEdit ? UpdateTopicSchema.safeParse(toUpdateInput(snapshot)) : TopicInputSchema.safeParse(toCreateInput(snapshot));
 
     if (!parsed.success) {
       const errors = mapZodFieldErrors(parsed.error);
@@ -147,16 +149,16 @@ export function useCategoryBuilderForm({ categoryId }: UseCategoryBuilderFormOpt
     form.markSubmitting();
 
     if (isEdit) {
-      mutateUpdate(parsed.data as UpdateCategoryInput);
+      mutateUpdate(parsed.data as UpdateTopicInput);
       return { ok: true };
     }
 
-    mutateCreate(parsed.data as CategoryInput);
+    mutateCreate(parsed.data as TopicInput);
     return { ok: true };
   }, [form, isEdit, mutateCreate, mutateUpdate]);
 
   const setField = useCallback(
-    <K extends keyof CategoryFormValues>(field: K, value: CategoryFormValues[K]) => {
+    <K extends keyof TopicFormValues>(field: K, value: TopicFormValues[K]) => {
       form.setScalar(field, value);
       setFieldErrors((current) => {
         if (!current[field]) return current;
@@ -182,6 +184,7 @@ export function useCategoryBuilderForm({ categoryId }: UseCategoryBuilderFormOpt
       status: form.status,
       slug,
       questionCount,
+      exerciseCount,
       isLoading: isDataLoading,
       isError: isDataError,
       isSubmitting,
@@ -190,11 +193,11 @@ export function useCategoryBuilderForm({ categoryId }: UseCategoryBuilderFormOpt
       setField,
       remove,
       refetch: () => {
-        if (isEdit) void categoryQuery.refetch();
+        if (isEdit) void topicQuery.refetch();
       },
     }),
     [
-      categoryQuery,
+      exerciseCount,
       fieldErrors,
       form,
       isDataError,
@@ -207,6 +210,7 @@ export function useCategoryBuilderForm({ categoryId }: UseCategoryBuilderFormOpt
       setField,
       slug,
       submit,
+      topicQuery,
     ],
   );
 }

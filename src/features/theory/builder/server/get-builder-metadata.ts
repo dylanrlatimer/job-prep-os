@@ -11,7 +11,7 @@ export async function getBuilderMetadata(): Promise<BuilderMetadataResponse> {
   await getAuthenticatedUser();
 
   try {
-    const categories = await db
+    const topics = await db
       .select({
         id: topicsInApp.id,
         name: topicsInApp.name,
@@ -21,7 +21,7 @@ export async function getBuilderMetadata(): Promise<BuilderMetadataResponse> {
       .where(eq(topicsInApp.isActive, true))
       .orderBy(asc(topicsInApp.name));
 
-    return { categories };
+    return { topics };
   } catch (error) {
     throw new DatabaseError('DATABASE_ERROR', { cause: error });
   }

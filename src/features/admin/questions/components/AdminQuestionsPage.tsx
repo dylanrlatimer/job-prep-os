@@ -18,9 +18,9 @@ function matchesSearch(question: SystemQuestionListItem, search: string) {
   return question.question.toLowerCase().includes(search.toLowerCase());
 }
 
-function matchesCategory(question: SystemQuestionListItem, categoryId: string | null) {
-  if (!categoryId) return true;
-  return question.categories.some((category) => category.id === categoryId);
+function matchesTopic(question: SystemQuestionListItem, topicId: string | null) {
+  if (!topicId) return true;
+  return question.topics.some((topic) => topic.id === topicId);
 }
 
 function matchesPublication(question: SystemQuestionListItem, publication: 'all' | 'published' | 'draft') {
@@ -44,19 +44,19 @@ function AdminQuestionsContent() {
   const { data, isPending, isError, refetch, isFetching } = useQuery(systemQuestionsQueryOptions);
 
   const [search, setSearch] = useState('');
-  const [categoryId, setCategoryId] = useState<string | null>(null);
+  const [topicId, setTopicId] = useState<string | null>(null);
   const [publication, setPublication] = useState<'all' | 'published' | 'draft'>('all');
 
   const filteredQuestions = useMemo(() => {
     if (!data) return [];
     return data.questions.filter(
-      (question) => matchesSearch(question, search) && matchesCategory(question, categoryId) && matchesPublication(question, publication),
+      (question) => matchesSearch(question, search) && matchesTopic(question, topicId) && matchesPublication(question, publication),
     );
-  }, [categoryId, data, publication, search]);
+  }, [topicId, data, publication, search]);
 
-  const categoryOptions = useMemo(() => {
-    if (!data) return [{ value: '', label: t('allCategories') }];
-    return [{ value: '', label: t('allCategories') }, ...data.categories.map((category) => ({ value: category.id, label: category.name }))];
+  const topicOptions = useMemo(() => {
+    if (!data) return [{ value: '', label: t('allTopics') }];
+    return [{ value: '', label: t('allTopics') }, ...data.topics.map((topic) => ({ value: topic.id, label: topic.name }))];
   }, [data, t]);
 
   const publicationOptions = useMemo(
@@ -122,13 +122,13 @@ function AdminQuestionsContent() {
               />
             </label>
 
-            {data.categories.length > 0 && (
+            {data.topics.length > 0 && (
               <Select
                 className='w-full lg:w-44'
-                aria-label={t('categoryFilterLabel')}
-                value={categoryId ?? ''}
-                onValueChange={(value) => setCategoryId(value || null)}
-                options={categoryOptions}
+                aria-label={t('topicFilterLabel')}
+                value={topicId ?? ''}
+                onValueChange={(value) => setTopicId(value || null)}
+                options={topicOptions}
               />
             )}
 
@@ -168,10 +168,10 @@ function AdminQuestionsContent() {
                     <p className='m-0 text-sm leading-relaxed text-foreground'>{question.question}</p>
                     <div className='mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs'>
                       <span className={question.isPublic ? 'text-success' : 'text-muted-foreground'}>{question.isPublic ? t('published') : t('draft')}</span>
-                      {question.categories.length > 0 ? (
-                        <span className='text-secondary-foreground'>{question.categories.map((category) => category.name).join(' · ')}</span>
+                      {question.topics.length > 0 ? (
+                        <span className='text-secondary-foreground'>{question.topics.map((topic) => topic.name).join(' · ')}</span>
                       ) : (
-                        <span className='text-muted-foreground'>{t('uncategorized')}</span>
+                        <span className='text-muted-foreground'>{t('noTopics')}</span>
                       )}
                     </div>
                   </div>

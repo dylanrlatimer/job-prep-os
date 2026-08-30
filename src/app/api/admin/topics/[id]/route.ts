@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { handleApiError } from '@/lib/api-errors';
-import { GetCategoryParamsSchema, UpdateCategorySchema } from '@/features/admin/categories/api/contracts';
-import { deleteCategory } from '@/features/admin/categories/server/delete-category';
-import { getCategory } from '@/features/admin/categories/server/get-category';
-import { updateCategory } from '@/features/admin/categories/server/update-category';
+import { GetTopicParamsSchema, UpdateTopicSchema } from '@/features/admin/topics/api/contracts';
+import { deleteTopic } from '@/features/admin/topics/server/delete-topic';
+import { getTopic } from '@/features/admin/topics/server/get-topic';
+import { updateTopic } from '@/features/admin/topics/server/update-topic';
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -11,8 +11,8 @@ type RouteContext = {
 
 export async function GET(req: NextRequest, { params }: RouteContext): Promise<NextResponse> {
   try {
-    const { id } = GetCategoryParamsSchema.parse(await params);
-    const response = await getCategory(id);
+    const { id } = GetTopicParamsSchema.parse(await params);
+    const response = await getTopic(id);
     return NextResponse.json(response, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
     return handleApiError(req, error);
@@ -21,10 +21,10 @@ export async function GET(req: NextRequest, { params }: RouteContext): Promise<N
 
 export async function PATCH(req: NextRequest, { params }: RouteContext): Promise<NextResponse> {
   try {
-    const { id } = GetCategoryParamsSchema.parse(await params);
+    const { id } = GetTopicParamsSchema.parse(await params);
     const body = await req.json();
-    const input = UpdateCategorySchema.parse(body);
-    const response = await updateCategory(id, input);
+    const input = UpdateTopicSchema.parse(body);
+    const response = await updateTopic(id, input);
     return NextResponse.json(response);
   } catch (error) {
     return handleApiError(req, error);
@@ -33,8 +33,8 @@ export async function PATCH(req: NextRequest, { params }: RouteContext): Promise
 
 export async function DELETE(req: NextRequest, { params }: RouteContext): Promise<NextResponse> {
   try {
-    const { id } = GetCategoryParamsSchema.parse(await params);
-    const response = await deleteCategory(id);
+    const { id } = GetTopicParamsSchema.parse(await params);
+    const response = await deleteTopic(id);
     return NextResponse.json(response);
   } catch (error) {
     return handleApiError(req, error);

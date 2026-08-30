@@ -1,5 +1,5 @@
-import AdminCategoriesPage from '@/features/admin/categories/components/AdminCategoriesPage';
+import AdminTopicsPage from '@/features/admin/topics/components/AdminTopicsPage';
 
-export default function AdminTopicsPageEntry() {
-  return <AdminCategoriesPage />;
+export default function Page() {
+  return <AdminTopicsPage />;
 }

@@ -6,7 +6,7 @@ import { topicsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError, ValidationError } from '@/lib/errors';
 import { slugify } from '@/common/lib/slugify';
 import { assertAdmin } from '@/features/auth/server/assert-admin';
-import type { CategoryInput, CreateCategoryResponse } from '@/features/admin/categories/api/contracts';
+import type { CreateTopicResponse, TopicInput } from '@/features/admin/topics/api/contracts';
 
 async function uniqueSlug(baseSlug: string) {
   let slug = baseSlug;
@@ -24,12 +24,12 @@ async function uniqueSlug(baseSlug: string) {
   }
 }
 
-export async function createCategory(input: CategoryInput): Promise<CreateCategoryResponse> {
+export async function createTopic(input: TopicInput): Promise<CreateTopicResponse> {
   await assertAdmin();
 
   const baseSlug = slugify(input.name);
   if (!baseSlug) {
-    throw new ValidationError('categoryNameRequired');
+    throw new ValidationError('topicNameRequired');
   }
 
   try {

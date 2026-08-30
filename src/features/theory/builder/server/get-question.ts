@@ -34,7 +34,7 @@ export async function getQuestion(id: string): Promise<QuestionResponse> {
       throw new ForbiddenError('questionForbidden');
     }
 
-    const categoryRows = await db
+    const topicRows = await db
       .select({ topicId: theoryQuestionTopicsInApp.topicId })
       .from(theoryQuestionTopicsInApp)
       .where(eq(theoryQuestionTopicsInApp.questionId, id));
@@ -43,7 +43,7 @@ export async function getQuestion(id: string): Promise<QuestionResponse> {
       id: question.id,
       question: question.question,
       answer: parseTiptapDocument(question.answer),
-      categoryIds: categoryRows.map((row) => row.topicId),
+      topicIds: topicRows.map((row) => row.topicId),
       sourceName: question.sourceName,
       sourceUrl: question.sourceUrl,
       isPublic: question.isPublic,

@@ -29,9 +29,9 @@ export async function createSystemQuestion(input: CreateSystemQuestionInput): Pr
         throw new DatabaseError('DATABASE_ERROR');
       }
 
-      if (input.categoryIds.length > 0) {
+      if (input.topicIds.length > 0) {
         await tx.insert(theoryQuestionTopicsInApp).values(
-          input.categoryIds.map((topicId) => ({
+          input.topicIds.map((topicId) => ({
             questionId: created.id,
             topicId,
           })),

@@ -1,6 +1,7 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { adminKeys } from '@/features/admin/api/query-keys';
 import { invalidateExerciseBrowseCaches } from '@/features/exercises/api/invalidate-caches';
+import { exerciseKeys } from '@/features/exercises/api/query-keys';
 import { theoryKeys } from '@/features/theory/api/query-keys';
 
 export async function invalidateBrowseCaches(queryClient: QueryClient, questionId?: string) {
@@ -27,13 +28,16 @@ export async function invalidateAdminExerciseCaches(queryClient: QueryClient, ex
   ]);
 }
 
-export async function invalidateAdminCategoryCaches(queryClient: QueryClient, categoryId?: string) {
+export async function invalidateAdminTopicCaches(queryClient: QueryClient, topicId?: string) {
   await Promise.all([
-    queryClient.invalidateQueries({ queryKey: adminKeys.categories(), refetchType: 'all' }),
-    categoryId ? queryClient.invalidateQueries({ queryKey: adminKeys.category(categoryId), refetchType: 'all' }) : Promise.resolve(),
+    queryClient.invalidateQueries({ queryKey: adminKeys.topics(), refetchType: 'all' }),
+    topicId ? queryClient.invalidateQueries({ queryKey: adminKeys.topic(topicId), refetchType: 'all' }) : Promise.resolve(),
     queryClient.invalidateQueries({ queryKey: theoryKeys.builderMetadata(), refetchType: 'all' }),
+    queryClient.invalidateQueries({ queryKey: exerciseKeys.builderMetadata(), refetchType: 'all' }),
     queryClient.invalidateQueries({ queryKey: adminKeys.systemQuestions(), refetchType: 'all' }),
+    queryClient.invalidateQueries({ queryKey: adminKeys.systemExercises(), refetchType: 'all' }),
     queryClient.invalidateQueries({ queryKey: theoryKeys.browse(), refetchType: 'all' }),
     queryClient.invalidateQueries({ queryKey: theoryKeys.repository(), refetchType: 'all' }),
+    invalidateExerciseBrowseCaches(queryClient),
   ]);
 }

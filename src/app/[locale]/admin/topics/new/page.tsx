@@ -1,5 +1,5 @@
-import CategoryBuilderPage from '@/features/admin/categories/components/CategoryBuilderPage';
+import TopicBuilderPage from '@/features/admin/topics/components/TopicBuilderPage';
 
-export default function NewTopicPage() {
-  return <CategoryBuilderPage />;
+export default function Page() {
+  return <TopicBuilderPage />;
 }

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { JSONContent } from '@tiptap/core';
-import type { RepositoryAttemptTotals, RepositoryCategory } from '@/features/theory/repository/api/contracts';
+import type { RepositoryAttemptTotals, RepositoryTopic } from '@/features/theory/repository/api/contracts';
 
 export const PracticeQuestionParamsSchema = z.object({
   id: z.uuid(),
@@ -19,7 +19,7 @@ export type PracticeAttempt = {
 export type PracticeQuestionResponse = {
   id: string;
   question: string;
-  categories: RepositoryCategory[];
+  topics: RepositoryTopic[];
   sourceName: string | null;
   sourceUrl: string | null;
 };

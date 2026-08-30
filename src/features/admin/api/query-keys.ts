@@ -4,6 +4,6 @@ export const adminKeys = {
   systemQuestion: (id: string) => [...adminKeys.systemQuestions(), id] as const,
   systemExercises: () => [...adminKeys.all(), 'system-exercises'] as const,
   systemExercise: (id: string) => [...adminKeys.systemExercises(), id] as const,
-  categories: () => [...adminKeys.all(), 'categories'] as const,
-  category: (id: string) => [...adminKeys.categories(), id] as const,
+  topics: () => [...adminKeys.all(), 'topics'] as const,
+  topic: (id: string) => [...adminKeys.topics(), id] as const,
 };

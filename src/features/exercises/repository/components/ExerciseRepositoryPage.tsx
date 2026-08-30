@@ -78,7 +78,7 @@ function ExerciseRow({ exercise }: { exercise: RepositoryExerciseItem }) {
             {exercise.topics.length > 0 ? (
               <span className='text-xs text-secondary-foreground'>{exercise.topics.map((topic) => topic.name).join(' · ')}</span>
             ) : (
-              <span className='text-xs text-muted-foreground'>{t('uncategorized')}</span>
+              <span className='text-xs text-muted-foreground'>{t('noTopics')}</span>
             )}
             <AttemptTotals exercise={exercise} />
           </div>

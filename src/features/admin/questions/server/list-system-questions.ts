@@ -6,7 +6,7 @@ import { topicsInApp, theoryQuestionTopicsInApp, theoryQuestionsInApp } from '@/
 import { DatabaseError } from '@/lib/errors';
 import { assertAdmin } from '@/features/auth/server/assert-admin';
 import type { ListSystemQuestionsResponse, SystemQuestionListItem } from '@/features/admin/questions/api/contracts';
-import type { RepositoryCategory } from '@/features/theory/repository/api/contracts';
+import type { RepositoryTopic } from '@/features/theory/repository/api/contracts';
 
 export async function listSystemQuestions(): Promise<ListSystemQuestionsResponse> {
   await assertAdmin();
@@ -24,7 +24,7 @@ export async function listSystemQuestions(): Promise<ListSystemQuestionsResponse
       .orderBy(desc(theoryQuestionsInApp.updatedAt));
 
     if (questionRows.length === 0) {
-      const categories = await db
+      const topics = await db
         .select({
           id: topicsInApp.id,
           name: topicsInApp.name,
@@ -32,12 +32,12 @@ export async function listSystemQuestions(): Promise<ListSystemQuestionsResponse
         })
         .from(topicsInApp);
 
-      return { questions: [], categories: categories.sort((a, b) => a.name.localeCompare(b.name)) };
+      return { questions: [], topics: topics.sort((a, b) => a.name.localeCompare(b.name)) };
     }
 
     const questionIds = questionRows.map((row) => row.id);
 
-    const categoryRows = await db
+    const topicRows = await db
       .select({
         questionId: theoryQuestionTopicsInApp.questionId,
         id: topicsInApp.id,
@@ -48,29 +48,29 @@ export async function listSystemQuestions(): Promise<ListSystemQuestionsResponse
       .innerJoin(topicsInApp, eq(theoryQuestionTopicsInApp.topicId, topicsInApp.id))
       .where(inArray(theoryQuestionTopicsInApp.questionId, questionIds));
 
-    const categoriesByQuestion = new Map<string, RepositoryCategory[]>();
-    const categoryMap = new Map<string, RepositoryCategory>();
+    const topicsByQuestion = new Map<string, RepositoryTopic[]>();
+    const topicMap = new Map<string, RepositoryTopic>();
 
-    for (const row of categoryRows) {
-      const category = { id: row.id, name: row.name, slug: row.slug };
-      categoryMap.set(category.id, category);
+    for (const row of topicRows) {
+      const topic = { id: row.id, name: row.name, slug: row.slug };
+      topicMap.set(topic.id, topic);
 
-      const existing = categoriesByQuestion.get(row.questionId) ?? [];
-      existing.push(category);
-      categoriesByQuestion.set(row.questionId, existing);
+      const existing = topicsByQuestion.get(row.questionId) ?? [];
+      existing.push(topic);
+      topicsByQuestion.set(row.questionId, existing);
     }
 
     const questions: SystemQuestionListItem[] = questionRows.map((row) => ({
       id: row.id,
       question: row.question,
       isPublic: row.isPublic,
-      categories: categoriesByQuestion.get(row.id) ?? [],
+      topics: topicsByQuestion.get(row.id) ?? [],
       updatedAt: row.updatedAt,
     }));
 
-    const categories = [...categoryMap.values()].sort((a, b) => a.name.localeCompare(b.name));
+    const topics = [...topicMap.values()].sort((a, b) => a.name.localeCompare(b.name));
 
-    return { questions, categories };
+    return { questions, topics };
   } catch (error) {
     throw new DatabaseError('DATABASE_ERROR', { cause: error });
   }

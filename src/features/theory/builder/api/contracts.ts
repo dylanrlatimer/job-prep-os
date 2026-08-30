@@ -42,7 +42,7 @@ const tiptapDocSchema = z
 export const QuestionInputSchema = z.object({
   question: z.string().trim().min(1, { error: 'questionRequired' }),
   answer: tiptapDocSchema,
-  categoryIds: z.array(z.uuid()),
+  topicIds: z.array(z.uuid()),
   sourceName: optionalTrimmedText(200),
   sourceUrl: optionalUrl(),
   isPublic: z.boolean(),
@@ -60,21 +60,21 @@ export const GetQuestionParamsSchema = z.object({
   id: z.uuid(),
 });
 
-export type BuilderCategory = {
+export type BuilderTopic = {
   id: string;
   name: string;
   slug: string;
 };
 
 export type BuilderMetadataResponse = {
-  categories: BuilderCategory[];
+  topics: BuilderTopic[];
 };
 
 export type QuestionResponse = {
   id: string;
   question: string;
   answer: JSONContent;
-  categoryIds: string[];
+  topicIds: string[];
   sourceName: string | null;
   sourceUrl: string | null;
   isPublic: boolean;

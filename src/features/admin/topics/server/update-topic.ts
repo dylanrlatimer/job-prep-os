@@ -5,9 +5,9 @@ import { db } from '@/lib/drizzle/client';
 import { topicsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError, NotFoundError } from '@/lib/errors';
 import { assertAdmin } from '@/features/auth/server/assert-admin';
-import type { UpdateCategoryInput, UpdateCategoryResponse } from '@/features/admin/categories/api/contracts';
+import type { UpdateTopicInput, UpdateTopicResponse } from '@/features/admin/topics/api/contracts';
 
-export async function updateCategory(id: string, input: UpdateCategoryInput): Promise<UpdateCategoryResponse> {
+export async function updateTopic(id: string, input: UpdateTopicInput): Promise<UpdateTopicResponse> {
   await assertAdmin();
 
   try {
@@ -21,7 +21,7 @@ export async function updateCategory(id: string, input: UpdateCategoryInput): Pr
       .returning({ id: topicsInApp.id });
 
     if (!updated) {
-      throw new NotFoundError('categoryNotFound');
+      throw new NotFoundError('topicNotFound');
     }
 
     return { id: updated.id };

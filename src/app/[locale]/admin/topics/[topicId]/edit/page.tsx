@@ -1,10 +1,10 @@
-import CategoryBuilderPage from '@/features/admin/categories/components/CategoryBuilderPage';
+import TopicBuilderPage from '@/features/admin/topics/components/TopicBuilderPage';
 
-type EditTopicPageProps = {
+type PageProps = {
   params: Promise<{ topicId: string }>;
 };
 
-export default async function EditTopicPage({ params }: EditTopicPageProps) {
+export default async function Page({ params }: PageProps) {
   const { topicId } = await params;
-  return <CategoryBuilderPage categoryId={topicId} />;
+  return <TopicBuilderPage topicId={topicId} />;
 }

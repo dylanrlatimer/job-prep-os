@@ -12,7 +12,7 @@ import { useValidationMessage } from '@/common/hooks/use-validation-message';
 import { inputClassName, primaryButtonClassName, secondaryButtonClassName, textareaClassName } from '@/common/styles/form';
 import TiptapEditor from '@/common/components/TiptapEditor';
 import { useQuestionBuilderForm, questionBuilderFieldOrder } from '@/features/theory/builder/hooks/useQuestionBuilderForm';
-import type { BuilderCategory } from '@/features/theory/builder/api/contracts';
+import type { BuilderTopic } from '@/features/theory/builder/api/contracts';
 import QuestionBuilderSkeleton from './QuestionBuilderSkeleton';
 import { scrollToFirstFormError } from '@/common/lib/scroll-to-first-form-error';
 import { useFormGuard } from '@/common/form/use-form-guard';
@@ -43,28 +43,28 @@ function Field({ label, htmlFor, error, children }: FieldProps) {
   );
 }
 
-function useFilteredCategories(categories: BuilderCategory[], query: string) {
+function useFilteredTopics(topics: BuilderTopic[], query: string) {
   const fuse = useMemo(
     () =>
-      new Fuse(categories, {
+      new Fuse(topics, {
         keys: ['name', 'slug'],
         threshold: 0.35,
         ignoreLocation: true,
       }),
-    [categories],
+    [topics],
   );
 
   return useMemo(() => {
     const trimmed = query.trim();
-    if (!trimmed) return categories;
+    if (!trimmed) return topics;
     return fuse.search(trimmed).map((result) => result.item);
-  }, [categories, fuse, query]);
+  }, [topics, fuse, query]);
 }
 
 export default function QuestionBuilderPage({ questionId }: QuestionBuilderPageProps) {
   const t = useTranslations('QuestionBuilderPage');
   const formRef = useRef<HTMLFormElement>(null);
-  const [categorySearch, setCategorySearch] = useState('');
+  const [topicSearch, setTopicSearch] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const {
     isEdit,
@@ -82,7 +82,7 @@ export default function QuestionBuilderPage({ questionId }: QuestionBuilderPageP
     isDeleting,
     submit,
     setField,
-    toggleCategory,
+    toggleTopic,
     onEditorReady,
     onDocumentUpdate,
     remove,
@@ -94,8 +94,8 @@ export default function QuestionBuilderPage({ questionId }: QuestionBuilderPageP
   useFormGuard(status, isDirty, isError);
 
   const answerErrorMessage = useValidationMessage(fieldErrors.answer);
-  const categoriesErrorMessage = useValidationMessage(fieldErrors.categoryIds);
-  const filteredCategories = useFilteredCategories(metadata?.categories ?? [], categorySearch);
+  const topicsErrorMessage = useValidationMessage(fieldErrors.topicIds);
+  const filteredTopics = useFilteredTopics(metadata?.topics ?? [], topicSearch);
 
   const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -128,7 +128,7 @@ export default function QuestionBuilderPage({ questionId }: QuestionBuilderPageP
     );
   }
 
-  const hasCategories = metadata.categories.length > 0;
+  const hasTopics = metadata.topics.length > 0;
 
   return (
     <AppShell>
@@ -183,16 +183,16 @@ export default function QuestionBuilderPage({ questionId }: QuestionBuilderPageP
             {answerErrorMessage ? <span className='mt-1.5 block text-xs text-destructive-bright'>{answerErrorMessage}</span> : null}
           </div>
 
-          <div data-field='categoryIds'>
-            <span className='mb-1.5 block text-xs text-secondary-foreground'>{t('categoriesLabel')}</span>
+          <div data-field='topicIds'>
+            <span className='mb-1.5 block text-xs text-secondary-foreground'>{t('topicsLabel')}</span>
 
-            {!hasCategories ? (
-              <p className='m-0 text-sm text-muted-foreground'>{t('noCategories')}</p>
+            {!hasTopics ? (
+              <p className='m-0 text-sm text-muted-foreground'>{t('noTopics')}</p>
             ) : (
               <div className='overflow-hidden rounded-sm border border-border bg-card'>
                 <div className='border-b border-border px-3 py-2'>
                   <label className='relative block'>
-                    <span className='sr-only'>{t('categoriesSearchLabel')}</span>
+                    <span className='sr-only'>{t('topicsSearchLabel')}</span>
                     <Search
                       size={14}
                       strokeWidth={1.75}
@@ -202,32 +202,32 @@ export default function QuestionBuilderPage({ questionId }: QuestionBuilderPageP
                     <input
                       type='search'
                       className='w-full border-0 bg-transparent py-1 pr-1 pl-5 text-sm text-foreground placeholder:text-subtle-foreground focus:outline-none'
-                      value={categorySearch}
-                      onChange={(event) => setCategorySearch(event.target.value)}
-                      placeholder={t('categoriesSearchPlaceholder')}
+                      value={topicSearch}
+                      onChange={(event) => setTopicSearch(event.target.value)}
+                      placeholder={t('topicsSearchPlaceholder')}
                     />
                   </label>
                 </div>
                 <div className='scrollbar-branded h-48 overflow-y-auto'>
-                  {filteredCategories.length === 0 ? (
-                    <p className='m-0 px-3 py-4 text-sm text-muted-foreground'>{t('categoriesNoResults')}</p>
+                  {filteredTopics.length === 0 ? (
+                    <p className='m-0 px-3 py-4 text-sm text-muted-foreground'>{t('topicsNoResults')}</p>
                   ) : (
                     <ul className='m-0 list-none p-0'>
-                      {filteredCategories.map((category, index) => {
-                        const checked = values.categoryIds.includes(category.id);
-                        const inputId = `category-${category.id}`;
+                      {filteredTopics.map((topic, index) => {
+                        const checked = values.topicIds.includes(topic.id);
+                        const inputId = `topic-${topic.id}`;
 
                         return (
-                          <li key={category.id} className={cn(index > 0 && 'border-t border-border')}>
+                          <li key={topic.id} className={cn(index > 0 && 'border-t border-border')}>
                             <label htmlFor={inputId} className='flex cursor-pointer items-center gap-3 px-3 py-2.5 text-sm hover:bg-card-muted'>
                               <input
                                 id={inputId}
                                 type='checkbox'
                                 className='size-3.5 shrink-0 cursor-pointer accent-primary'
                                 checked={checked}
-                                onChange={() => toggleCategory(category.id)}
+                                onChange={() => toggleTopic(topic.id)}
                               />
-                              <span className='text-foreground'>{category.name}</span>
+                              <span className='text-foreground'>{topic.name}</span>
                             </label>
                           </li>
                         );
@@ -238,7 +238,7 @@ export default function QuestionBuilderPage({ questionId }: QuestionBuilderPageP
               </div>
             )}
 
-            {categoriesErrorMessage ? <span className='mt-1.5 block text-xs text-destructive-bright'>{categoriesErrorMessage}</span> : null}
+            {topicsErrorMessage ? <span className='mt-1.5 block text-xs text-destructive-bright'>{topicsErrorMessage}</span> : null}
           </div>
 
           <Field label={t('sourceNameLabel')} htmlFor='sourceName' error={fieldErrors.sourceName}>

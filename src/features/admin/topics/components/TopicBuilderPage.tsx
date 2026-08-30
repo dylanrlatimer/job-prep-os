@@ -9,13 +9,13 @@ import AppShell from '@/common/components/AppShell';
 import AdminGate from '@/features/admin/components/AdminGate';
 import { useValidationMessage } from '@/common/hooks/use-validation-message';
 import { inputClassName, primaryButtonClassName, secondaryButtonClassName } from '@/common/styles/form';
-import { categoryBuilderFieldOrder, useCategoryBuilderForm } from '@/features/admin/categories/hooks/useCategoryBuilderForm';
+import { topicBuilderFieldOrder, useTopicBuilderForm } from '@/features/admin/topics/hooks/useTopicBuilderForm';
 import { scrollToFirstFormError } from '@/common/lib/scroll-to-first-form-error';
 import { useFormGuard } from '@/common/form/use-form-guard';
 import { cn } from '@/lib/cn';
 
-type CategoryBuilderPageProps = {
-  categoryId?: string;
+type TopicBuilderPageProps = {
+  topicId?: string;
 };
 
 type FieldProps = {
@@ -39,21 +39,37 @@ function Field({ label, htmlFor, error, children }: FieldProps) {
   );
 }
 
-export default function CategoryBuilderPage({ categoryId }: CategoryBuilderPageProps) {
-  const t = useTranslations('AdminCategoryBuilderPage');
+export default function TopicBuilderPage({ topicId }: TopicBuilderPageProps) {
+  const t = useTranslations('AdminTopicBuilderPage');
 
   return (
     <AdminGate forbiddenMessage={t('forbidden')}>
-      <CategoryBuilderContent categoryId={categoryId} />
+      <TopicBuilderContent topicId={topicId} />
     </AdminGate>
   );
 }
 
-function CategoryBuilderContent({ categoryId }: CategoryBuilderPageProps) {
-  const t = useTranslations('AdminCategoryBuilderPage');
+function TopicBuilderContent({ topicId }: TopicBuilderPageProps) {
+  const t = useTranslations('AdminTopicBuilderPage');
   const formRef = useRef<HTMLFormElement>(null);
-  const { isEdit, values, fieldErrors, isDirty, status, slug, questionCount, isLoading, isError, isSubmitting, isDeleting, submit, setField, remove, refetch } =
-    useCategoryBuilderForm({ categoryId });
+  const {
+    isEdit,
+    values,
+    fieldErrors,
+    isDirty,
+    status,
+    slug,
+    questionCount,
+    exerciseCount,
+    isLoading,
+    isError,
+    isSubmitting,
+    isDeleting,
+    submit,
+    setField,
+    remove,
+    refetch,
+  } = useTopicBuilderForm({ topicId });
 
   useFormGuard(status, isDirty, isError);
 
@@ -62,7 +78,7 @@ function CategoryBuilderContent({ categoryId }: CategoryBuilderPageProps) {
     const result = submit();
 
     if (!result.ok) {
-      scrollToFirstFormError(result.fieldErrors, categoryBuilderFieldOrder, formRef.current ?? document);
+      scrollToFirstFormError(result.fieldErrors, topicBuilderFieldOrder, formRef.current ?? document);
     }
   };
 
@@ -90,7 +106,7 @@ function CategoryBuilderContent({ categoryId }: CategoryBuilderPageProps) {
     );
   }
 
-  const canDelete = isEdit && questionCount === 0;
+  const canDelete = isEdit && questionCount === 0 && exerciseCount === 0;
 
   return (
     <AppShell>
@@ -127,8 +143,10 @@ function CategoryBuilderContent({ categoryId }: CategoryBuilderPageProps) {
               </div>
 
               <div>
-                <p className='m-0 mb-1.5 text-xs text-secondary-foreground'>{t('questionCountLabel')}</p>
-                <p className='m-0 text-sm text-foreground'>{t('questionCount', { count: questionCount })}</p>
+                <p className='m-0 mb-1.5 text-xs text-secondary-foreground'>{t('usageLabel')}</p>
+                <p className='m-0 text-sm text-foreground'>
+                  {t('questionCount', { count: questionCount })} · {t('exerciseCount', { count: exerciseCount })}
+                </p>
               </div>
 
               <div>
@@ -171,7 +189,7 @@ function CategoryBuilderContent({ categoryId }: CategoryBuilderPageProps) {
                     if (!canDelete || !window.confirm(t('deleteConfirm'))) return;
                     remove();
                   }}>
-                  {isDeleting ? t('deleting') : t('deleteCategory')}
+                  {isDeleting ? t('deleting') : t('deleteTopic')}
                 </button>
               </section>
             </>
@@ -182,7 +200,7 @@ function CategoryBuilderContent({ categoryId }: CategoryBuilderPageProps) {
               {t('cancel')}
             </Link>
             <button type='submit' className={primaryButtonClassName} disabled={isSubmitting}>
-              {isSubmitting ? t('saving') : isEdit ? t('saveChanges') : t('createCategory')}
+              {isSubmitting ? t('saving') : isEdit ? t('saveChanges') : t('createTopic')}
             </button>
           </div>
         </form>

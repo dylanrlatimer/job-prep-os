@@ -26,7 +26,7 @@ function toQuestionInput(snapshot: QuestionFormSnapshot) {
   return {
     question: snapshot.question,
     answer: snapshot.answer,
-    categoryIds: snapshot.categoryIds,
+    topicIds: snapshot.topicIds,
     sourceName: snapshot.sourceName,
     sourceUrl: snapshot.sourceUrl,
     isPublic: snapshot.isPublic,
@@ -52,7 +52,7 @@ type UseQuestionBuilderFormOptions = {
 
 export type QuestionBuilderSubmitResult = { ok: true } | { ok: false; fieldErrors: Partial<Record<keyof QuestionFormValues, string>> };
 
-export const questionBuilderFieldOrder = ['question', 'answer', 'categoryIds', 'sourceName', 'sourceUrl'] as const;
+export const questionBuilderFieldOrder = ['question', 'answer', 'topicIds', 'sourceName', 'sourceUrl'] as const;
 
 export function useQuestionBuilderForm({ questionId }: UseQuestionBuilderFormOptions) {
   const t = useTranslations('QuestionBuilderPage');
@@ -74,7 +74,7 @@ export function useQuestionBuilderForm({ questionId }: UseQuestionBuilderFormOpt
 
     return {
       question: questionQuery.data.question,
-      categoryIds: questionQuery.data.categoryIds,
+      topicIds: questionQuery.data.topicIds,
       sourceName: questionQuery.data.sourceName ?? '',
       sourceUrl: questionQuery.data.sourceUrl ?? '',
       isPublic: questionQuery.data.isPublic,
@@ -170,20 +170,20 @@ export function useQuestionBuilderForm({ questionId }: UseQuestionBuilderFormOpt
     [form],
   );
 
-  const toggleCategory = useCallback(
-    (categoryId: string) => {
+  const toggleTopic = useCallback(
+    (topicId: string) => {
       form.setScalars((current) => {
-        const categoryIds = current.categoryIds.includes(categoryId)
-          ? current.categoryIds.filter((id) => id !== categoryId)
-          : [...current.categoryIds, categoryId];
+        const topicIds = current.topicIds.includes(topicId)
+          ? current.topicIds.filter((id) => id !== topicId)
+          : [...current.topicIds, topicId];
 
-        return { ...current, categoryIds };
+        return { ...current, topicIds };
       });
 
       setFieldErrors((current) => {
-        if (!current.categoryIds) return current;
+        if (!current.topicIds) return current;
         const next = { ...current };
-        delete next.categoryIds;
+        delete next.topicIds;
         return next;
       });
     },
@@ -212,7 +212,7 @@ export function useQuestionBuilderForm({ questionId }: UseQuestionBuilderFormOpt
       isDeleting,
       submit,
       setField,
-      toggleCategory,
+      toggleTopic,
       onEditorReady: form.onEditorReady,
       onDocumentUpdate: form.onDocumentUpdate,
       remove,
@@ -235,7 +235,7 @@ export function useQuestionBuilderForm({ questionId }: UseQuestionBuilderFormOpt
       remove,
       setField,
       submit,
-      toggleCategory,
+      toggleTopic,
     ],
   );
 }

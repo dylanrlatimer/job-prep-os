@@ -22,9 +22,9 @@ function matchesSearch(question: RepositoryQuestionItem, search: string) {
   return question.question.toLowerCase().includes(search.toLowerCase());
 }
 
-function matchesCategory(question: RepositoryQuestionItem, categoryId: string | null) {
-  if (!categoryId) return true;
-  return question.categories.some((category) => category.id === categoryId);
+function matchesTopic(question: RepositoryQuestionItem, topicId: string | null) {
+  if (!topicId) return true;
+  return question.topics.some((topic) => topic.id === topicId);
 }
 
 function hasAttempts(question: RepositoryQuestionItem) {
@@ -75,10 +75,10 @@ function QuestionRow({ question }: { question: RepositoryQuestionItem }) {
           </Link>
 
           <div className='mt-2 flex flex-wrap items-center gap-x-3 gap-y-1'>
-            {question.categories.length > 0 ? (
-              <span className='text-xs text-secondary-foreground'>{question.categories.map((category) => category.name).join(' · ')}</span>
+            {question.topics.length > 0 ? (
+              <span className='text-xs text-secondary-foreground'>{question.topics.map((topic) => topic.name).join(' · ')}</span>
             ) : (
-              <span className='text-xs text-muted-foreground'>{t('uncategorized')}</span>
+              <span className='text-xs text-muted-foreground'>{t('noTopics')}</span>
             )}
             <AttemptTotals question={question} />
           </div>
@@ -116,16 +116,16 @@ export default function TheoryRepositoryPage() {
   const { data, isPending, isError, refetch, isFetching } = useQuery(repositoryQueryOptions);
 
   const [search, setSearch] = useState('');
-  const [categoryId, setCategoryId] = useState<string | null>(null);
+  const [topicId, setTopicId] = useState<string | null>(null);
 
   const filteredQuestions = useMemo(() => {
     if (!data) return [];
-    return data.questions.filter((question) => matchesSearch(question, search) && matchesCategory(question, categoryId));
-  }, [categoryId, data, search]);
+    return data.questions.filter((question) => matchesSearch(question, search) && matchesTopic(question, topicId));
+  }, [topicId, data, search]);
 
-  const categoryOptions = useMemo(() => {
+  const topicOptions = useMemo(() => {
     if (!data) return [];
-    return [{ value: '', label: t('allCategories') }, ...data.categories.map((category) => ({ value: category.id, label: category.name }))];
+    return [{ value: '', label: t('allTopics') }, ...data.topics.map((topic) => ({ value: topic.id, label: topic.name }))];
   }, [data, t]);
 
   if (isPending) {
@@ -188,13 +188,13 @@ export default function TheoryRepositoryPage() {
               />
             </label>
 
-            {data.categories.length > 0 && (
+            {data.topics.length > 0 && (
               <Select
                 className='w-full sm:w-44'
-                aria-label={t('categoryFilterLabel')}
-                value={categoryId ?? ''}
-                onValueChange={(value) => setCategoryId(value || null)}
-                options={categoryOptions}
+                aria-label={t('topicFilterLabel')}
+                value={topicId ?? ''}
+                onValueChange={(value) => setTopicId(value || null)}
+                options={topicOptions}
               />
             )}
           </div>

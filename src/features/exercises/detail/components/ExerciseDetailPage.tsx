@@ -78,7 +78,7 @@ export default function ExerciseDetailPage({ exerciseId }: ExerciseDetailPagePro
                 {data.topics.length > 0 ? (
                   <span className='text-secondary-foreground'>{data.topics.map((topic) => topic.name).join(' · ')}</span>
                 ) : (
-                  <span className='text-muted-foreground'>{t('uncategorized')}</span>
+                  <span className='text-muted-foreground'>{t('noTopics')}</span>
                 )}
 
                 {data.sourceName ? (

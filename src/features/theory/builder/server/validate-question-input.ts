@@ -7,15 +7,15 @@ import { ValidationError } from '@/lib/errors';
 import type { QuestionInput } from '@/features/theory/builder/api/contracts';
 
 export async function validateQuestionInput(input: QuestionInput): Promise<void> {
-  const uniqueCategoryIds = [...new Set(input.categoryIds)];
-  if (uniqueCategoryIds.length === 0) return;
+  const uniqueTopicIds = [...new Set(input.topicIds)];
+  if (uniqueTopicIds.length === 0) return;
 
-  const categories = await db
+  const topics = await db
     .select({ id: topicsInApp.id })
     .from(topicsInApp)
-    .where(inArray(topicsInApp.id, uniqueCategoryIds));
+    .where(inArray(topicsInApp.id, uniqueTopicIds));
 
-  if (categories.length !== uniqueCategoryIds.length) {
-    throw new ValidationError('invalidCategories');
+  if (topics.length !== uniqueTopicIds.length) {
+    throw new ValidationError('invalidTopics');
   }
 }

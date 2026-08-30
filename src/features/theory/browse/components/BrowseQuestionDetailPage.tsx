@@ -70,10 +70,10 @@ export default function BrowseQuestionDetailPage({ questionId }: BrowseQuestionD
 
               <div className='mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs'>
                 {data.isSystem ? <span className='text-secondary-foreground'>{tBrowse('systemQuestion')}</span> : null}
-                {data.categories.length > 0 ? (
-                  <span className='text-secondary-foreground'>{data.categories.map((category) => category.name).join(' · ')}</span>
+                {data.topics.length > 0 ? (
+                  <span className='text-secondary-foreground'>{data.topics.map((topic) => topic.name).join(' · ')}</span>
                 ) : (
-                  <span className='text-muted-foreground'>{tDetail('uncategorized')}</span>
+                  <span className='text-muted-foreground'>{tDetail('noTopics')}</span>
                 )}
 
                 {data.sourceName ? (

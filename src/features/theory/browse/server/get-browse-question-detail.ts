@@ -11,7 +11,7 @@ import {
 import { DatabaseError, NotFoundError } from '@/lib/errors';
 import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
 import type { BrowseQuestionDetailResponse } from '@/features/theory/browse/api/contracts';
-import type { RepositoryCategory } from '@/features/theory/repository/api/contracts';
+import type { RepositoryTopic } from '@/features/theory/repository/api/contracts';
 import { parseTiptapDocument } from '@/lib/tiptap/parse-document';
 
 export async function getBrowseQuestionDetail(questionId: string): Promise<BrowseQuestionDetailResponse> {
@@ -35,7 +35,7 @@ export async function getBrowseQuestionDetail(questionId: string): Promise<Brows
       throw new NotFoundError('questionNotFound');
     }
 
-    const categoryRows = await db
+    const topicRows = await db
       .select({
         id: topicsInApp.id,
         name: topicsInApp.name,
@@ -45,7 +45,7 @@ export async function getBrowseQuestionDetail(questionId: string): Promise<Brows
       .innerJoin(topicsInApp, eq(theoryQuestionTopicsInApp.topicId, topicsInApp.id))
       .where(eq(theoryQuestionTopicsInApp.questionId, questionId));
 
-    const categories: RepositoryCategory[] = categoryRows
+    const topics: RepositoryTopic[] = topicRows
       .map((row) => ({ id: row.id, name: row.name, slug: row.slug }))
       .sort((a, b) => a.name.localeCompare(b.name));
 
@@ -59,7 +59,7 @@ export async function getBrowseQuestionDetail(questionId: string): Promise<Brows
       id: question.id,
       question: question.question,
       answer: parseTiptapDocument(question.answer),
-      categories,
+      topics,
       sourceName: question.sourceName,
       sourceUrl: question.sourceUrl,
       isSaved: !!savedRow,

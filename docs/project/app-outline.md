@@ -2,37 +2,36 @@
 
 ## Purpose
 
-JobPrepOS is a personal interview-preparation workspace that may eventually include Theory Practice, System Design, Soft Questions, Aim Trainer, and other focused practice tools.
+JobPrepOS is a personal interview-preparation workspace that may eventually include System Design, Soft Questions, Aim Trainer, and other focused practice tools.
 
-The first version covers **Theory Practice only**. Its purpose is to replace an awkward collection of Markdown files and external question lists with a centralized repository where users can curate questions and keep a history of their answers.
+The current product covers **Theory Practice** and **Exercises** (multiple-choice). Theory replaces scattered Markdown files and external question lists with a curated repository and self-assessed attempt history. Exercises are the fast sibling: structured prompts the server grades immediately.
 
-The application records practice. It does not decide what the user should study, grade answers automatically, or calculate familiarity.
+The application records practice. It does not decide what the user should study or calculate familiarity. Theory answers are self-graded; exercise answers are graded by the server.
 
 ## Content Model
 
-The platform contains three kinds of questions:
+The platform contains three kinds of questions and three kinds of exercises:
 
-- **System questions:** Created and maintained by administrators for the shared question bank.
-- **Public user questions:** Created by users and made available for others to add.
-- **Private user questions:** Visible only to their creator.
+- **System:** Created and maintained by administrators for the shared bank.
+- **Public user:** Created by users and available for others to add.
+- **Private user:** Visible only to their creator.
 
-A question exists once. Adding a shared question to a personal repository does not copy it; it records that the user has saved it.
+A question or exercise exists once. Adding shared content to a personal repository does not copy it; it records that the user has saved it. Theory and exercises use separate repositories and attempt ledgers.
 
-Questions can belong to multiple categories, such as JavaScript, TypeScript, React, CSS, SQL, or PostgreSQL. They may also reference a general source and an exact source URL.
+Content can belong to multiple shared topics, such as JavaScript, TypeScript, React, CSS, SQL, or PostgreSQL. Items may also reference a general source and an exact source URL.
 
 ## Main Areas
 
 ### My Repository
 
-The user's repository is the default Theory Practice view. It lists saved questions and supports:
+The user's theory repository is the default Theory Practice view. It lists saved questions and supports:
 
 - text search;
-- category filtering;
+- topic filtering;
 - opening a question for practice;
 - removing a question from the repository;
 - viewing incorrect, partial, and correct attempt totals;
-- creating a personal question;
-- exporting attempt history to CSV.
+- creating a personal question.
 
 Removing a question from the repository does not delete the question or its attempt history.
 
@@ -48,7 +47,7 @@ Users can create questions with:
 
 - the question;
 - a reference answer;
-- optional categories (questions with none are treated as uncategorized in the UI);
+- optional topics (questions with none are shown as having no topics in the UI);
 - an optional source;
 - an optional exact source URL;
 - private or public visibility.
@@ -59,7 +58,7 @@ Duplicating or “forking” a question simply prefills the normal builder with 
 
 ### Practice
 
-The practice page is centered on one question. It shows the question, categories, and source while initially hiding the reference answer.
+The practice page is centered on one question. It shows the question, topics, and source while initially hiding the reference answer.
 
 The user may write a response or answer aloud. They then reveal the reference answer, compare it with their response, and record the attempt as:
 
@@ -69,29 +68,33 @@ The user may write a response or answer aloud. They then reveal the reference an
 
 The written response and notes are optional. Every submitted attempt is added to the question's ledger.
 
-The same page shows result totals and the complete attempt history, including dates, results, previous responses, and notes. This lets the user see how their answer has changed over time without reducing that history to a familiarity score.
+The same page shows result totals and the complete attempt history, including dates, results, previous responses, and notes. This lets the user see how their answer has changed over time without reducing that history to a familiarity score. Question detail pages also show totals and history for review.
+
+### Exercises
+
+Exercises follow the same repository, browse, builder, and practice surfaces as theory, with a separate personal repository.
+
+Practice shows a multiple-choice prompt, accepts selected choices, and grades the attempt on the server. Correctness and any explanation are revealed only after submit. Result totals and attempt history are kept on the practice and detail pages.
+
+Builders support a title, rich-text prompt, ordered choices (one or more correct), optional explanation, topics, source fields, and visibility. New personal exercises are added to the creator's repository automatically.
 
 ### Administration
 
 Administrators have a plain management area for:
 
-- sources;
-- categories;
+- topics (active or disabled);
 - system questions;
-- publication state.
+- system exercises;
+- publication state via public or private visibility.
 
 Normal users cannot create or modify system-owned content.
 
-### CSV Export
-
-Users can export only their own attempt ledger. The export includes the attempt date, question, categories, result, response, notes, and source information so it can be reviewed externally or provided to an LLM.
-
 ## Access Rules
 
-- Authentication is required for Theory Practice.
-- Users can always read and edit their own questions.
-- Users can read published questions created by the system or other users.
-- Users can modify only their own repository and attempts.
+- Authentication is required for the application.
+- Users can always read and edit their own questions and exercises.
+- Users can read published content created by the system or other users.
+- Users can modify only their own repositories and attempts.
 - Administrative operations require an administrator profile.
 - Visibility and ownership are enforced by the server, not merely hidden in the interface.
 
@@ -99,19 +102,21 @@ Users can export only their own attempt ledger. The export includes the attempt 
 
 The interface is a restrained study tool rather than a dashboard or marketing site. It uses clear typography, ordinary lists, compact controls, dividers, and simple forms. Decorative gradients, glows, nested cards, oversized metrics, gamification, and unnecessary animation are avoided.
 
-The question and its practice history remain the visual focus.
+The question or exercise and its practice history remain the visual focus.
 
-## Outside the Initial Version
+## Out of Scope
 
-The initial version does not include:
+The current product does not include:
 
-- LLM feedback or automatic grading;
+- LLM feedback or automatic grading of theory answers;
 - familiarity scores or study recommendations;
 - spaced repetition;
-- question version history or database-level fork tracking;
+- question or exercise version history or database-level fork tracking;
 - named repositories or multiple collections per user;
 - likes, comments, rankings, or social feeds;
 - streaks, points, achievements, or other gamification;
+- CSV export of attempt history;
+- non-multiple-choice exercise types;
 - the other future JobPrepOS practice areas.
 
 These may be considered only when a concrete product need appears.
