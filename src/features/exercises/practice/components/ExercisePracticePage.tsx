@@ -9,7 +9,7 @@ import AppShell from '@/common/components/AppShell';
 import AttemptTotals from '@/common/components/AttemptTotals';
 import TiptapRenderer from '@/common/components/TiptapRenderer';
 import { primaryButtonClassName, secondaryButtonClassName } from '@/common/styles/form';
-import { invalidateExerciseCaches } from '@/features/exercises/api/invalidate-caches';
+import { applyExerciseAttemptToCaches, invalidateExerciseCaches } from '@/features/exercises/api/invalidate-caches';
 import { submitExerciseAnswer } from '@/features/exercises/practice/api/mutations';
 import { exercisePracticeQueryOptions } from '@/features/exercises/practice/api/queries';
 import type { ExercisePracticeAttemptResult, SubmitExerciseAnswerResponse } from '@/features/exercises/practice/api/contracts';
@@ -72,6 +72,11 @@ export default function ExercisePracticePage({ exerciseId }: ExercisePracticePag
     onSuccess: async (response) => {
       setSubmitResult(response);
       setPhase('result');
+      applyExerciseAttemptToCaches(queryClient, exerciseId, {
+        id: response.attemptId,
+        result: response.result,
+        selectedChoiceIds,
+      });
       await invalidateExerciseCaches(queryClient, exerciseId);
     },
   });

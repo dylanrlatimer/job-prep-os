@@ -1,7 +1,7 @@
 import { ApiClientError } from '@/lib/errors/api-client-error';
 
 export async function apiRequest<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, init);
+  const res = await fetch(url, { ...init, cache: 'no-store' });
   const body = await res.json().catch(() => null);
   if (!res.ok) {
     const payload = body as { message?: string; code?: string } | null;

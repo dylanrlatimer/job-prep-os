@@ -247,6 +247,7 @@
     "attemptTotals": "{incorrect} incorrect · {partial} partial · {correct} correct",
     "choicesLabel": "Answer choices",
     "correctChoice": "Correct",
+    "revealAnswer": "Reveal answer",
     "explanationLabel": "Explanation",
     "historyTitle": "Attempt history",
     "historyEmpty": "No attempts recorded yet.",

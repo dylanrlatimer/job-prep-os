@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
@@ -31,6 +32,7 @@ function resultLabelKey(result: ExerciseAttemptResult) {
 export default function ExerciseDetailPage({ exerciseId }: ExerciseDetailPageProps) {
   const t = useTranslations('ExerciseDetailPage');
   const locale = useLocale();
+  const [answerRevealed, setAnswerRevealed] = useState(false);
   const { data, isPending, isError, refetch, isFetching } = useQuery(exerciseDetailQueryOptions(exerciseId));
 
   const formatDate = (value: string) =>
@@ -131,15 +133,21 @@ export default function ExerciseDetailPage({ exerciseId }: ExerciseDetailPagePro
                 <li key={choice.id} className='flex items-start gap-3'>
                   <span className='mt-0.5 shrink-0 text-sm text-muted-foreground'>{choice.position + 1}.</span>
                   <div className='min-w-0 flex-1'>
-                    <TiptapRenderer content={choice.content} className={cn(choice.isCorrect && 'text-success')} />
-                    {choice.isCorrect ? <p className='m-0 mt-1 text-xs text-success'>{t('correctChoice')}</p> : null}
+                    <TiptapRenderer content={choice.content} className={cn(answerRevealed && choice.isCorrect && 'text-success')} />
+                    {answerRevealed && choice.isCorrect ? <p className='m-0 mt-1 text-xs text-success'>{t('correctChoice')}</p> : null}
                   </div>
                 </li>
               ))}
             </ul>
+
+            {!answerRevealed ? (
+              <button type='button' className={cn(secondaryButtonClassName, 'mt-4')} onClick={() => setAnswerRevealed(true)}>
+                {t('revealAnswer')}
+              </button>
+            ) : null}
           </section>
 
-          {data.explanation ? (
+          {answerRevealed && data.explanation ? (
             <section className='border-t border-border pt-6'>
               <h2 className='m-0 text-xs text-secondary-foreground'>{t('explanationLabel')}</h2>
               <TiptapRenderer content={data.explanation} className='mt-2' />
