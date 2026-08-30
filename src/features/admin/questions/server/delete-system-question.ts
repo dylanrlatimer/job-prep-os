@@ -1,10 +1,11 @@
 import 'server-only';
 
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db } from '@/lib/drizzle/client';
 import { theoryAttemptsInApp, theoryQuestionsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError, NotFoundError } from '@/lib/errors';
 import { assertAdmin } from '@/features/auth/server/assert-admin';
+import { questionAccess } from '@/features/theory/server/access';
 import type { DeleteSystemQuestionResponse } from '@/features/admin/questions/api/contracts';
 
 export async function deleteSystemQuestion(id: string): Promise<DeleteSystemQuestionResponse> {
@@ -15,7 +16,7 @@ export async function deleteSystemQuestion(id: string): Promise<DeleteSystemQues
       const [existing] = await tx
         .select({ id: theoryQuestionsInApp.id })
         .from(theoryQuestionsInApp)
-        .where(and(eq(theoryQuestionsInApp.id, id), isNull(theoryQuestionsInApp.ownerProfileId)))
+        .where(and(eq(theoryQuestionsInApp.id, id), questionAccess.appOwned()))
         .limit(1);
 
       if (!existing) {
@@ -23,7 +24,7 @@ export async function deleteSystemQuestion(id: string): Promise<DeleteSystemQues
       }
 
       await tx.delete(theoryAttemptsInApp).where(eq(theoryAttemptsInApp.questionId, id));
-      await tx.delete(theoryQuestionsInApp).where(eq(theoryQuestionsInApp.id, id));
+      await tx.delete(theoryQuestionsInApp).where(and(eq(theoryQuestionsInApp.id, id), questionAccess.appOwned()));
 
       return { id };
     });

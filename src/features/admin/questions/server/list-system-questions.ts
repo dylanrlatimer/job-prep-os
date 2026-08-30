@@ -1,10 +1,11 @@
 import 'server-only';
 
-import { desc, eq, inArray, isNull } from 'drizzle-orm';
+import { desc, eq, inArray } from 'drizzle-orm';
 import { db } from '@/lib/drizzle/client';
 import { topicsInApp, theoryQuestionTopicsInApp, theoryQuestionsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError } from '@/lib/errors';
 import { assertAdmin } from '@/features/auth/server/assert-admin';
+import { questionAccess } from '@/features/theory/server/access';
 import type { ListSystemQuestionsResponse, SystemQuestionListItem } from '@/features/admin/questions/api/contracts';
 import type { RepositoryTopic } from '@/features/theory/repository/api/contracts';
 
@@ -20,7 +21,7 @@ export async function listSystemQuestions(): Promise<ListSystemQuestionsResponse
         updatedAt: theoryQuestionsInApp.updatedAt,
       })
       .from(theoryQuestionsInApp)
-      .where(isNull(theoryQuestionsInApp.ownerProfileId))
+      .where(questionAccess.appOwned())
       .orderBy(desc(theoryQuestionsInApp.updatedAt));
 
     if (questionRows.length === 0) {

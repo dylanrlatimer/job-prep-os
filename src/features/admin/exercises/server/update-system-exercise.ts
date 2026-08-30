@@ -1,10 +1,11 @@
 import 'server-only';
 
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db } from '@/lib/drizzle/client';
 import { exerciseChoicesInApp, exerciseTopicsInApp, exercisesInApp } from '@/lib/drizzle/schema';
 import { DatabaseError, NotFoundError } from '@/lib/errors';
 import { assertAdmin } from '@/features/auth/server/assert-admin';
+import { exerciseAccess } from '@/features/exercises/server/access';
 import { validateExerciseInput } from '@/features/exercises/builder/server/validate-exercise-input';
 import type { UpdateSystemExerciseInput, UpdateSystemExerciseResponse } from '@/features/admin/exercises/api/contracts';
 
@@ -17,7 +18,7 @@ export async function updateSystemExercise(id: string, input: UpdateSystemExerci
       const [existing] = await tx
         .select({ id: exercisesInApp.id })
         .from(exercisesInApp)
-        .where(and(eq(exercisesInApp.id, id), isNull(exercisesInApp.ownerProfileId)))
+        .where(and(eq(exercisesInApp.id, id), exerciseAccess.appOwned()))
         .limit(1);
 
       if (!existing) {
@@ -35,7 +36,7 @@ export async function updateSystemExercise(id: string, input: UpdateSystemExerci
           isPublic: input.isPublic,
           allowMultiple: input.allowMultiple,
         })
-        .where(and(eq(exercisesInApp.id, id), isNull(exercisesInApp.ownerProfileId)))
+        .where(and(eq(exercisesInApp.id, id), exerciseAccess.appOwned()))
         .returning({ id: exercisesInApp.id });
 
       if (!updated) {

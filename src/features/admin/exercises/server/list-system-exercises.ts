@@ -1,10 +1,11 @@
 import 'server-only';
 
-import { desc, eq, inArray, isNull } from 'drizzle-orm';
+import { desc, eq, inArray } from 'drizzle-orm';
 import { db } from '@/lib/drizzle/client';
 import { exerciseTopicsInApp, exercisesInApp, topicsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError } from '@/lib/errors';
 import { assertAdmin } from '@/features/auth/server/assert-admin';
+import { exerciseAccess } from '@/features/exercises/server/access';
 import type { ListSystemExercisesResponse, SystemExerciseListItem } from '@/features/admin/exercises/api/contracts';
 import type { ExerciseTopic } from '@/features/exercises/repository/api/contracts';
 
@@ -20,7 +21,7 @@ export async function listSystemExercises(): Promise<ListSystemExercisesResponse
         updatedAt: exercisesInApp.updatedAt,
       })
       .from(exercisesInApp)
-      .where(isNull(exercisesInApp.ownerProfileId))
+      .where(exerciseAccess.appOwned())
       .orderBy(desc(exercisesInApp.updatedAt));
 
     if (exerciseRows.length === 0) {

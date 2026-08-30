@@ -1,10 +1,11 @@
 import 'server-only';
 
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db } from '@/lib/drizzle/client';
 import { exerciseAttemptsInApp, exercisesInApp } from '@/lib/drizzle/schema';
 import { DatabaseError, NotFoundError } from '@/lib/errors';
 import { assertAdmin } from '@/features/auth/server/assert-admin';
+import { exerciseAccess } from '@/features/exercises/server/access';
 import type { DeleteSystemExerciseResponse } from '@/features/admin/exercises/api/contracts';
 
 export async function deleteSystemExercise(id: string): Promise<DeleteSystemExerciseResponse> {
@@ -15,7 +16,7 @@ export async function deleteSystemExercise(id: string): Promise<DeleteSystemExer
       const [existing] = await tx
         .select({ id: exercisesInApp.id })
         .from(exercisesInApp)
-        .where(and(eq(exercisesInApp.id, id), isNull(exercisesInApp.ownerProfileId)))
+        .where(and(eq(exercisesInApp.id, id), exerciseAccess.appOwned()))
         .limit(1);
 
       if (!existing) {
@@ -23,7 +24,7 @@ export async function deleteSystemExercise(id: string): Promise<DeleteSystemExer
       }
 
       await tx.delete(exerciseAttemptsInApp).where(eq(exerciseAttemptsInApp.exerciseId, id));
-      await tx.delete(exercisesInApp).where(eq(exercisesInApp.id, id));
+      await tx.delete(exercisesInApp).where(and(eq(exercisesInApp.id, id), exerciseAccess.appOwned()));
 
       return { id };
     });

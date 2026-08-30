@@ -1,10 +1,11 @@
 import 'server-only';
 
-import { and, asc, eq, isNull } from 'drizzle-orm';
+import { and, asc, eq } from 'drizzle-orm';
 import { db } from '@/lib/drizzle/client';
 import { exerciseChoicesInApp, exerciseTopicsInApp, exercisesInApp } from '@/lib/drizzle/schema';
 import { DatabaseError, NotFoundError } from '@/lib/errors';
 import { assertAdmin } from '@/features/auth/server/assert-admin';
+import { exerciseAccess } from '@/features/exercises/server/access';
 import type { SystemExerciseResponse } from '@/features/admin/exercises/api/contracts';
 import { parseTiptapDocument } from '@/lib/tiptap/parse-document';
 
@@ -24,7 +25,7 @@ export async function getSystemExercise(id: string): Promise<SystemExerciseRespo
         allowMultiple: exercisesInApp.allowMultiple,
       })
       .from(exercisesInApp)
-      .where(and(eq(exercisesInApp.id, id), isNull(exercisesInApp.ownerProfileId)))
+      .where(and(eq(exercisesInApp.id, id), exerciseAccess.appOwned()))
       .limit(1);
 
     if (!exercise) {

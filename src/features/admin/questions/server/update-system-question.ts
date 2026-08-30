@@ -1,10 +1,11 @@
 import 'server-only';
 
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db } from '@/lib/drizzle/client';
 import { theoryQuestionTopicsInApp, theoryQuestionsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError, NotFoundError } from '@/lib/errors';
 import { assertAdmin } from '@/features/auth/server/assert-admin';
+import { questionAccess } from '@/features/theory/server/access';
 import { validateQuestionInput } from '@/features/theory/builder/server/validate-question-input';
 import type { UpdateSystemQuestionInput, UpdateSystemQuestionResponse } from '@/features/admin/questions/api/contracts';
 
@@ -17,7 +18,7 @@ export async function updateSystemQuestion(id: string, input: UpdateSystemQuesti
       const [existing] = await tx
         .select({ id: theoryQuestionsInApp.id })
         .from(theoryQuestionsInApp)
-        .where(and(eq(theoryQuestionsInApp.id, id), isNull(theoryQuestionsInApp.ownerProfileId)))
+        .where(and(eq(theoryQuestionsInApp.id, id), questionAccess.appOwned()))
         .limit(1);
 
       if (!existing) {
@@ -33,7 +34,7 @@ export async function updateSystemQuestion(id: string, input: UpdateSystemQuesti
           sourceUrl: input.sourceUrl,
           isPublic: input.isPublic,
         })
-        .where(and(eq(theoryQuestionsInApp.id, id), isNull(theoryQuestionsInApp.ownerProfileId)))
+        .where(and(eq(theoryQuestionsInApp.id, id), questionAccess.appOwned()))
         .returning({ id: theoryQuestionsInApp.id });
 
       if (!updated) {

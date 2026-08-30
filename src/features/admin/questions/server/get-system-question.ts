@@ -1,10 +1,11 @@
 import 'server-only';
 
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db } from '@/lib/drizzle/client';
 import { theoryQuestionTopicsInApp, theoryQuestionsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError, NotFoundError } from '@/lib/errors';
 import { assertAdmin } from '@/features/auth/server/assert-admin';
+import { questionAccess } from '@/features/theory/server/access';
 import type { SystemQuestionResponse } from '@/features/admin/questions/api/contracts';
 import { parseTiptapDocument } from '@/lib/tiptap/parse-document';
 
@@ -22,7 +23,7 @@ export async function getSystemQuestion(id: string): Promise<SystemQuestionRespo
         isPublic: theoryQuestionsInApp.isPublic,
       })
       .from(theoryQuestionsInApp)
-      .where(and(eq(theoryQuestionsInApp.id, id), isNull(theoryQuestionsInApp.ownerProfileId)))
+      .where(and(eq(theoryQuestionsInApp.id, id), questionAccess.appOwned()))
       .limit(1);
 
     if (!question) {
