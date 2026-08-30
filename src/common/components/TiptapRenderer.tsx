@@ -1,7 +1,6 @@
 import { generateHTML } from '@tiptap/html';
-import StarterKit from '@tiptap/starter-kit';
-import { TableKit } from '@tiptap/extension-table';
 import type { JSONContent } from '@tiptap/core';
+import { getRendererExtensions } from '@/lib/tiptap/extensions';
 
 type TiptapRendererProps = {
   content: JSONContent;
@@ -9,7 +8,7 @@ type TiptapRendererProps = {
 };
 
 export default function TiptapRenderer({ content, className }: TiptapRendererProps) {
-  const html = generateHTML(content, [StarterKit.configure({ heading: { levels: [2, 3] } }), TableKit]);
+  const html = generateHTML(content, getRendererExtensions());
 
   return <div className={`tiptap-content${className ? ` ${className}` : ''}`} dangerouslySetInnerHTML={{ __html: html }} />;
 }

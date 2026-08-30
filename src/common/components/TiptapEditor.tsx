@@ -1,12 +1,31 @@
 'use client';
 
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
-import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
+import { useEditor, EditorContent, type Editor } from '@tiptap/react';
 import type { JSONContent } from '@tiptap/core';
-import { Bold, Italic, Strikethrough, Heading2, Heading3, List, ListOrdered, Code, Terminal, Quote, Minus, Undo2, Redo2, Table2, PlusSquare, MinusSquare, Trash2 } from 'lucide-react';
-import { TableKit } from '@tiptap/extension-table';
+import {
+  Bold,
+  Italic,
+  Strikethrough,
+  Heading2,
+  Heading3,
+  List,
+  ListOrdered,
+  Code,
+  Terminal,
+  Quote,
+  Minus,
+  Undo2,
+  Redo2,
+  Table2,
+  PlusSquare,
+  MinusSquare,
+  Trash2,
+} from 'lucide-react';
+import { getEditorExtensions } from '@/lib/tiptap/extensions';
+import { canonicalCodeBlockLanguage, codeBlockLanguageOptions } from '@/lib/tiptap/languages';
 import { cn } from '@/lib/cn';
+import { hardcoded } from '@/utils/hardcoded';
 
 export type TiptapEditorRef = {
   getJSON: () => JSONContent;
@@ -52,6 +71,39 @@ function ToolbarDivider() {
   return <div className='mx-0.5 h-4 w-px shrink-0 bg-border' />;
 }
 
+function CodeBlockLanguageSelect({ editor }: { editor: Editor | null }) {
+  const inCodeBlock = editor?.isActive('codeBlock') ?? false;
+  const currentLanguage = canonicalCodeBlockLanguage(editor?.getAttributes('codeBlock').language);
+  const options = codeBlockLanguageOptions(currentLanguage);
+
+  return (
+    <label className='ml-0.5 flex items-center'>
+      <span className='sr-only'>{hardcoded('Code language')}</span>
+      <select
+        value={currentLanguage}
+        disabled={!editor || !inCodeBlock}
+        onChange={(event) => {
+          editor
+            ?.chain()
+            .focus()
+            .updateAttributes('codeBlock', { language: event.target.value || null })
+            .run();
+        }}
+        className={cn(
+          'h-6 max-w-28 cursor-pointer rounded-sm border-0 bg-transparent px-1 text-[11px] text-muted-foreground',
+          'hover:bg-card-muted hover:text-foreground focus:bg-card-muted focus:text-foreground focus:outline-none',
+          'disabled:cursor-not-allowed disabled:opacity-40',
+        )}>
+        {options.map((option) => (
+          <option key={option.value || 'auto'} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 const emptyDocument: JSONContent = { type: 'doc', content: [] };
 
 const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(function TiptapEditor(
@@ -65,28 +117,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(function Tip
   const onUpdateRef = useRef(onUpdate);
   onUpdateRef.current = onUpdate;
 
-  const extensions = useMemo(() => {
-    if (isInline) {
-      return [
-        StarterKit.configure({
-          heading: false,
-          blockquote: false,
-          codeBlock: false,
-          horizontalRule: false,
-          bulletList: false,
-          orderedList: false,
-          listItem: false,
-        }),
-      ];
-    }
-
-    return [
-      StarterKit.configure({
-        heading: { levels: [2, 3] },
-      }),
-      TableKit,
-    ];
-  }, [isInline]);
+  const extensions = useMemo(() => getEditorExtensions(isInline ? 'inline' : 'full'), [isInline]);
 
   const editor = useEditor({
     extensions,
@@ -96,10 +127,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(function Tip
     editorProps: {
       attributes: {
         id: id ?? '',
-        class: cn(
-          'px-3 text-sm leading-relaxed text-foreground focus:outline-none',
-          isInline ? 'min-h-[2.5rem] py-2' : 'min-h-[9rem] py-2.5',
-        ),
+        class: cn('px-3 text-sm leading-relaxed text-foreground focus:outline-none', isInline ? 'min-h-[2.5rem] py-2' : 'min-h-[9rem] py-2.5'),
       },
     },
     onCreate({ editor: createdEditor }) {
@@ -192,6 +220,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(function Tip
             disabled={!editor}>
             <Terminal size={13} strokeWidth={2} />
           </ToolbarButton>
+          <CodeBlockLanguageSelect editor={editor} />
           <ToolbarButton
             title='Blockquote'
             onClick={() => editor?.chain().focus().toggleBlockquote().run()}
@@ -211,34 +240,19 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(function Tip
             disabled={!editor}>
             <Table2 size={13} strokeWidth={2} />
           </ToolbarButton>
-          <ToolbarButton
-            title='Add row below'
-            onClick={() => editor?.chain().focus().addRowAfter().run()}
-            disabled={!editor?.isActive('table')}>
+          <ToolbarButton title='Add row below' onClick={() => editor?.chain().focus().addRowAfter().run()} disabled={!editor?.isActive('table')}>
             <PlusSquare size={13} strokeWidth={2} />
           </ToolbarButton>
-          <ToolbarButton
-            title='Delete row'
-            onClick={() => editor?.chain().focus().deleteRow().run()}
-            disabled={!editor?.isActive('table')}>
+          <ToolbarButton title='Delete row' onClick={() => editor?.chain().focus().deleteRow().run()} disabled={!editor?.isActive('table')}>
             <MinusSquare size={13} strokeWidth={2} />
           </ToolbarButton>
-          <ToolbarButton
-            title='Add column right'
-            onClick={() => editor?.chain().focus().addColumnAfter().run()}
-            disabled={!editor?.isActive('table')}>
+          <ToolbarButton title='Add column right' onClick={() => editor?.chain().focus().addColumnAfter().run()} disabled={!editor?.isActive('table')}>
             <PlusSquare size={13} strokeWidth={2} className='rotate-90' />
           </ToolbarButton>
-          <ToolbarButton
-            title='Delete column'
-            onClick={() => editor?.chain().focus().deleteColumn().run()}
-            disabled={!editor?.isActive('table')}>
+          <ToolbarButton title='Delete column' onClick={() => editor?.chain().focus().deleteColumn().run()} disabled={!editor?.isActive('table')}>
             <MinusSquare size={13} strokeWidth={2} className='rotate-90' />
           </ToolbarButton>
-          <ToolbarButton
-            title='Delete table'
-            onClick={() => editor?.chain().focus().deleteTable().run()}
-            disabled={!editor?.isActive('table')}>
+          <ToolbarButton title='Delete table' onClick={() => editor?.chain().focus().deleteTable().run()} disabled={!editor?.isActive('table')}>
             <Trash2 size={13} strokeWidth={2} />
           </ToolbarButton>
 

@@ -50,6 +50,16 @@
   --tab-hover: #242422;
 
   --toast-error: #a84848;
+
+  /* Syntax tokens — Atom One Dark roles (highlight.js official grouping) */
+  --syntax-comment: #6e7178;
+  --syntax-keyword: #c678dd;
+  --syntax-tag: #e06c75;
+  --syntax-literal: #56b6c2;
+  --syntax-string: #98c379;
+  --syntax-number: #d19a66;
+  --syntax-function: #61aeee;
+  --syntax-type: #e6c07b;
 }
 
 @theme {
@@ -187,7 +197,94 @@ html::-webkit-scrollbar-thumb:hover,
   }
 
   pre code {
-    @apply bg-transparent p-0 text-xs text-tertiary-foreground;
+    @apply bg-transparent p-0 font-mono text-xs leading-relaxed text-foreground;
+    tab-size: 2;
+  }
+
+  /* Token groups match Atom One Dark / highlight.js official theme. */
+
+  .hljs-comment,
+  .hljs-quote {
+    color: var(--syntax-comment);
+    font-style: italic;
+  }
+
+  .hljs-doctag,
+  .hljs-keyword,
+  .hljs-formula {
+    color: var(--syntax-keyword);
+  }
+
+  .hljs-section,
+  .hljs-name,
+  .hljs-tag,
+  .hljs-selector-tag,
+  .hljs-template-tag,
+  .hljs-deletion,
+  .hljs-subst {
+    color: var(--syntax-tag);
+  }
+
+  .hljs-literal {
+    color: var(--syntax-literal);
+  }
+
+  .hljs-string,
+  .hljs-regexp,
+  .hljs-addition,
+  .hljs-attribute,
+  .hljs-meta .hljs-string {
+    color: var(--syntax-string);
+  }
+
+  .hljs-attr,
+  .hljs-variable,
+  .hljs-variable.language_,
+  .hljs-variable.constant_,
+  .hljs-template-variable,
+  .hljs-type,
+  .hljs-selector-class,
+  .hljs-selector-attr,
+  .hljs-selector-pseudo,
+  .hljs-property,
+  .hljs-number {
+    color: var(--syntax-number);
+  }
+
+  .hljs-symbol,
+  .hljs-bullet,
+  .hljs-link,
+  .hljs-meta,
+  .hljs-selector-id,
+  .hljs-title,
+  .hljs-title.function_,
+  .hljs-title.function_.invoke_ {
+    color: var(--syntax-function);
+  }
+
+  .hljs-built_in,
+  .hljs-title.class_,
+  .hljs-title.class_.inherited__,
+  .hljs-class .hljs-title {
+    color: var(--syntax-type);
+  }
+
+  .hljs-operator,
+  .hljs-punctuation,
+  .hljs-params {
+    color: var(--foreground);
+  }
+
+  .hljs-emphasis {
+    font-style: italic;
+  }
+
+  .hljs-strong {
+    font-weight: 600;
+  }
+
+  .hljs-link {
+    text-decoration: underline;
   }
 
   blockquote {
