@@ -5,6 +5,7 @@ import { db } from '@/lib/drizzle/client';
 import { theoryQuestionTopicsInApp, theoryQuestionsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError, ForbiddenError, NotFoundError } from '@/lib/errors';
 import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
+import { assertQuestionOwnedBy, questionAccess } from '@/features/theory/server/access';
 import { validateQuestionInput } from '@/features/theory/builder/server/validate-question-input';
 import type { UpdateQuestionInput, UpdateQuestionResponse } from '@/features/theory/builder/api/contracts';
 
@@ -20,13 +21,7 @@ export async function updateQuestion(id: string, input: UpdateQuestionInput): Pr
         .where(eq(theoryQuestionsInApp.id, id))
         .limit(1);
 
-      if (!existing) {
-        throw new NotFoundError('questionNotFound');
-      }
-
-      if (existing.ownerProfileId !== user.id) {
-        throw new ForbiddenError('questionForbidden');
-      }
+      assertQuestionOwnedBy(user.id, existing);
 
       const [updated] = await tx
         .update(theoryQuestionsInApp)
@@ -37,7 +32,7 @@ export async function updateQuestion(id: string, input: UpdateQuestionInput): Pr
           sourceUrl: input.sourceUrl,
           isPublic: input.isPublic,
         })
-        .where(and(eq(theoryQuestionsInApp.id, id), eq(theoryQuestionsInApp.ownerProfileId, user.id)))
+        .where(and(eq(theoryQuestionsInApp.id, id), questionAccess.ownedBy(user.id)))
         .returning({ id: theoryQuestionsInApp.id });
 
       if (!updated) {

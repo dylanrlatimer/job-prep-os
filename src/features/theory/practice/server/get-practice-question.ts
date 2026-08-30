@@ -7,7 +7,7 @@ import { DatabaseError, NotFoundError } from '@/lib/errors';
 import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
 import type { PracticeQuestionResponse } from '@/features/theory/practice/api/contracts';
 import type { RepositoryTopic } from '@/features/theory/repository/api/contracts';
-import { assertQuestionInLibrary } from '@/features/theory/practice/server/assert-question-in-library';
+import { assertQuestionInLibrary } from '@/features/theory/server/access';
 
 export async function getPracticeQuestion(id: string): Promise<PracticeQuestionResponse> {
   const user = await getAuthenticatedUser();

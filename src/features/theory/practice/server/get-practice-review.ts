@@ -6,7 +6,7 @@ import { theoryQuestionsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError, NotFoundError } from '@/lib/errors';
 import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
 import type { PracticeReviewResponse } from '@/features/theory/practice/api/contracts';
-import { assertQuestionInLibrary } from '@/features/theory/practice/server/assert-question-in-library';
+import { assertQuestionInLibrary } from '@/features/theory/server/access';
 import { listQuestionAttempts } from '@/features/theory/practice/server/list-question-attempts';
 import { parseTiptapDocument } from '@/lib/tiptap/parse-document';
 

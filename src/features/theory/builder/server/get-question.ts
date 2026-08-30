@@ -5,6 +5,7 @@ import { db } from '@/lib/drizzle/client';
 import { theoryQuestionTopicsInApp, theoryQuestionsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError, ForbiddenError, NotFoundError } from '@/lib/errors';
 import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
+import { assertQuestionOwnedBy } from '@/features/theory/server/access';
 import type { QuestionResponse } from '@/features/theory/builder/api/contracts';
 import { parseTiptapDocument } from '@/lib/tiptap/parse-document';
 
@@ -26,13 +27,7 @@ export async function getQuestion(id: string): Promise<QuestionResponse> {
       .where(eq(theoryQuestionsInApp.id, id))
       .limit(1);
 
-    if (!question) {
-      throw new NotFoundError('questionNotFound');
-    }
-
-    if (question.ownerProfileId !== user.id) {
-      throw new ForbiddenError('questionForbidden');
-    }
+    assertQuestionOwnedBy(user.id, question);
 
     const topicRows = await db
       .select({ topicId: theoryQuestionTopicsInApp.topicId })

@@ -5,6 +5,7 @@ import { db } from '@/lib/drizzle/client';
 import { theoryLibraryItemsInApp, theoryQuestionsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError, ForbiddenError, NotFoundError } from '@/lib/errors';
 import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
+import { assertQuestionCanUnsave } from '@/features/theory/server/access';
 import type { UnsaveRepositoryQuestionResponse } from '@/features/theory/repository/api/contracts';
 
 export async function unsaveRepositoryQuestion(questionId: string): Promise<UnsaveRepositoryQuestionResponse> {
@@ -25,13 +26,9 @@ export async function unsaveRepositoryQuestion(questionId: string): Promise<Unsa
       throw new NotFoundError('questionNotInRepository');
     }
 
-    if (libraryItem.ownerProfileId === user.id) {
-      throw new ForbiddenError('cannotUnsaveOwnedQuestion');
-    }
+    assertQuestionCanUnsave(user.id, libraryItem.ownerProfileId);
 
-    await db
-      .delete(theoryLibraryItemsInApp)
-      .where(and(eq(theoryLibraryItemsInApp.profileId, user.id), eq(theoryLibraryItemsInApp.questionId, questionId)));
+    await db.delete(theoryLibraryItemsInApp).where(and(eq(theoryLibraryItemsInApp.profileId, user.id), eq(theoryLibraryItemsInApp.questionId, questionId)));
 
     return { questionId };
   } catch (error) {

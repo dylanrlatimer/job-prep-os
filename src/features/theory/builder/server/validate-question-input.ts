@@ -10,10 +10,7 @@ export async function validateQuestionInput(input: QuestionInput): Promise<void>
   const uniqueTopicIds = [...new Set(input.topicIds)];
   if (uniqueTopicIds.length === 0) return;
 
-  const topics = await db
-    .select({ id: topicsInApp.id })
-    .from(topicsInApp)
-    .where(inArray(topicsInApp.id, uniqueTopicIds));
+  const topics = await db.select({ id: topicsInApp.id }).from(topicsInApp).where(inArray(topicsInApp.id, uniqueTopicIds));
 
   if (topics.length !== uniqueTopicIds.length) {
     throw new ValidationError('invalidTopics');

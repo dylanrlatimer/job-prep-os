@@ -1,10 +1,11 @@
 import 'server-only';
 
-import { and, eq, isNotNull } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db } from '@/lib/drizzle/client';
 import { theoryAttemptsInApp, theoryQuestionsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError, ForbiddenError, NotFoundError } from '@/lib/errors';
 import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
+import { assertQuestionOwnedBy, questionAccess } from '@/features/theory/server/access';
 import type { DeleteQuestionResponse } from '@/features/theory/builder/api/contracts';
 
 export async function deleteQuestion(id: string): Promise<DeleteQuestionResponse> {
@@ -15,19 +16,13 @@ export async function deleteQuestion(id: string): Promise<DeleteQuestionResponse
       const [existing] = await tx
         .select({ id: theoryQuestionsInApp.id, ownerProfileId: theoryQuestionsInApp.ownerProfileId })
         .from(theoryQuestionsInApp)
-        .where(and(eq(theoryQuestionsInApp.id, id), isNotNull(theoryQuestionsInApp.ownerProfileId)))
+        .where(eq(theoryQuestionsInApp.id, id))
         .limit(1);
 
-      if (!existing) {
-        throw new NotFoundError('questionNotFound');
-      }
-
-      if (existing.ownerProfileId !== user.id) {
-        throw new ForbiddenError('questionForbidden');
-      }
+      assertQuestionOwnedBy(user.id, existing);
 
       await tx.delete(theoryAttemptsInApp).where(eq(theoryAttemptsInApp.questionId, id));
-      await tx.delete(theoryQuestionsInApp).where(eq(theoryQuestionsInApp.id, id));
+      await tx.delete(theoryQuestionsInApp).where(and(eq(theoryQuestionsInApp.id, id), questionAccess.ownedBy(user.id)));
 
       return { id };
     });

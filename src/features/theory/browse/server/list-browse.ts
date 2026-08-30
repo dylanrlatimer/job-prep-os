@@ -5,6 +5,7 @@ import { db } from '@/lib/drizzle/client';
 import { topicsInApp, theoryLibraryItemsInApp, theoryQuestionTopicsInApp, theoryQuestionsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError } from '@/lib/errors';
 import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
+import { isQuestionAppOwned, questionAccess } from '@/features/theory/server/access';
 import type { BrowseQuestionItem, GetBrowseResponse } from '@/features/theory/browse/api/contracts';
 import type { RepositoryTopic } from '@/features/theory/repository/api/contracts';
 
@@ -19,7 +20,7 @@ export async function listBrowse(): Promise<GetBrowseResponse> {
         ownerProfileId: theoryQuestionsInApp.ownerProfileId,
       })
       .from(theoryQuestionsInApp)
-      .where(eq(theoryQuestionsInApp.isPublic, true))
+      .where(questionAccess.public())
       .orderBy(desc(theoryQuestionsInApp.createdAt));
 
     if (questionRows.length === 0) {
@@ -63,7 +64,7 @@ export async function listBrowse(): Promise<GetBrowseResponse> {
       question: row.question,
       topics: topicsByQuestion.get(row.id) ?? [],
       isSaved: savedQuestionIds.has(row.id),
-      isSystem: row.ownerProfileId === null,
+      isSystem: isQuestionAppOwned(row.ownerProfileId),
     }));
 
     const topics = [...topicMap.values()].sort((a, b) => a.name.localeCompare(b.name));

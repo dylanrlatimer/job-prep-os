@@ -7,7 +7,7 @@ import { DatabaseError, NotFoundError } from '@/lib/errors';
 import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
 import type { QuestionDetailResponse } from '@/features/theory/detail/api/contracts';
 import type { RepositoryTopic } from '@/features/theory/repository/api/contracts';
-import { assertQuestionInLibrary } from '@/features/theory/practice/server/assert-question-in-library';
+import { assertQuestionInLibrary, isQuestionOwnedBy } from '@/features/theory/server/access';
 import { listQuestionAttempts } from '@/features/theory/practice/server/list-question-attempts';
 import { parseTiptapDocument } from '@/lib/tiptap/parse-document';
 
@@ -44,9 +44,7 @@ export async function getQuestionDetail(id: string): Promise<QuestionDetailRespo
       .innerJoin(topicsInApp, eq(theoryQuestionTopicsInApp.topicId, topicsInApp.id))
       .where(eq(theoryQuestionTopicsInApp.questionId, id));
 
-    const topics: RepositoryTopic[] = topicRows
-      .map((row) => ({ id: row.id, name: row.name, slug: row.slug }))
-      .sort((a, b) => a.name.localeCompare(b.name));
+    const topics: RepositoryTopic[] = topicRows.map((row) => ({ id: row.id, name: row.name, slug: row.slug })).sort((a, b) => a.name.localeCompare(b.name));
 
     const { attempts, attemptHistory } = await listQuestionAttempts(user.id, id);
 
@@ -58,7 +56,7 @@ export async function getQuestionDetail(id: string): Promise<QuestionDetailRespo
       sourceName: question.sourceName,
       sourceUrl: question.sourceUrl,
       isPublic: question.isPublic,
-      isOwner: question.ownerProfileId === user.id,
+      isOwner: isQuestionOwnedBy(user.id, question.ownerProfileId),
       attempts,
       attemptHistory,
     };

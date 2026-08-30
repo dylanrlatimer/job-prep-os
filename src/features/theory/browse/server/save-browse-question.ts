@@ -5,6 +5,7 @@ import { db } from '@/lib/drizzle/client';
 import { theoryLibraryItemsInApp, theoryQuestionsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError, NotFoundError } from '@/lib/errors';
 import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
+import { questionAccess } from '@/features/theory/server/access';
 import type { SaveBrowseQuestionResponse } from '@/features/theory/browse/api/contracts';
 
 export async function saveBrowseQuestion(questionId: string): Promise<SaveBrowseQuestionResponse> {
@@ -14,7 +15,7 @@ export async function saveBrowseQuestion(questionId: string): Promise<SaveBrowse
     const [question] = await db
       .select({ id: theoryQuestionsInApp.id })
       .from(theoryQuestionsInApp)
-      .where(and(eq(theoryQuestionsInApp.id, questionId), eq(theoryQuestionsInApp.isPublic, true)))
+      .where(and(eq(theoryQuestionsInApp.id, questionId), questionAccess.public()))
       .limit(1);
 
     if (!question) {

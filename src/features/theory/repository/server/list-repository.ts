@@ -5,6 +5,7 @@ import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
 import { db } from '@/lib/drizzle/client';
 import { theoryAttemptsInApp, topicsInApp, theoryLibraryItemsInApp, theoryQuestionTopicsInApp, theoryQuestionsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError } from '@/lib/errors';
+import { isQuestionOwnedBy } from '@/features/theory/server/access';
 import type { GetRepositoryResponse, RepositoryAttemptTotals, RepositoryTopic, RepositoryQuestionItem } from '@/features/theory/repository/api/contracts';
 
 const emptyTotals = (): RepositoryAttemptTotals => ({
@@ -78,7 +79,7 @@ export async function listRepository(): Promise<GetRepositoryResponse> {
       question: row.question,
       topics: topicsByQuestion.get(row.questionId) ?? [],
       attempts: attemptsByQuestion.get(row.questionId) ?? emptyTotals(),
-      canUnsave: row.ownerProfileId !== user.id,
+      canUnsave: !isQuestionOwnedBy(user.id, row.ownerProfileId),
     }));
 
     const topics = [...topicMap.values()].sort((a, b) => a.name.localeCompare(b.name));

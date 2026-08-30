@@ -5,7 +5,7 @@ import { theoryAttemptsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError } from '@/lib/errors';
 import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
 import type { CreateAttemptInput, CreateAttemptResponse } from '@/features/theory/practice/api/contracts';
-import { assertQuestionInLibrary } from '@/features/theory/practice/server/assert-question-in-library';
+import { assertQuestionInLibrary } from '@/features/theory/server/access';
 
 export async function createAttempt(questionId: string, input: CreateAttemptInput): Promise<CreateAttemptResponse> {
   const user = await getAuthenticatedUser();
