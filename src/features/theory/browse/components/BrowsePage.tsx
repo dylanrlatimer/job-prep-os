@@ -15,8 +15,11 @@ import type { BrowseExerciseItem } from '@/features/exercises/browse/api/contrac
 import { saveBrowseQuestion } from '@/features/theory/browse/api/mutations';
 import { browseQueryOptions } from '@/features/theory/browse/api/queries';
 import type { BrowseQuestionItem } from '@/features/theory/browse/api/contracts';
-import { browseHref, matchesSaved, matchesTopic, type BrowseKind, type BrowseSavedFilter } from '@/features/theory/browse/lib/browse-filters';
-import TheoryRepositorySkeleton from '@/features/theory/repository/components/TheoryRepositorySkeleton';
+import { browseHref, matchesSaved, type BrowseKind, type BrowseSavedFilter } from '@/features/theory/browse/lib/browse-filters';
+import { matchesText, matchesTopic } from '@/common/lib/list-filters';
+import ListPageLayout, { ListEmptyState } from '@/common/components/ListPageLayout';
+import ListPageSkeleton from '@/common/components/ListPageSkeleton';
+import PageLoadError from '@/common/components/PageLoadError';
 import { inputClassName, secondaryButtonClassName } from '@/common/styles/form';
 import { useToastStore } from '@/lib/store/use-toast-store';
 import { cn } from '@/lib/cn';
@@ -25,19 +28,7 @@ type BrowsePageProps = {
   initialKind?: BrowseKind;
 };
 
-type BrowseRow =
-  | { type: 'question'; item: BrowseQuestionItem }
-  | { type: 'exercise'; item: BrowseExerciseItem };
-
-function matchesQuestionSearch(question: BrowseQuestionItem, search: string) {
-  if (!search) return true;
-  return question.question.toLowerCase().includes(search.toLowerCase());
-}
-
-function matchesExerciseSearch(exercise: BrowseExerciseItem, search: string) {
-  if (!search) return true;
-  return exercise.title.toLowerCase().includes(search.toLowerCase());
-}
+type BrowseRow = { type: 'question'; item: BrowseQuestionItem } | { type: 'exercise'; item: BrowseExerciseItem };
 
 function mergeTopics(questionTopics: BrowseQuestionItem['topics'], exerciseTopics: BrowseExerciseItem['topics']) {
   const topics = new Map<string, BrowseQuestionItem['topics'][number]>();
@@ -196,14 +187,14 @@ export default function BrowsePage({ initialKind = 'all' }: BrowsePageProps) {
   const filteredQuestions = useMemo(() => {
     if (!includeQuestions || !questionsQuery.data) return [];
     return questionsQuery.data.questions.filter(
-      (question) => matchesQuestionSearch(question, search) && matchesTopic(question, topicId) && matchesSaved(question.isSaved, savedFilter),
+      (question) => matchesText(question.question, search) && matchesTopic(question, topicId) && matchesSaved(question.isSaved, savedFilter),
     );
   }, [includeQuestions, questionsQuery.data, search, topicId, savedFilter]);
 
   const filteredExercises = useMemo(() => {
     if (!includeExercises || !exercisesQuery.data) return [];
     return exercisesQuery.data.exercises.filter(
-      (exercise) => matchesExerciseSearch(exercise, search) && matchesTopic(exercise, topicId) && matchesSaved(exercise.isSaved, savedFilter),
+      (exercise) => matchesText(exercise.title, search) && matchesTopic(exercise, topicId) && matchesSaved(exercise.isSaved, savedFilter),
     );
   }, [includeExercises, exercisesQuery.data, search, topicId, savedFilter]);
 
@@ -245,7 +236,7 @@ export default function BrowsePage({ initialKind = 'all' }: BrowsePageProps) {
   if (isPending) {
     return (
       <AppShell>
-        <TheoryRepositorySkeleton />
+        <ListPageSkeleton />
       </AppShell>
     );
   }
@@ -255,15 +246,14 @@ export default function BrowsePage({ initialKind = 'all' }: BrowsePageProps) {
 
   if (isError || questionsMissing || exercisesMissing) {
     return (
-      <AppShell>
-        <div className='px-4 py-8 md:px-8'>
-          <h1 className='m-0 text-lg font-medium text-foreground'>{t('title')}</h1>
-          <p className='mt-2 text-sm text-muted-foreground'>{t('loadError')}</p>
-          <button type='button' className={cn(secondaryButtonClassName, 'mt-4')} onClick={refetch} disabled={isFetching}>
-            {isFetching ? t('retrying') : t('retry')}
-          </button>
-        </div>
-      </AppShell>
+      <PageLoadError
+        title={t('title')}
+        message={t('loadError')}
+        onRetry={refetch}
+        isRetrying={isFetching}
+        retryLabel={t('retry')}
+        retryingLabel={t('retrying')}
+      />
     );
   }
 
@@ -274,7 +264,8 @@ export default function BrowsePage({ initialKind = 'all' }: BrowsePageProps) {
   const hasNoMatches = !isEmpty && rows.length === 0;
   const showType = kind === 'all';
 
-  const searchPlaceholder = kind === 'questions' ? t('searchQuestionsPlaceholder') : kind === 'exercises' ? t('searchExercisesPlaceholder') : t('searchAllPlaceholder');
+  const searchPlaceholder =
+    kind === 'questions' ? t('searchQuestionsPlaceholder') : kind === 'exercises' ? t('searchExercisesPlaceholder') : t('searchAllPlaceholder');
 
   const emptyTitle = kind === 'questions' ? t('emptyQuestionsTitle') : kind === 'exercises' ? t('emptyExercisesTitle') : t('emptyAllTitle');
   const emptyDescription =
@@ -294,58 +285,49 @@ export default function BrowsePage({ initialKind = 'all' }: BrowsePageProps) {
 
   return (
     <AppShell>
-      <div className='px-4 py-8 md:px-8'>
-        <header className='border-b border-border pb-6'>
-          <h1 className='m-0 text-lg font-medium text-foreground'>{t('title')}</h1>
-          <p className='mt-1 max-w-2xl text-sm text-muted-foreground'>{t('description')}</p>
-        </header>
+      <ListPageLayout
+        title={t('title')}
+        description={t('description')}
+        filters={
+          <div className='mt-6 flex flex-col gap-3 lg:flex-row lg:items-center'>
+            <label className='block flex-1'>
+              <span className='sr-only'>{t('searchLabel')}</span>
+              <input
+                className={inputClassName}
+                type='search'
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder={searchPlaceholder}
+                disabled={isEmpty}
+              />
+            </label>
 
-        <div className='mt-6 flex flex-col gap-3 lg:flex-row lg:items-center'>
-          <label className='block flex-1'>
-            <span className='sr-only'>{t('searchLabel')}</span>
-            <input
-              className={inputClassName}
-              type='search'
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder={searchPlaceholder}
-              disabled={isEmpty}
-            />
-          </label>
+            <Select className='w-full lg:w-48' aria-label={t('kindFilterLabel')} value={kind} onValueChange={handleKindChange} options={kindOptions} />
 
-          <Select className='w-full lg:w-48' aria-label={t('kindFilterLabel')} value={kind} onValueChange={handleKindChange} options={kindOptions} />
-
-          <Select
-            className='w-full lg:w-52'
-            aria-label={t('savedFilterLabel')}
-            value={savedFilter}
-            onValueChange={handleSavedFilterChange}
-            options={savedOptions}
-          />
-
-          {topics.length > 0 ? (
             <Select
-              className='w-full lg:w-44'
-              aria-label={t('topicFilterLabel')}
-              value={topicId ?? ''}
-              onValueChange={(value) => setTopicId(value || null)}
-              options={topicOptions}
+              className='w-full lg:w-52'
+              aria-label={t('savedFilterLabel')}
+              value={savedFilter}
+              onValueChange={handleSavedFilterChange}
+              options={savedOptions}
             />
-          ) : null}
-        </div>
 
-        <p className='mt-4 border-b border-border pb-4 text-xs text-muted-foreground'>{countLabel}</p>
-
+            {topics.length > 0 ? (
+              <Select
+                className='w-full lg:w-44'
+                aria-label={t('topicFilterLabel')}
+                value={topicId ?? ''}
+                onValueChange={(value) => setTopicId(value || null)}
+                options={topicOptions}
+              />
+            ) : null}
+          </div>
+        }
+        countLabel={countLabel}>
         {isEmpty ? (
-          <div className='py-12'>
-            <p className='m-0 text-sm text-foreground'>{emptyTitle}</p>
-            <p className='mt-1 text-sm text-muted-foreground'>{emptyDescription}</p>
-          </div>
+          <ListEmptyState title={emptyTitle} description={emptyDescription} />
         ) : hasNoMatches ? (
-          <div className='py-12'>
-            <p className='m-0 text-sm text-foreground'>{t('noMatchesTitle')}</p>
-            <p className='mt-1 text-sm text-muted-foreground'>{t('noMatchesDescription')}</p>
-          </div>
+          <ListEmptyState title={t('noMatchesTitle')} description={t('noMatchesDescription')} />
         ) : (
           <ul className='m-0 list-none p-0'>
             {rows.map((row) =>
@@ -357,7 +339,7 @@ export default function BrowsePage({ initialKind = 'all' }: BrowsePageProps) {
             )}
           </ul>
         )}
-      </div>
+      </ListPageLayout>
     </AppShell>
   );
 }

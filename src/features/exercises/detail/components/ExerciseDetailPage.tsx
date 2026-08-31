@@ -20,10 +20,6 @@ type ExerciseDetailPageProps = {
   exerciseId: string;
 };
 
-function hasAttempts(totals: { incorrect: number; partial: number; correct: number }) {
-  return totals.incorrect + totals.partial + totals.correct > 0;
-}
-
 function resultLabelKey(result: ExerciseAttemptResult) {
   if (result === 'incorrect') return 'resultIncorrect' as const;
   if (result === 'partial') return 'resultPartial' as const;
@@ -96,16 +92,13 @@ export default function ExerciseDetailPage({ exerciseId }: ExerciseDetailPagePro
                   </span>
                 ) : null}
 
-                {hasAttempts(data.attempts) ? (
-                  <AttemptTotals
-                    attempts={data.attempts}
-                    incorrectLabel={t('attemptIncorrect', { count: data.attempts.incorrect })}
-                    partialLabel={t('attemptPartial', { count: data.attempts.partial })}
-                    correctLabel={t('attemptCorrect', { count: data.attempts.correct })}
-                  />
-                ) : (
-                  <span className='text-muted-foreground'>{t('noAttempts')}</span>
-                )}
+                <AttemptTotals
+                  attempts={data.attempts}
+                  incorrectLabel={t('attemptIncorrect', { count: data.attempts.incorrect })}
+                  partialLabel={t('attemptPartial', { count: data.attempts.partial })}
+                  correctLabel={t('attemptCorrect', { count: data.attempts.correct })}
+                  emptyLabel={t('noAttempts')}
+                />
               </div>
             </div>
 

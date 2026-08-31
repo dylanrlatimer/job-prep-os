@@ -12,3 +12,7 @@ export function attemptCountClassName(count: number, type: 'incorrect' | 'partia
   if (type === 'partial') return 'text-warning';
   return 'text-success';
 }
+
+export function hasAttempts(totals: { incorrect: number; partial: number; correct: number }) {
+  return totals.incorrect + totals.partial + totals.correct > 0;
+}

@@ -27,10 +27,6 @@ type PracticePageProps = {
 
 type SessionPhase = 'draft' | 'grading';
 
-function hasAttempts(totals: { incorrect: number; partial: number; correct: number }) {
-  return totals.incorrect + totals.partial + totals.correct > 0;
-}
-
 function resultLabelKey(result: PracticeAttemptResult) {
   if (result === 'incorrect') return 'resultIncorrect' as const;
   if (result === 'partial') return 'resultPartial' as const;
@@ -144,7 +140,7 @@ export default function PracticePage({ questionId }: PracticePageProps) {
               </span>
             ) : null}
 
-            {isGrading && hasAttempts(review.attempts) ? (
+            {isGrading ? (
               <AttemptTotals
                 attempts={review.attempts}
                 incorrectLabel={t('attemptIncorrect', { count: review.attempts.incorrect })}
@@ -162,11 +158,7 @@ export default function PracticePage({ questionId }: PracticePageProps) {
             </label>
             {isGrading ? (
               <div className='rounded-sm border border-border bg-muted px-3 py-2 text-sm'>
-                {lockedResponse ? (
-                  <TiptapRenderer content={lockedResponse} />
-                ) : (
-                  <span className='text-muted-foreground'>{t('responseEmpty')}</span>
-                )}
+                {lockedResponse ? <TiptapRenderer content={lockedResponse} /> : <span className='text-muted-foreground'>{t('responseEmpty')}</span>}
               </div>
             ) : (
               <TiptapEditor ref={responseEditorRef} initialContent={null} id='response' />

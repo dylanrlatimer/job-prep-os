@@ -5,53 +5,21 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import AppShell from '@/common/components/AppShell';
+import AttemptTotals from '@/common/components/AttemptTotals';
 import ConfirmDialog from '@/common/components/ConfirmDialog';
+import ListPageLayout, { ListEmptyState } from '@/common/components/ListPageLayout';
+import ListPageSkeleton from '@/common/components/ListPageSkeleton';
+import PageLoadError from '@/common/components/PageLoadError';
 import Select from '@/common/components/Select';
 import TopicList from '@/common/components/TopicList';
+import { matchesText, matchesTopic } from '@/common/lib/list-filters';
+import { inputClassName, primaryButtonClassName, secondaryButtonClassName } from '@/common/styles/form';
 import { invalidateRepositoryCaches } from '@/features/theory/api/invalidate-repository-caches';
 import { unsaveRepositoryQuestion } from '@/features/theory/repository/api/mutations';
-import { inputClassName, primaryButtonClassName, secondaryButtonClassName } from '@/common/styles/form';
 import { repositoryQueryOptions } from '@/features/theory/repository/api/queries';
 import type { RepositoryQuestionItem } from '@/features/theory/repository/api/contracts';
-import TheoryRepositorySkeleton from './TheoryRepositorySkeleton';
 import { useToastStore } from '@/lib/store/use-toast-store';
-import { attemptCountClassName } from '@/features/theory/lib/attempt-result-styles';
 import { cn } from '@/lib/cn';
-
-function matchesSearch(question: RepositoryQuestionItem, search: string) {
-  if (!search) return true;
-  return question.question.toLowerCase().includes(search.toLowerCase());
-}
-
-function matchesTopic(question: RepositoryQuestionItem, topicId: string | null) {
-  if (!topicId) return true;
-  return question.topics.some((topic) => topic.id === topicId);
-}
-
-function hasAttempts(question: RepositoryQuestionItem) {
-  const { incorrect, partial, correct } = question.attempts;
-  return incorrect + partial + correct > 0;
-}
-
-function AttemptTotals({ question }: { question: RepositoryQuestionItem }) {
-  const t = useTranslations('TheoryRepositoryPage');
-
-  if (!hasAttempts(question)) {
-    return <span className='text-xs text-muted-foreground'>{t('noAttempts')}</span>;
-  }
-
-  const { incorrect, partial, correct } = question.attempts;
-
-  return (
-    <span className='text-xs'>
-      <span className={attemptCountClassName(incorrect, 'incorrect')}>{t('attemptIncorrect', { count: incorrect })}</span>
-      <span className='text-muted-foreground'> · </span>
-      <span className={attemptCountClassName(partial, 'partial')}>{t('attemptPartial', { count: partial })}</span>
-      <span className='text-muted-foreground'> · </span>
-      <span className={attemptCountClassName(correct, 'correct')}>{t('attemptCorrect', { count: correct })}</span>
-    </span>
-  );
-}
 
 function QuestionRow({ question }: { question: RepositoryQuestionItem }) {
   const t = useTranslations('TheoryRepositoryPage');
@@ -81,7 +49,13 @@ function QuestionRow({ question }: { question: RepositoryQuestionItem }) {
             ) : (
               <span className='text-xs text-muted-foreground'>{t('noTopics')}</span>
             )}
-            <AttemptTotals question={question} />
+            <AttemptTotals
+              attempts={question.attempts}
+              incorrectLabel={t('attemptIncorrect', { count: question.attempts.incorrect })}
+              partialLabel={t('attemptPartial', { count: question.attempts.partial })}
+              correctLabel={t('attemptCorrect', { count: question.attempts.correct })}
+              emptyLabel={t('noAttempts')}
+            />
           </div>
         </div>
 
@@ -121,7 +95,7 @@ export default function TheoryRepositoryPage() {
 
   const filteredQuestions = useMemo(() => {
     if (!data) return [];
-    return data.questions.filter((question) => matchesSearch(question, search) && matchesTopic(question, topicId));
+    return data.questions.filter((question) => matchesText(question.question, search) && matchesTopic(question, topicId));
   }, [topicId, data, search]);
 
   const topicOptions = useMemo(() => {
@@ -132,88 +106,78 @@ export default function TheoryRepositoryPage() {
   if (isPending) {
     return (
       <AppShell>
-        <TheoryRepositorySkeleton />
+        <ListPageSkeleton />
       </AppShell>
     );
   }
 
   if (isError) {
     return (
-      <AppShell>
-        <div className='px-4 py-8 md:px-8'>
-          <h1 className='m-0 text-lg font-medium text-foreground'>{t('title')}</h1>
-          <p className='mt-2 text-sm text-muted-foreground'>{t('loadError')}</p>
-          <button type='button' className={cn(secondaryButtonClassName, 'mt-4')} onClick={() => refetch()} disabled={isFetching}>
-            {isFetching ? t('retrying') : t('retry')}
-          </button>
-        </div>
-      </AppShell>
+      <PageLoadError
+        title={t('title')}
+        message={t('loadError')}
+        onRetry={() => refetch()}
+        isRetrying={isFetching}
+        retryLabel={t('retry')}
+        retryingLabel={t('retrying')}
+      />
     );
   }
 
   const isEmpty = data.questions.length === 0;
   const hasNoMatches = !isEmpty && filteredQuestions.length === 0;
-  const questionCount = data.questions.length;
 
   return (
     <AppShell>
-      <div className='px-4 py-8 md:px-8'>
-        <header className='border-b border-border pb-6'>
-          <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
-            <div className='min-w-0'>
-              <h1 className='m-0 text-lg font-medium text-foreground'>{t('title')}</h1>
-              <p className='mt-1 max-w-2xl text-sm text-muted-foreground'>{t('description')}</p>
-            </div>
-
-            <div className='flex shrink-0 flex-wrap gap-2'>
-              <Link href='/browse' className={secondaryButtonClassName}>
-                {t('browseBank')}
-              </Link>
-              <Link href='/theory/new' className={primaryButtonClassName}>
-                {t('createQuestion')}
-              </Link>
-            </div>
+      <ListPageLayout
+        title={t('title')}
+        description={t('description')}
+        headerActions={
+          <div className='flex shrink-0 flex-wrap gap-2'>
+            <Link href='/browse' className={secondaryButtonClassName}>
+              {t('browseBank')}
+            </Link>
+            <Link href='/theory/new' className={primaryButtonClassName}>
+              {t('createQuestion')}
+            </Link>
           </div>
-        </header>
+        }
+        filters={
+          isEmpty ? undefined : (
+            <div className='mt-6 flex flex-col gap-3 sm:flex-row sm:items-center'>
+              <label className='block flex-1'>
+                <span className='sr-only'>{t('searchLabel')}</span>
+                <input
+                  className={inputClassName}
+                  type='search'
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder={t('searchPlaceholder')}
+                />
+              </label>
 
-        {!isEmpty && (
-          <div className='mt-6 flex flex-col gap-3 sm:flex-row sm:items-center'>
-            <label className='block flex-1'>
-              <span className='sr-only'>{t('searchLabel')}</span>
-              <input
-                className={inputClassName}
-                type='search'
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder={t('searchPlaceholder')}
-              />
-            </label>
-
-            {data.topics.length > 0 && (
-              <Select
-                className='w-full sm:w-44'
-                aria-label={t('topicFilterLabel')}
-                value={topicId ?? ''}
-                onValueChange={(value) => setTopicId(value || null)}
-                options={topicOptions}
-              />
-            )}
-          </div>
-        )}
-
-        <div className='mt-4 flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-center sm:justify-between'>
-          <p className='m-0 text-xs text-muted-foreground'>{isEmpty ? t('questionCountEmpty') : t('questionCount', { count: questionCount })}</p>
-          {!isEmpty && (
+              {data.topics.length > 0 && (
+                <Select
+                  className='w-full sm:w-44'
+                  aria-label={t('topicFilterLabel')}
+                  value={topicId ?? ''}
+                  onValueChange={(value) => setTopicId(value || null)}
+                  options={topicOptions}
+                />
+              )}
+            </div>
+          )
+        }
+        countLabel={isEmpty ? t('questionCountEmpty') : t('questionCount', { count: data.questions.length })}
+        countExtra={
+          isEmpty ? undefined : (
             <button type='button' className={cn(secondaryButtonClassName, 'self-start sm:self-auto')} disabled>
               {t('exportCsv')}
             </button>
-          )}
-        </div>
-
+          )
+        }>
         {isEmpty ? (
-          <div className='py-12'>
-            <p className='m-0 text-sm text-foreground'>{t('emptyTitle')}</p>
-            <p className='mt-1 text-sm text-muted-foreground'>{t('emptyDescription')}</p>
+          <ListEmptyState title={t('emptyTitle')} description={t('emptyDescription')}>
             <div className='mt-4 flex flex-wrap gap-2'>
               <Link href='/browse' className={secondaryButtonClassName}>
                 {t('browseBank')}
@@ -222,12 +186,9 @@ export default function TheoryRepositoryPage() {
                 {t('createQuestion')}
               </Link>
             </div>
-          </div>
+          </ListEmptyState>
         ) : hasNoMatches ? (
-          <div className='py-12'>
-            <p className='m-0 text-sm text-foreground'>{t('noMatchesTitle')}</p>
-            <p className='mt-1 text-sm text-muted-foreground'>{t('noMatchesDescription')}</p>
-          </div>
+          <ListEmptyState title={t('noMatchesTitle')} description={t('noMatchesDescription')} />
         ) : (
           <ul className='m-0 list-none p-0'>
             {filteredQuestions.map((question) => (
@@ -235,7 +196,7 @@ export default function TheoryRepositoryPage() {
             ))}
           </ul>
         )}
-      </div>
+      </ListPageLayout>
     </AppShell>
   );
 }

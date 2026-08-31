@@ -5,53 +5,21 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import AppShell from '@/common/components/AppShell';
+import AttemptTotals from '@/common/components/AttemptTotals';
 import ConfirmDialog from '@/common/components/ConfirmDialog';
+import ListPageLayout, { ListEmptyState } from '@/common/components/ListPageLayout';
+import ListPageSkeleton from '@/common/components/ListPageSkeleton';
+import PageLoadError from '@/common/components/PageLoadError';
 import Select from '@/common/components/Select';
 import TopicList from '@/common/components/TopicList';
+import { matchesText, matchesTopic } from '@/common/lib/list-filters';
+import { inputClassName, primaryButtonClassName, secondaryButtonClassName } from '@/common/styles/form';
 import { invalidateExerciseCaches } from '@/features/exercises/api/invalidate-caches';
 import { unsaveExercise } from '@/features/exercises/repository/api/mutations';
-import { inputClassName, primaryButtonClassName, secondaryButtonClassName } from '@/common/styles/form';
 import { exerciseRepositoryQueryOptions } from '@/features/exercises/repository/api/queries';
 import type { RepositoryExerciseItem } from '@/features/exercises/repository/api/contracts';
-import ExerciseRepositorySkeleton from './ExerciseRepositorySkeleton';
 import { useToastStore } from '@/lib/store/use-toast-store';
-import { attemptCountClassName } from '@/features/theory/lib/attempt-result-styles';
 import { cn } from '@/lib/cn';
-
-function matchesSearch(exercise: RepositoryExerciseItem, search: string) {
-  if (!search) return true;
-  return exercise.title.toLowerCase().includes(search.toLowerCase());
-}
-
-function matchesTopic(exercise: RepositoryExerciseItem, topicId: string | null) {
-  if (!topicId) return true;
-  return exercise.topics.some((topic) => topic.id === topicId);
-}
-
-function hasAttempts(exercise: RepositoryExerciseItem) {
-  const { incorrect, partial, correct } = exercise.attempts;
-  return incorrect + partial + correct > 0;
-}
-
-function AttemptTotals({ exercise }: { exercise: RepositoryExerciseItem }) {
-  const t = useTranslations('ExerciseRepositoryPage');
-
-  if (!hasAttempts(exercise)) {
-    return <span className='text-xs text-muted-foreground'>{t('noAttempts')}</span>;
-  }
-
-  const { incorrect, partial, correct } = exercise.attempts;
-
-  return (
-    <span className='text-xs'>
-      <span className={attemptCountClassName(incorrect, 'incorrect')}>{t('attemptIncorrect', { count: incorrect })}</span>
-      <span className='text-muted-foreground'> · </span>
-      <span className={attemptCountClassName(partial, 'partial')}>{t('attemptPartial', { count: partial })}</span>
-      <span className='text-muted-foreground'> · </span>
-      <span className={attemptCountClassName(correct, 'correct')}>{t('attemptCorrect', { count: correct })}</span>
-    </span>
-  );
-}
 
 function ExerciseRow({ exercise }: { exercise: RepositoryExerciseItem }) {
   const t = useTranslations('ExerciseRepositoryPage');
@@ -81,7 +49,13 @@ function ExerciseRow({ exercise }: { exercise: RepositoryExerciseItem }) {
             ) : (
               <span className='text-xs text-muted-foreground'>{t('noTopics')}</span>
             )}
-            <AttemptTotals exercise={exercise} />
+            <AttemptTotals
+              attempts={exercise.attempts}
+              incorrectLabel={t('attemptIncorrect', { count: exercise.attempts.incorrect })}
+              partialLabel={t('attemptPartial', { count: exercise.attempts.partial })}
+              correctLabel={t('attemptCorrect', { count: exercise.attempts.correct })}
+              emptyLabel={t('noAttempts')}
+            />
           </div>
         </div>
 
@@ -121,7 +95,7 @@ export default function ExerciseRepositoryPage() {
 
   const filteredExercises = useMemo(() => {
     if (!data) return [];
-    return data.exercises.filter((exercise) => matchesSearch(exercise, search) && matchesTopic(exercise, topicId));
+    return data.exercises.filter((exercise) => matchesText(exercise.title, search) && matchesTopic(exercise, topicId));
   }, [data, search, topicId]);
 
   const topicOptions = useMemo(() => {
@@ -132,88 +106,78 @@ export default function ExerciseRepositoryPage() {
   if (isPending) {
     return (
       <AppShell>
-        <ExerciseRepositorySkeleton />
+        <ListPageSkeleton />
       </AppShell>
     );
   }
 
   if (isError) {
     return (
-      <AppShell>
-        <div className='px-4 py-8 md:px-8'>
-          <h1 className='m-0 text-lg font-medium text-foreground'>{t('title')}</h1>
-          <p className='mt-2 text-sm text-muted-foreground'>{t('loadError')}</p>
-          <button type='button' className={cn(secondaryButtonClassName, 'mt-4')} onClick={() => refetch()} disabled={isFetching}>
-            {isFetching ? t('retrying') : t('retry')}
-          </button>
-        </div>
-      </AppShell>
+      <PageLoadError
+        title={t('title')}
+        message={t('loadError')}
+        onRetry={() => refetch()}
+        isRetrying={isFetching}
+        retryLabel={t('retry')}
+        retryingLabel={t('retrying')}
+      />
     );
   }
 
   const isEmpty = data.exercises.length === 0;
   const hasNoMatches = !isEmpty && filteredExercises.length === 0;
-  const exerciseCount = data.exercises.length;
 
   return (
     <AppShell>
-      <div className='px-4 py-8 md:px-8'>
-        <header className='border-b border-border pb-6'>
-          <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
-            <div className='min-w-0'>
-              <h1 className='m-0 text-lg font-medium text-foreground'>{t('title')}</h1>
-              <p className='mt-1 max-w-2xl text-sm text-muted-foreground'>{t('description')}</p>
-            </div>
-
-            <div className='flex shrink-0 flex-wrap gap-2'>
-              <Link href='/browse?kind=exercises' className={secondaryButtonClassName}>
-                {t('browseBank')}
-              </Link>
-              <Link href='/exercises/new' className={primaryButtonClassName}>
-                {t('createExercise')}
-              </Link>
-            </div>
+      <ListPageLayout
+        title={t('title')}
+        description={t('description')}
+        headerActions={
+          <div className='flex shrink-0 flex-wrap gap-2'>
+            <Link href='/browse?kind=exercises' className={secondaryButtonClassName}>
+              {t('browseBank')}
+            </Link>
+            <Link href='/exercises/new' className={primaryButtonClassName}>
+              {t('createExercise')}
+            </Link>
           </div>
-        </header>
+        }
+        filters={
+          isEmpty ? undefined : (
+            <div className='mt-6 flex flex-col gap-3 sm:flex-row sm:items-center'>
+              <label className='block flex-1'>
+                <span className='sr-only'>{t('searchLabel')}</span>
+                <input
+                  className={inputClassName}
+                  type='search'
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder={t('searchPlaceholder')}
+                />
+              </label>
 
-        {!isEmpty && (
-          <div className='mt-6 flex flex-col gap-3 sm:flex-row sm:items-center'>
-            <label className='block flex-1'>
-              <span className='sr-only'>{t('searchLabel')}</span>
-              <input
-                className={inputClassName}
-                type='search'
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder={t('searchPlaceholder')}
-              />
-            </label>
-
-            {data.topics.length > 0 && (
-              <Select
-                className='w-full sm:w-44'
-                aria-label={t('topicFilterLabel')}
-                value={topicId ?? ''}
-                onValueChange={(value) => setTopicId(value || null)}
-                options={topicOptions}
-              />
-            )}
-          </div>
-        )}
-
-        <div className='mt-4 flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-center sm:justify-between'>
-          <p className='m-0 text-xs text-muted-foreground'>{isEmpty ? t('exerciseCountEmpty') : t('exerciseCount', { count: exerciseCount })}</p>
-          {!isEmpty && (
+              {data.topics.length > 0 && (
+                <Select
+                  className='w-full sm:w-44'
+                  aria-label={t('topicFilterLabel')}
+                  value={topicId ?? ''}
+                  onValueChange={(value) => setTopicId(value || null)}
+                  options={topicOptions}
+                />
+              )}
+            </div>
+          )
+        }
+        countLabel={isEmpty ? t('exerciseCountEmpty') : t('exerciseCount', { count: data.exercises.length })}
+        countExtra={
+          isEmpty ? undefined : (
             <button type='button' className={cn(secondaryButtonClassName, 'self-start sm:self-auto')} disabled>
               {t('exportCsv')}
             </button>
-          )}
-        </div>
-
+          )
+        }>
         {isEmpty ? (
-          <div className='py-12'>
-            <p className='m-0 text-sm text-foreground'>{t('emptyTitle')}</p>
-            <p className='mt-1 text-sm text-muted-foreground'>{t('emptyDescription')}</p>
+          <ListEmptyState title={t('emptyTitle')} description={t('emptyDescription')}>
             <div className='mt-4 flex flex-wrap gap-2'>
               <Link href='/browse?kind=exercises' className={secondaryButtonClassName}>
                 {t('browseBank')}
@@ -222,12 +186,9 @@ export default function ExerciseRepositoryPage() {
                 {t('createExercise')}
               </Link>
             </div>
-          </div>
+          </ListEmptyState>
         ) : hasNoMatches ? (
-          <div className='py-12'>
-            <p className='m-0 text-sm text-foreground'>{t('noMatchesTitle')}</p>
-            <p className='mt-1 text-sm text-muted-foreground'>{t('noMatchesDescription')}</p>
-          </div>
+          <ListEmptyState title={t('noMatchesTitle')} description={t('noMatchesDescription')} />
         ) : (
           <ul className='m-0 list-none p-0'>
             {filteredExercises.map((exercise) => (
@@ -235,7 +196,7 @@ export default function ExerciseRepositoryPage() {
             ))}
           </ul>
         )}
-      </div>
+      </ListPageLayout>
     </AppShell>
   );
 }

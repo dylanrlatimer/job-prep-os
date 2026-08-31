@@ -24,10 +24,6 @@ type ExercisePracticePageProps = {
 
 type SessionPhase = 'draft' | 'result';
 
-function hasAttempts(totals: { incorrect: number; partial: number; correct: number }) {
-  return totals.incorrect + totals.partial + totals.correct > 0;
-}
-
 function resultLabelKey(result: ExercisePracticeAttemptResult) {
   if (result === 'incorrect') return 'resultIncorrect' as const;
   if (result === 'partial') return 'resultPartial' as const;
@@ -161,14 +157,12 @@ export default function ExercisePracticePage({ exerciseId }: ExercisePracticePag
               </span>
             ) : null}
 
-            {hasAttempts(data.attempts) ? (
-              <AttemptTotals
-                attempts={data.attempts}
-                incorrectLabel={t('attemptIncorrect', { count: data.attempts.incorrect })}
-                partialLabel={t('attemptPartial', { count: data.attempts.partial })}
-                correctLabel={t('attemptCorrect', { count: data.attempts.correct })}
-              />
-            ) : null}
+            <AttemptTotals
+              attempts={data.attempts}
+              incorrectLabel={t('attemptIncorrect', { count: data.attempts.incorrect })}
+              partialLabel={t('attemptPartial', { count: data.attempts.partial })}
+              correctLabel={t('attemptCorrect', { count: data.attempts.correct })}
+            />
           </div>
         </header>
 

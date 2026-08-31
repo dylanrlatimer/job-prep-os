@@ -32,11 +32,3 @@ export function matchesSaved(isSaved: boolean, filter: BrowseSavedFilter) {
 
   return true;
 }
-
-export function matchesTopic<T extends { topics: Array<{ id: string }> }>(item: T, topicId: string | null) {
-  if (!topicId) {
-    return true;
-  }
-
-  return item.topics.some((topic) => topic.id === topicId);
-}

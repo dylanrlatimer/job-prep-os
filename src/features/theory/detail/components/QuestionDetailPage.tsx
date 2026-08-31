@@ -24,10 +24,6 @@ type QuestionDetailPageProps = {
   questionId: string;
 };
 
-function hasAttempts(totals: { incorrect: number; partial: number; correct: number }) {
-  return totals.incorrect + totals.partial + totals.correct > 0;
-}
-
 function resultLabelKey(result: PracticeAttemptResult) {
   if (result === 'incorrect') return 'resultIncorrect' as const;
   if (result === 'partial') return 'resultPartial' as const;
@@ -114,16 +110,13 @@ export default function QuestionDetailPage({ questionId }: QuestionDetailPagePro
 
                 <span className='text-muted-foreground'>{data.isPublic ? t('visibilityPublic') : t('visibilityPrivate')}</span>
 
-                {hasAttempts(data.attempts) ? (
-                  <AttemptTotals
-                    attempts={data.attempts}
-                    incorrectLabel={t('attemptIncorrect', { count: data.attempts.incorrect })}
-                    partialLabel={t('attemptPartial', { count: data.attempts.partial })}
-                    correctLabel={t('attemptCorrect', { count: data.attempts.correct })}
-                  />
-                ) : (
-                  <span className='text-muted-foreground'>{t('noAttempts')}</span>
-                )}
+                <AttemptTotals
+                  attempts={data.attempts}
+                  incorrectLabel={t('attemptIncorrect', { count: data.attempts.incorrect })}
+                  partialLabel={t('attemptPartial', { count: data.attempts.partial })}
+                  correctLabel={t('attemptCorrect', { count: data.attempts.correct })}
+                  emptyLabel={t('noAttempts')}
+                />
               </div>
             </div>
 

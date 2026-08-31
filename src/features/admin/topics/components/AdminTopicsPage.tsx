@@ -5,22 +5,21 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import AppShell from '@/common/components/AppShell';
+import ListPageLayout, { ListEmptyState } from '@/common/components/ListPageLayout';
+import ListPageSkeleton from '@/common/components/ListPageSkeleton';
+import PageLoadError from '@/common/components/PageLoadError';
 import Select from '@/common/components/Select';
 import TopicIcon from '@/common/components/TopicIcon';
 import AdminGate from '@/features/admin/components/AdminGate';
+import { matchesText } from '@/common/lib/list-filters';
 import { adminTopicsQueryOptions } from '@/features/admin/topics/api/queries';
 import type { AdminTopicItem } from '@/features/admin/topics/api/contracts';
 import { inputClassName, primaryButtonClassName, secondaryButtonClassName } from '@/common/styles/form';
-import TheoryRepositorySkeleton from '@/features/theory/repository/components/TheoryRepositorySkeleton';
 import { cn } from '@/lib/cn';
 
-function matchesSearch(topic: AdminTopicItem, search: string) {
-  if (!search) return true;
-  const normalized = search.toLowerCase();
-  return topic.name.toLowerCase().includes(normalized) || topic.slug.toLowerCase().includes(normalized);
-}
+type StatusFilter = 'all' | 'active' | 'disabled';
 
-function matchesStatus(topic: AdminTopicItem, status: 'all' | 'active' | 'disabled') {
+function matchesStatus(topic: AdminTopicItem, status: StatusFilter) {
   if (status === 'all') return true;
   if (status === 'active') return topic.isActive;
   return !topic.isActive;
@@ -41,11 +40,11 @@ function AdminTopicsContent() {
   const { data, isPending, isError, refetch, isFetching } = useQuery(adminTopicsQueryOptions);
 
   const [search, setSearch] = useState('');
-  const [status, setStatus] = useState<'all' | 'active' | 'disabled'>('all');
+  const [status, setStatus] = useState<StatusFilter>('all');
 
   const filteredTopics = useMemo(() => {
     if (!data) return [];
-    return data.topics.filter((topic) => matchesSearch(topic, search) && matchesStatus(topic, status));
+    return data.topics.filter((topic) => (matchesText(topic.name, search) || matchesText(topic.slug, search)) && matchesStatus(topic, status));
   }, [data, search, status]);
 
   const statusOptions = useMemo(
@@ -57,25 +56,24 @@ function AdminTopicsContent() {
     [t],
   );
 
-  if (!data && isPending) {
+  if (isPending) {
     return (
       <AppShell>
-        <TheoryRepositorySkeleton />
+        <ListPageSkeleton />
       </AppShell>
     );
   }
 
   if (isError || !data) {
     return (
-      <AppShell>
-        <div className='px-4 py-8 md:px-8'>
-          <h1 className='m-0 text-lg font-medium text-foreground'>{t('title')}</h1>
-          <p className='mt-2 text-sm text-muted-foreground'>{t('loadError')}</p>
-          <button type='button' className={cn(secondaryButtonClassName, 'mt-4')} onClick={() => refetch()} disabled={isFetching}>
-            {isFetching ? t('retrying') : t('retry')}
-          </button>
-        </div>
-      </AppShell>
+      <PageLoadError
+        title={t('title')}
+        message={t('loadError')}
+        onRetry={() => refetch()}
+        isRetrying={isFetching}
+        retryLabel={t('retry')}
+        retryingLabel={t('retrying')}
+      />
     );
   }
 
@@ -84,60 +82,47 @@ function AdminTopicsContent() {
 
   return (
     <AppShell>
-      <div className='px-4 py-8 md:px-8'>
-        <header className='border-b border-border pb-6'>
-          <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
-            <div className='min-w-0'>
-              <h1 className='m-0 text-lg font-medium text-foreground'>{t('title')}</h1>
-              <p className='mt-1 max-w-2xl text-sm text-muted-foreground'>{t('description')}</p>
-            </div>
+      <ListPageLayout
+        title={t('title')}
+        description={t('description')}
+        headerActions={
+          <Link href='/admin/topics/new' className={cn(primaryButtonClassName, 'shrink-0 self-start')}>
+            {t('createTopic')}
+          </Link>
+        }
+        filters={
+          isEmpty ? undefined : (
+            <div className='mt-6 flex flex-col gap-3 sm:flex-row sm:items-center'>
+              <label className='block flex-1'>
+                <span className='sr-only'>{t('searchLabel')}</span>
+                <input
+                  className={inputClassName}
+                  type='search'
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder={t('searchPlaceholder')}
+                />
+              </label>
 
-            <Link href='/admin/topics/new' className={cn(primaryButtonClassName, 'shrink-0 self-start')}>
-              {t('createTopic')}
-            </Link>
-          </div>
-        </header>
-
-        {!isEmpty && (
-          <div className='mt-6 flex flex-col gap-3 sm:flex-row sm:items-center'>
-            <label className='block flex-1'>
-              <span className='sr-only'>{t('searchLabel')}</span>
-              <input
-                className={inputClassName}
-                type='search'
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder={t('searchPlaceholder')}
+              <Select
+                className='w-full sm:w-44'
+                aria-label={t('statusFilterLabel')}
+                value={status}
+                onValueChange={(value) => setStatus(value as StatusFilter)}
+                options={statusOptions}
               />
-            </label>
-
-            <Select
-              className='w-full sm:w-44'
-              aria-label={t('statusFilterLabel')}
-              value={status}
-              onValueChange={(value) => setStatus(value as 'all' | 'active' | 'disabled')}
-              options={statusOptions}
-            />
-          </div>
-        )}
-
-        <p className='mt-4 border-b border-border pb-4 text-xs text-muted-foreground'>
-          {isEmpty ? t('topicCountEmpty') : t('topicCount', { count: data.topics.length })}
-        </p>
-
+            </div>
+          )
+        }
+        countLabel={isEmpty ? t('topicCountEmpty') : t('topicCount', { count: data.topics.length })}>
         {isEmpty ? (
-          <div className='py-12'>
-            <p className='m-0 text-sm text-foreground'>{t('emptyTitle')}</p>
-            <p className='mt-1 text-sm text-muted-foreground'>{t('emptyDescription')}</p>
+          <ListEmptyState title={t('emptyTitle')} description={t('emptyDescription')}>
             <Link href='/admin/topics/new' className={cn(primaryButtonClassName, 'mt-4 inline-flex')}>
               {t('createTopic')}
             </Link>
-          </div>
+          </ListEmptyState>
         ) : hasNoMatches ? (
-          <div className='py-12'>
-            <p className='m-0 text-sm text-foreground'>{t('noMatchesTitle')}</p>
-            <p className='mt-1 text-sm text-muted-foreground'>{t('noMatchesDescription')}</p>
-          </div>
+          <ListEmptyState title={t('noMatchesTitle')} description={t('noMatchesDescription')} />
         ) : (
           <ul className='m-0 list-none p-0'>
             {filteredTopics.map((topic) => (
@@ -163,7 +148,7 @@ function AdminTopicsContent() {
             ))}
           </ul>
         )}
-      </div>
+      </ListPageLayout>
     </AppShell>
   );
 }

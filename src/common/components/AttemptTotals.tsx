@@ -1,4 +1,4 @@
-import { attemptCountClassName } from '@/features/theory/lib/attempt-result-styles';
+import { attemptCountClassName, hasAttempts } from '@/features/theory/lib/attempt-result-styles';
 
 export type AttemptCountTotals = {
   incorrect: number;
@@ -11,9 +11,15 @@ type AttemptTotalsProps = {
   incorrectLabel: string;
   partialLabel: string;
   correctLabel: string;
+  emptyLabel?: string;
 };
 
-export default function AttemptTotals({ attempts, incorrectLabel, partialLabel, correctLabel }: AttemptTotalsProps) {
+export default function AttemptTotals({ attempts, incorrectLabel, partialLabel, correctLabel, emptyLabel }: AttemptTotalsProps) {
+  if (!hasAttempts(attempts)) {
+    if (!emptyLabel) return null;
+    return <span className='text-xs text-muted-foreground'>{emptyLabel}</span>;
+  }
+
   const { incorrect, partial, correct } = attempts;
 
   return (

@@ -1,4 +1,4 @@
-export default function TheoryRepositorySkeleton() {
+export default function ListPageSkeleton() {
   return (
     <div className='px-4 py-8 md:px-8'>
       <div className='h-6 w-48 animate-pulse rounded-sm bg-card-muted' />
