@@ -10,7 +10,7 @@ import AdminGate from '@/features/admin/components/AdminGate';
 import { useValidationMessage } from '@/common/hooks/use-validation-message';
 import Select from '@/common/components/Select';
 import TopicIcon from '@/common/components/TopicIcon';
-import { inputClassName, primaryButtonClassName, secondaryButtonClassName } from '@/common/styles/form';
+import { destructiveButtonClassName, inputClassName, primaryButtonClassName, secondaryButtonClassName } from '@/common/styles/form';
 import { isTopicIconKey, TOPIC_ICON_KEYS, TOPIC_ICON_LABELS } from '@/common/topics/icon-keys';
 import { topicBuilderFieldOrder, useTopicBuilderForm } from '@/features/admin/topics/hooks/useTopicBuilderForm';
 import { hardcoded } from '@/utils/hardcoded';
@@ -203,9 +203,7 @@ function TopicBuilderContent({ topicId }: TopicBuilderPageProps) {
                 <p className='mt-2 text-sm text-muted-foreground'>{canDelete ? t('deleteDescription') : t('deleteBlockedDescription')}</p>
                 <button
                   type='button'
-                  className={cn(
-                    'mt-4 inline-flex cursor-pointer items-center justify-center rounded-sm border border-destructive-border bg-destructive-subtle px-3 py-2 text-sm text-destructive-bright transition-colors hover:bg-destructive-subtle/80 disabled:cursor-not-allowed disabled:opacity-60',
-                  )}
+                  className={cn(destructiveButtonClassName, 'mt-4')}
                   disabled={!canDelete || isDeleting}
                   onClick={() => {
                     if (!canDelete || !window.confirm(t('deleteConfirm'))) return;

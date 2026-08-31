@@ -12,11 +12,8 @@ import { settingsQueryOptions } from '@/features/settings/api/queries';
 import { updateDisplayName } from '@/features/settings/api/mutations';
 import { useToastStore } from '@/lib/store/use-toast-store';
 import { settingsKeys } from '@/features/settings/api/query-keys';
-
-const inputClassName =
-  'box-border w-full rounded-sm border border-input bg-card px-3 py-2 text-sm text-foreground placeholder:text-subtle-foreground focus:border-tertiary-foreground focus:outline-none';
-
-const readOnlyInputClassName = 'box-border w-full rounded-sm border border-border-subtle bg-muted px-3 py-2 text-sm text-muted-foreground';
+import { destructiveSolidButtonClassName, inputClassName, primaryButtonClassName, readOnlyInputClassName } from '@/common/styles/form';
+import { cn } from '@/lib/cn';
 
 export default function SettingsPage() {
   const t = useTranslations('SettingsPage');
@@ -84,20 +81,13 @@ export default function SettingsPage() {
             <input className={readOnlyInputClassName} type='email' value={data?.email ?? ''} readOnly tabIndex={-1} aria-readonly='true' />
           </label>
 
-          <button
-            type='submit'
-            className='w-full cursor-pointer rounded-sm border border-primary bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60'
-            disabled={isSaving}>
+          <button type='submit' className={cn(primaryButtonClassName, 'w-full')} disabled={isSaving}>
             {isSaving ? t('saving') : t('save')}
           </button>
         </form>
 
         <div className='mt-8 border-t border-border pt-6'>
-          <button
-            type='button'
-            className='w-full cursor-pointer rounded-sm border border-destructive-button-border bg-destructive-button px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-destructive-button-hover disabled:cursor-not-allowed disabled:opacity-60'
-            onClick={() => handleSignOut()}
-            disabled={isSigningOut}>
+          <button type='button' className={cn(destructiveSolidButtonClassName, 'w-full')} onClick={() => handleSignOut()} disabled={isSigningOut}>
             {isSigningOut ? t('signingOut') : t('signOut')}
           </button>
         </div>

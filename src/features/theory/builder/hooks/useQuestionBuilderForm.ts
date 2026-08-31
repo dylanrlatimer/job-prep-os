@@ -3,9 +3,12 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from '@/i18n/navigation';
-import { useTranslations } from 'next-intl';
 import { useReleaseUnsavedGuard } from '@/common/unsaved-changes/use-unsaved-changes-guard';
 import { useSnapshotForm } from '@/common/form/use-snapshot-form';
+import { mapZodFieldErrorsFlat } from '@/common/lib/map-zod-field-errors';
+import { invalidateAdminQuestionCaches } from '@/features/admin/api/invalidate-admin-caches';
+import { createSystemQuestion, deleteSystemQuestion, updateSystemQuestion } from '@/features/admin/questions/api/mutations';
+import { systemQuestionQueryOptions } from '@/features/admin/questions/api/queries';
 import { QuestionInputSchema } from '@/features/theory/builder/api/contracts';
 import { createQuestion, deleteQuestion, updateQuestion } from '@/features/theory/builder/api/mutations';
 import { builderMetadataQueryOptions, questionDetailQueryOptions } from '@/features/theory/builder/api/queries';
@@ -22,6 +25,14 @@ import { useToastStore } from '@/lib/store/use-toast-store';
 
 export type { QuestionFormValues } from '@/features/theory/builder/lib/question-form-values';
 
+export type BuilderVariant = 'user' | 'admin';
+
+export type BuilderToastMessages = {
+  createSuccess: string;
+  updateSuccess: string;
+  deleteSuccess: string;
+};
+
 function toQuestionInput(snapshot: QuestionFormSnapshot) {
   return {
     question: snapshot.question,
@@ -33,41 +44,35 @@ function toQuestionInput(snapshot: QuestionFormSnapshot) {
   };
 }
 
-function mapZodFieldErrors(error: { issues: Array<{ path: PropertyKey[]; message: string }> }) {
-  const fieldErrors: Partial<Record<keyof QuestionFormValues, string>> = {};
-
-  for (const issue of error.issues) {
-    const field = issue.path[0];
-    if (typeof field === 'string' && !(field in fieldErrors)) {
-      fieldErrors[field as keyof QuestionFormValues] = issue.message;
-    }
-  }
-
-  return fieldErrors;
-}
-
 type UseQuestionBuilderFormOptions = {
   questionId?: string;
+  variant: BuilderVariant;
+  toastMessages: BuilderToastMessages;
 };
 
 export type QuestionBuilderSubmitResult = { ok: true } | { ok: false; fieldErrors: Partial<Record<keyof QuestionFormValues, string>> };
 
 export const questionBuilderFieldOrder = ['question', 'answer', 'topicIds', 'sourceName', 'sourceUrl'] as const;
 
-export function useQuestionBuilderForm({ questionId }: UseQuestionBuilderFormOptions) {
-  const t = useTranslations('QuestionBuilderPage');
+export function useQuestionBuilderForm({ questionId, variant, toastMessages }: UseQuestionBuilderFormOptions) {
   const router = useRouter();
   const releaseGuard = useReleaseUnsavedGuard();
   const queryClient = useQueryClient();
   const isEdit = !!questionId;
+  const isAdmin = variant === 'admin';
 
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof QuestionFormValues, string>>>({});
 
   const metadataQuery = useQuery(builderMetadataQueryOptions);
-  const questionQuery = useQuery({
+  const userQuestionQuery = useQuery({
     ...questionDetailQueryOptions(questionId ?? ''),
-    enabled: isEdit,
+    enabled: isEdit && !isAdmin,
   });
+  const adminQuestionQuery = useQuery({
+    ...systemQuestionQueryOptions(questionId ?? ''),
+    enabled: isEdit && isAdmin,
+  });
+  const questionQuery = isAdmin ? adminQuestionQuery : userQuestionQuery;
 
   const loadedScalars = useMemo((): QuestionScalars | null => {
     if (!questionQuery.data) return null;
@@ -101,35 +106,50 @@ export function useQuestionBuilderForm({ questionId }: UseQuestionBuilderFormOpt
     (id: string) => {
       form.commitSnapshot();
       releaseGuard();
-      useToastStore.getState().addToast(isEdit ? t('updateSuccess') : t('createSuccess'), 'success');
+      useToastStore.getState().addToast(isEdit ? toastMessages.updateSuccess : toastMessages.createSuccess, 'success');
+
+      if (isAdmin) {
+        router.push(`/admin/questions/${id}`);
+        void invalidateAdminQuestionCaches(queryClient, id);
+        return;
+      }
+
       router.replace(`/theory/${id}`);
       void invalidateQuestionCaches(queryClient, id);
     },
-    [form, isEdit, queryClient, releaseGuard, router, t],
+    [form, isAdmin, isEdit, queryClient, releaseGuard, router, toastMessages],
   );
 
   const onDeleteSuccess = useCallback(() => {
     if (!questionId) return;
 
-    removeQuestionCaches(queryClient, questionId);
     releaseGuard();
-    useToastStore.getState().addToast(t('deleteSuccess'), 'success');
+    useToastStore.getState().addToast(toastMessages.deleteSuccess, 'success');
+
+    if (isAdmin) {
+      router.push('/admin/questions');
+      void invalidateAdminQuestionCaches(queryClient, questionId);
+      return;
+    }
+
+    removeQuestionCaches(queryClient, questionId);
     router.replace('/');
     void invalidateRepositoryCache(queryClient);
-  }, [questionId, queryClient, releaseGuard, router, t]);
+  }, [isAdmin, queryClient, questionId, releaseGuard, router, toastMessages]);
 
   const { mutate: mutateCreate, isPending: isCreating } = useMutation({
-    mutationFn: createQuestion,
+    mutationFn: (payload: Parameters<typeof createQuestion>[0]) => (isAdmin ? createSystemQuestion(payload) : createQuestion(payload)),
     onSuccess: (response) => onSaveSuccess(response.id),
   });
 
   const { mutate: mutateUpdate, isPending: isUpdating } = useMutation({
-    mutationFn: (payload: Parameters<typeof updateQuestion>[1]) => updateQuestion(questionId!, payload),
+    mutationFn: (payload: Parameters<typeof updateQuestion>[1]) =>
+      isAdmin ? updateSystemQuestion(questionId!, payload) : updateQuestion(questionId!, payload),
     onSuccess: (response) => onSaveSuccess(response.id),
   });
 
   const { mutate: mutateDelete, isPending: isDeleting } = useMutation({
-    mutationFn: () => deleteQuestion(questionId!),
+    mutationFn: () => (isAdmin ? deleteSystemQuestion(questionId!) : deleteQuestion(questionId!)),
     onSuccess: onDeleteSuccess,
   });
 
@@ -140,7 +160,7 @@ export function useQuestionBuilderForm({ questionId }: UseQuestionBuilderFormOpt
     const parsed = QuestionInputSchema.safeParse(toQuestionInput(snapshot));
 
     if (!parsed.success) {
-      const errors = mapZodFieldErrors(parsed.error);
+      const errors = mapZodFieldErrorsFlat(parsed.error) as Partial<Record<keyof QuestionFormValues, string>>;
       setFieldErrors(errors);
       return { ok: false, fieldErrors: errors };
     }
@@ -173,9 +193,7 @@ export function useQuestionBuilderForm({ questionId }: UseQuestionBuilderFormOpt
   const toggleTopic = useCallback(
     (topicId: string) => {
       form.setScalars((current) => {
-        const topicIds = current.topicIds.includes(topicId)
-          ? current.topicIds.filter((id) => id !== topicId)
-          : [...current.topicIds, topicId];
+        const topicIds = current.topicIds.includes(topicId) ? current.topicIds.filter((id) => id !== topicId) : [...current.topicIds, topicId];
 
         return { ...current, topicIds };
       });

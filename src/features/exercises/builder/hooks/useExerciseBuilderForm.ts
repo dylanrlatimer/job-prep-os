@@ -4,9 +4,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { JSONContent } from '@tiptap/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from '@/i18n/navigation';
-import { useTranslations } from 'next-intl';
 import type { TiptapEditorRef } from '@/common/components/TiptapEditor';
 import { useReleaseUnsavedGuard } from '@/common/unsaved-changes/use-unsaved-changes-guard';
+import { mapZodFieldErrorsNested } from '@/common/lib/map-zod-field-errors';
+import { invalidateAdminExerciseCaches } from '@/features/admin/api/invalidate-admin-caches';
+import { createSystemExercise, deleteSystemExercise, updateSystemExercise } from '@/features/admin/exercises/api/mutations';
+import { systemExerciseQueryOptions } from '@/features/admin/exercises/api/queries';
 import { ExerciseInputSchema } from '@/features/exercises/builder/api/contracts';
 import { createExercise, deleteExercise, updateExercise } from '@/features/exercises/builder/api/mutations';
 import { builderMetadataQueryOptions, exerciseDetailQueryOptions } from '@/features/exercises/builder/api/queries';
@@ -25,6 +28,14 @@ import { invalidateExerciseCaches, invalidateExerciseRepositoryCache, removeExer
 import { useToastStore } from '@/lib/store/use-toast-store';
 
 export type { ExerciseFormValues } from '@/features/exercises/builder/lib/exercise-form-values';
+
+export type BuilderVariant = 'user' | 'admin';
+
+export type BuilderToastMessages = {
+  createSuccess: string;
+  updateSuccess: string;
+  deleteSuccess: string;
+};
 
 type FormStatus = 'loading' | 'ready' | 'submitting';
 
@@ -45,38 +56,22 @@ function toExerciseInput(snapshot: ExerciseFormSnapshot) {
   };
 }
 
-function mapZodFieldErrors(error: { issues: Array<{ path: PropertyKey[]; message: string }> }) {
-  const fieldErrors: Record<string, string> = {};
-
-  for (const issue of error.issues) {
-    const key = issue.path.map(String).join('.');
-    if (!(key in fieldErrors)) {
-      fieldErrors[key] = issue.message;
-    }
-
-    const top = issue.path[0];
-    if (typeof top === 'string' && !(top in fieldErrors)) {
-      fieldErrors[top] = issue.message;
-    }
-  }
-
-  return fieldErrors;
-}
-
 type UseExerciseBuilderFormOptions = {
   exerciseId?: string;
+  variant: BuilderVariant;
+  toastMessages: BuilderToastMessages;
 };
 
 export type ExerciseBuilderSubmitResult = { ok: true } | { ok: false; fieldErrors: Record<string, string> };
 
 export const exerciseBuilderFieldOrder = ['title', 'prompt', 'explanation', 'choices', 'topicIds', 'sourceName', 'sourceUrl'] as const;
 
-export function useExerciseBuilderForm({ exerciseId }: UseExerciseBuilderFormOptions) {
-  const t = useTranslations('ExerciseBuilderPage');
+export function useExerciseBuilderForm({ exerciseId, variant, toastMessages }: UseExerciseBuilderFormOptions) {
   const router = useRouter();
   const releaseGuard = useReleaseUnsavedGuard();
   const queryClient = useQueryClient();
   const isEdit = !!exerciseId;
+  const isAdmin = variant === 'admin';
 
   const promptRef = useRef<TiptapEditorRef>(null);
   const explanationRef = useRef<TiptapEditorRef>(null);
@@ -90,10 +85,15 @@ export function useExerciseBuilderForm({ exerciseId }: UseExerciseBuilderFormOpt
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const metadataQuery = useQuery(builderMetadataQueryOptions);
-  const exerciseQuery = useQuery({
+  const userExerciseQuery = useQuery({
     ...exerciseDetailQueryOptions(exerciseId ?? ''),
-    enabled: isEdit,
+    enabled: isEdit && !isAdmin,
   });
+  const adminExerciseQuery = useQuery({
+    ...systemExerciseQueryOptions(exerciseId ?? ''),
+    enabled: isEdit && isAdmin,
+  });
+  const exerciseQuery = isAdmin ? adminExerciseQuery : userExerciseQuery;
 
   const initialPrompt = exerciseQuery.data?.prompt ?? null;
   const initialExplanation = exerciseQuery.data?.explanation ?? null;
@@ -192,35 +192,50 @@ export function useExerciseBuilderForm({ exerciseId }: UseExerciseBuilderFormOpt
       setCommittedSnapshot(getSnapshot());
       setStatus('ready');
       releaseGuard();
-      useToastStore.getState().addToast(isEdit ? t('updateSuccess') : t('createSuccess'), 'success');
+      useToastStore.getState().addToast(isEdit ? toastMessages.updateSuccess : toastMessages.createSuccess, 'success');
+
+      if (isAdmin) {
+        router.push(`/admin/exercises/${id}`);
+        void invalidateAdminExerciseCaches(queryClient, id);
+        return;
+      }
+
       router.replace(`/exercises/${id}`);
       void invalidateExerciseCaches(queryClient, id);
     },
-    [getSnapshot, isEdit, queryClient, releaseGuard, router, t],
+    [getSnapshot, isAdmin, isEdit, queryClient, releaseGuard, router, toastMessages],
   );
 
   const onDeleteSuccess = useCallback(() => {
     if (!exerciseId) return;
 
-    removeExerciseCaches(queryClient, exerciseId);
     releaseGuard();
-    useToastStore.getState().addToast(t('deleteSuccess'), 'success');
+    useToastStore.getState().addToast(toastMessages.deleteSuccess, 'success');
+
+    if (isAdmin) {
+      router.push('/admin/exercises');
+      void invalidateAdminExerciseCaches(queryClient, exerciseId);
+      return;
+    }
+
+    removeExerciseCaches(queryClient, exerciseId);
     router.replace('/exercises');
     void invalidateExerciseRepositoryCache(queryClient);
-  }, [exerciseId, queryClient, releaseGuard, router, t]);
+  }, [exerciseId, isAdmin, queryClient, releaseGuard, router, toastMessages]);
 
   const { mutate: mutateCreate, isPending: isCreating } = useMutation({
-    mutationFn: createExercise,
+    mutationFn: (payload: Parameters<typeof createExercise>[0]) => (isAdmin ? createSystemExercise(payload) : createExercise(payload)),
     onSuccess: (response) => onSaveSuccess(response.id),
   });
 
   const { mutate: mutateUpdate, isPending: isUpdating } = useMutation({
-    mutationFn: (payload: Parameters<typeof updateExercise>[1]) => updateExercise(exerciseId!, payload),
+    mutationFn: (payload: Parameters<typeof updateExercise>[1]) =>
+      isAdmin ? updateSystemExercise(exerciseId!, payload) : updateExercise(exerciseId!, payload),
     onSuccess: (response) => onSaveSuccess(response.id),
   });
 
   const { mutate: mutateDelete, isPending: isDeleting } = useMutation({
-    mutationFn: () => deleteExercise(exerciseId!),
+    mutationFn: () => (isAdmin ? deleteSystemExercise(exerciseId!) : deleteExercise(exerciseId!)),
     onSuccess: onDeleteSuccess,
   });
 
@@ -231,7 +246,7 @@ export function useExerciseBuilderForm({ exerciseId }: UseExerciseBuilderFormOpt
     const parsed = ExerciseInputSchema.safeParse(toExerciseInput(snapshot));
 
     if (!parsed.success) {
-      const errors = mapZodFieldErrors(parsed.error);
+      const errors = mapZodFieldErrorsNested(parsed.error);
       setFieldErrors(errors);
       return { ok: false, fieldErrors: errors };
     }

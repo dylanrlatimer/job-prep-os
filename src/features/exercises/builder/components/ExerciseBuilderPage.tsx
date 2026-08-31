@@ -1,20 +1,25 @@
 'use client';
 
-import type { SubmitEvent, ReactNode } from 'react';
-import { useMemo, useRef, useState } from 'react';
+import type { SubmitEvent } from 'react';
+import { useRef, useState } from 'react';
 import type { JSONContent } from '@tiptap/core';
-import Fuse from 'fuse.js';
-import { ChevronLeft, Plus, Search, Trash2 } from 'lucide-react';
+import { ChevronLeft, Plus, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import AppShell from '@/common/components/AppShell';
-import TopicIcon from '@/common/components/TopicIcon';
+import Field from '@/common/components/Field';
+import TopicsPickerField from '@/common/components/TopicsPickerField';
 import TypeToConfirmDialog from '@/common/components/TypeToConfirmDialog';
+import VisibilityField from '@/common/components/VisibilityField';
 import { useValidationMessage } from '@/common/hooks/use-validation-message';
-import { inputClassName, primaryButtonClassName, secondaryButtonClassName } from '@/common/styles/form';
+import { destructiveButtonClassName, inputClassName, primaryButtonClassName, secondaryButtonClassName } from '@/common/styles/form';
 import TiptapEditor, { type TiptapEditorRef } from '@/common/components/TiptapEditor';
-import { exerciseBuilderFieldOrder, useExerciseBuilderForm } from '@/features/exercises/builder/hooks/useExerciseBuilderForm';
-import type { BuilderTopic } from '@/features/exercises/builder/api/contracts';
+import {
+  exerciseBuilderFieldOrder,
+  useExerciseBuilderForm,
+  type BuilderToastMessages,
+  type BuilderVariant,
+} from '@/features/exercises/builder/hooks/useExerciseBuilderForm';
 import ExerciseBuilderSkeleton from './ExerciseBuilderSkeleton';
 import { scrollToFirstFormError } from '@/common/lib/scroll-to-first-form-error';
 import { useFormGuard } from '@/common/form/use-form-guard';
@@ -22,46 +27,12 @@ import { cn } from '@/lib/cn';
 
 type ExerciseBuilderPageProps = {
   exerciseId?: string;
+  variant?: BuilderVariant;
+  backLink?: { href: string; label: string };
+  cancelHref?: string;
+  visibilityLabels?: { label: string; falseLabel: string; trueLabel: string };
+  toastMessages?: BuilderToastMessages;
 };
-
-type FieldProps = {
-  label: string;
-  htmlFor: string;
-  error?: string;
-  children: ReactNode;
-};
-
-function Field({ label, htmlFor, error, children }: FieldProps) {
-  const errorMessage = useValidationMessage(error);
-
-  return (
-    <div data-field={htmlFor}>
-      <label className='block' htmlFor={htmlFor}>
-        <span className='mb-1.5 block text-xs text-secondary-foreground'>{label}</span>
-        {children}
-        {errorMessage ? <span className='mt-1.5 block text-xs text-destructive-bright'>{errorMessage}</span> : null}
-      </label>
-    </div>
-  );
-}
-
-function useFilteredTopics(topics: BuilderTopic[], query: string) {
-  const fuse = useMemo(
-    () =>
-      new Fuse(topics, {
-        keys: ['name', 'slug'],
-        threshold: 0.35,
-        ignoreLocation: true,
-      }),
-    [topics],
-  );
-
-  return useMemo(() => {
-    const trimmed = query.trim();
-    if (!trimmed) return topics;
-    return fuse.search(trimmed).map((result) => result.item);
-  }, [fuse, query, topics]);
-}
 
 function getChoiceFieldError(fieldErrors: Record<string, string>, index: number) {
   return fieldErrors[`choices.${index}.content`] ?? fieldErrors[`choices.${index}`];
@@ -81,6 +52,8 @@ type ChoiceRowProps = {
   setChoiceCorrect: (choiceId: string, isCorrect: boolean) => void;
   removeChoice: (choiceId: string) => void;
   exerciseId?: string;
+  correctChoiceLabel: string;
+  removeChoiceLabel: string;
 };
 
 function ChoiceRow({
@@ -97,8 +70,9 @@ function ChoiceRow({
   setChoiceCorrect,
   removeChoice,
   exerciseId,
+  correctChoiceLabel,
+  removeChoiceLabel,
 }: ChoiceRowProps) {
-  const t = useTranslations('ExerciseBuilderPage');
   const choiceErrorMessage = useValidationMessage(fieldError);
 
   return (
@@ -111,7 +85,7 @@ function ChoiceRow({
             checked={isCorrect}
             onChange={(event) => setChoiceCorrect(choiceId, event.target.checked)}
           />
-          {t('correctChoice')}
+          {correctChoiceLabel}
         </label>
         <div className='min-w-0 flex-1'>
           <TiptapEditor
@@ -130,7 +104,7 @@ function ChoiceRow({
           className='ml-3 inline-flex shrink-0 cursor-pointer items-center justify-center rounded-sm py-1 text-muted-foreground transition-colors hover:bg-card-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40'
           disabled={!canRemove || status !== 'ready'}
           onClick={() => removeChoice(choiceId)}
-          aria-label={t('removeChoice')}>
+          aria-label={removeChoiceLabel}>
           <Trash2 size={14} strokeWidth={1.75} aria-hidden='true' />
         </button>
       </div>
@@ -139,11 +113,24 @@ function ChoiceRow({
   );
 }
 
-export default function ExerciseBuilderPage({ exerciseId }: ExerciseBuilderPageProps) {
+export default function ExerciseBuilderPage({ exerciseId, variant = 'user', backLink, cancelHref, visibilityLabels, toastMessages }: ExerciseBuilderPageProps) {
   const t = useTranslations('ExerciseBuilderPage');
   const formRef = useRef<HTMLFormElement>(null);
-  const [topicSearch, setTopicSearch] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  const resolvedBackLink = backLink ?? { href: '/exercises', label: t('backToRepository') };
+  const resolvedCancelHref = cancelHref ?? '/exercises';
+  const resolvedVisibilityLabels = visibilityLabels ?? {
+    label: t('visibilityLabel'),
+    falseLabel: t('visibilityPrivate'),
+    trueLabel: t('visibilityPublic'),
+  };
+  const resolvedToastMessages = toastMessages ?? {
+    createSuccess: t('createSuccess'),
+    updateSuccess: t('updateSuccess'),
+    deleteSuccess: t('deleteSuccess'),
+  };
+
   const {
     isEdit,
     values,
@@ -178,6 +165,8 @@ export default function ExerciseBuilderPage({ exerciseId }: ExerciseBuilderPageP
     maxChoices,
   } = useExerciseBuilderForm({
     exerciseId,
+    variant,
+    toastMessages: resolvedToastMessages,
   });
 
   useFormGuard(status, isDirty, isError);
@@ -185,8 +174,6 @@ export default function ExerciseBuilderPage({ exerciseId }: ExerciseBuilderPageP
   const promptErrorMessage = useValidationMessage(fieldErrors.prompt);
   const explanationErrorMessage = useValidationMessage(fieldErrors.explanation);
   const choicesErrorMessage = useValidationMessage(fieldErrors.choices);
-  const topicsErrorMessage = useValidationMessage(fieldErrors.topicIds);
-  const filteredTopics = useFilteredTopics(metadata?.topics ?? [], topicSearch);
 
   const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -219,16 +206,17 @@ export default function ExerciseBuilderPage({ exerciseId }: ExerciseBuilderPageP
     );
   }
 
-  const hasTopics = metadata.topics.length > 0;
   const canAddChoice = values.choices.length < maxChoices;
   const canRemoveChoice = values.choices.length > minChoices;
 
   return (
     <AppShell>
       <div className='px-4 py-8 md:px-8'>
-        <Link href='/exercises' className='inline-flex items-center gap-1 text-sm text-muted-foreground no-underline transition-colors hover:text-foreground'>
+        <Link
+          href={resolvedBackLink.href}
+          className='inline-flex items-center gap-1 text-sm text-muted-foreground no-underline transition-colors hover:text-foreground'>
           <ChevronLeft size={16} strokeWidth={1.75} aria-hidden='true' />
-          {t('backToRepository')}
+          {resolvedBackLink.label}
         </Link>
 
         <header className='mt-4 border-b border-border pb-6'>
@@ -321,6 +309,8 @@ export default function ExerciseBuilderPage({ exerciseId }: ExerciseBuilderPageP
                   setChoiceCorrect={setChoiceCorrect}
                   removeChoice={removeChoice}
                   exerciseId={exerciseId}
+                  correctChoiceLabel={t('correctChoice')}
+                  removeChoiceLabel={t('removeChoice')}
                 />
               ))}
             </div>
@@ -328,66 +318,19 @@ export default function ExerciseBuilderPage({ exerciseId }: ExerciseBuilderPageP
             {choicesErrorMessage ? <span className='mt-1.5 block text-xs text-destructive-bright'>{choicesErrorMessage}</span> : null}
           </div>
 
-          <div data-field='topicIds'>
-            <span className='mb-1.5 block text-xs text-secondary-foreground'>{t('topicsLabel')}</span>
-
-            {!hasTopics ? (
-              <p className='m-0 text-sm text-muted-foreground'>{t('noTopics')}</p>
-            ) : (
-              <div className='overflow-hidden rounded-sm border border-border bg-card'>
-                <div className='border-b border-border px-3 py-2'>
-                  <label className='relative block'>
-                    <span className='sr-only'>{t('topicsSearchLabel')}</span>
-                    <Search
-                      size={14}
-                      strokeWidth={1.75}
-                      className='pointer-events-none absolute top-1/2 left-0 -translate-y-1/2 text-muted-foreground'
-                      aria-hidden='true'
-                    />
-                    <input
-                      type='search'
-                      className='w-full border-0 bg-transparent py-1 pr-1 pl-5 text-sm text-foreground placeholder:text-subtle-foreground focus:outline-none'
-                      value={topicSearch}
-                      onChange={(event) => setTopicSearch(event.target.value)}
-                      placeholder={t('topicsSearchPlaceholder')}
-                    />
-                  </label>
-                </div>
-                <div className='scrollbar-branded h-48 overflow-y-auto'>
-                  {filteredTopics.length === 0 ? (
-                    <p className='m-0 px-3 py-4 text-sm text-muted-foreground'>{t('topicsNoResults')}</p>
-                  ) : (
-                    <ul className='m-0 list-none p-0'>
-                      {filteredTopics.map((topic, index) => {
-                        const checked = values.topicIds.includes(topic.id);
-                        const inputId = `topic-${topic.id}`;
-
-                        return (
-                          <li key={topic.id} className={cn(index > 0 && 'border-t border-border')}>
-                            <label htmlFor={inputId} className='flex cursor-pointer items-center gap-3 px-3 py-2.5 text-sm hover:bg-card-muted'>
-                              <input
-                                id={inputId}
-                                type='checkbox'
-                                className='size-3.5 shrink-0 cursor-pointer accent-primary'
-                                checked={checked}
-                                onChange={() => toggleTopic(topic.id)}
-                              />
-                              <span className='inline-flex items-center gap-1.5 text-foreground'>
-                                <TopicIcon iconKey={topic.iconKey} />
-                                <span className='-translate-y-px'>{topic.name}</span>
-                              </span>
-                            </label>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {topicsErrorMessage ? <span className='mt-1.5 block text-xs text-destructive-bright'>{topicsErrorMessage}</span> : null}
-          </div>
+          <TopicsPickerField
+            topics={metadata.topics}
+            selectedIds={values.topicIds}
+            onToggle={toggleTopic}
+            error={fieldErrors.topicIds}
+            labels={{
+              fieldLabel: t('topicsLabel'),
+              searchLabel: t('topicsSearchLabel'),
+              searchPlaceholder: t('topicsSearchPlaceholder'),
+              noTopicsMessage: t('noTopics'),
+              noResultsMessage: t('topicsNoResults'),
+            }}
+          />
 
           <Field label={t('sourceNameLabel')} htmlFor='sourceName' error={fieldErrors.sourceName}>
             <input
@@ -423,50 +366,27 @@ export default function ExerciseBuilderPage({ exerciseId }: ExerciseBuilderPageP
             {t('allowMultipleLabel')}
           </label>
 
-          <fieldset className='m-0 mb-6 border-0 p-0'>
-            <legend className='mb-1.5 block text-xs text-secondary-foreground'>{t('visibilityLabel')}</legend>
-            <div className='flex flex-col gap-2 sm:flex-row sm:gap-6'>
-              <label className='flex cursor-pointer items-center gap-2 text-sm text-foreground'>
-                <input
-                  type='radio'
-                  name='visibility'
-                  className='size-3.5 cursor-pointer accent-primary'
-                  checked={!values.isPublic}
-                  onChange={() => setField('isPublic', false)}
-                />
-                {t('visibilityPrivate')}
-              </label>
-              <label className='flex cursor-pointer items-center gap-2 text-sm text-foreground'>
-                <input
-                  type='radio'
-                  name='visibility'
-                  className='size-3.5 cursor-pointer accent-primary'
-                  checked={values.isPublic}
-                  onChange={() => setField('isPublic', true)}
-                />
-                {t('visibilityPublic')}
-              </label>
-            </div>
-          </fieldset>
+          <VisibilityField
+            value={values.isPublic}
+            onChange={(value) => setField('isPublic', value)}
+            label={resolvedVisibilityLabels.label}
+            falseLabel={resolvedVisibilityLabels.falseLabel}
+            trueLabel={resolvedVisibilityLabels.trueLabel}
+            radioName='visibility'
+          />
 
           {isEdit ? (
             <section className='border-t border-border pt-6'>
               <h2 className='m-0 text-sm font-medium text-foreground'>{t('dangerZoneTitle')}</h2>
               <p className='mt-2 text-sm text-muted-foreground'>{t('deleteDescription')}</p>
-              <button
-                type='button'
-                className={cn(
-                  'mt-4 inline-flex cursor-pointer items-center justify-center rounded-sm border border-destructive-border bg-destructive-subtle px-3 py-2 text-sm text-destructive-bright transition-colors hover:bg-destructive-subtle/80 disabled:cursor-not-allowed disabled:opacity-60',
-                )}
-                disabled={isDeleting}
-                onClick={() => setDeleteDialogOpen(true)}>
+              <button type='button' className={cn(destructiveButtonClassName, 'mt-4')} disabled={isDeleting} onClick={() => setDeleteDialogOpen(true)}>
                 {isDeleting ? t('deleting') : t('deleteExercise')}
               </button>
             </section>
           ) : null}
 
           <div className='flex flex-col-reverse gap-2 border-t border-border pt-6 sm:flex-row sm:justify-end'>
-            <Link href='/exercises' className={cn(secondaryButtonClassName, 'text-center')}>
+            <Link href={resolvedCancelHref} className={cn(secondaryButtonClassName, 'text-center')}>
               {t('cancel')}
             </Link>
             <button type='submit' className={primaryButtonClassName} disabled={isSubmitting || status !== 'ready'}>

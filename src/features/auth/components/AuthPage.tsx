@@ -5,14 +5,12 @@ import OAuthIcon from '@/common/icons/OAuthIcon';
 import { useAuthForm } from '../hooks/useAuthForm';
 import { supabase } from '@/lib/supabase/client';
 import { useTranslations } from 'next-intl';
+import { inputClassName, primaryButtonClassName, secondaryButtonClassName } from '@/common/styles/form';
 import { cn } from '@/lib/cn';
 
 // TODO: Add TOS & Privacy Policy if applicable
 
 type AuthMode = 'login' | 'register';
-
-const inputClassName =
-  'box-border w-full rounded-sm border border-input bg-card px-3 py-2 text-sm text-foreground placeholder:text-subtle-foreground focus:border-tertiary-foreground focus:outline-none';
 
 export default function AuthPage() {
   const t = useTranslations('AuthPage');
@@ -94,11 +92,7 @@ export default function AuthPage() {
         </div>
 
         <div className='mt-6'>
-          <button
-            type='button'
-            className='flex w-full cursor-pointer items-center justify-center gap-2 rounded-sm border border-border bg-card px-3 py-2 text-sm text-foreground transition-colors hover:bg-card-muted'
-            aria-label={copy.google}
-            onClick={handleGoogleSignIn}>
+          <button type='button' className={cn(secondaryButtonClassName, 'w-full gap-2')} aria-label={copy.google} onClick={handleGoogleSignIn}>
             <OAuthIcon className='inline-flex shrink-0' />
             <span>{copy.google}</span>
           </button>
@@ -137,10 +131,7 @@ export default function AuthPage() {
             />
           </label>
 
-          <button
-            type='submit'
-            className='w-full cursor-pointer rounded-sm border border-primary bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60'
-            disabled={loading}>
+          <button type='submit' className={cn(primaryButtonClassName, 'w-full')} disabled={loading}>
             {copy.submit}
           </button>
 

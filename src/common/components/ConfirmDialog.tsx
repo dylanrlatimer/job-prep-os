@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useId, useRef } from 'react';
-import { primaryButtonClassName, secondaryButtonClassName } from '@/common/styles/form';
+import { destructiveButtonClassName, primaryButtonClassName, secondaryButtonClassName } from '@/common/styles/form';
 import { cn } from '@/lib/cn';
 
 type ConfirmDialogProps = {
@@ -15,9 +15,6 @@ type ConfirmDialogProps = {
   confirmVariant?: 'primary' | 'destructive';
   isConfirming?: boolean;
 };
-
-const destructiveButtonClassName =
-  'inline-flex cursor-pointer items-center justify-center rounded-sm border border-destructive-border bg-destructive-subtle px-3 py-2 text-sm text-destructive-bright transition-colors hover:bg-destructive-subtle/80 disabled:cursor-not-allowed disabled:opacity-60';
 
 export default function ConfirmDialog({
   open,
@@ -68,12 +65,7 @@ export default function ConfirmDialog({
           {description}
         </p>
         <div className='mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end'>
-          <button
-            ref={cancelButtonRef}
-            type='button'
-            className={cn(primaryButtonClassName, 'w-full sm:w-auto')}
-            onClick={onCancel}
-            disabled={isConfirming}>
+          <button ref={cancelButtonRef} type='button' className={cn(primaryButtonClassName, 'w-full sm:w-auto')} onClick={onCancel} disabled={isConfirming}>
             {cancelLabel}
           </button>
           <button
