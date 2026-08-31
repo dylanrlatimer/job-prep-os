@@ -1,6 +1,6 @@
 'use client';
 
-import { BookOpen, Compass, FolderTree, Layers, Settings, Shield, Zap } from 'lucide-react';
+import { BookOpen, Compass, FolderTree, Layers, Settings, Shield, Shuffle, Zap } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { Link, usePathname } from '@/i18n/navigation';
@@ -9,7 +9,7 @@ import { sessionQueryOptions } from '@/features/auth/api/queries';
 import { cn } from '@/lib/cn';
 
 type NavItem = {
-  href: '/' | '/browse' | '/exercises';
+  href: '/' | '/browse' | '/exercises' | '/practice';
   label: string;
   icon: React.ReactNode;
   match: (pathname: string) => boolean;
@@ -46,6 +46,12 @@ export default function AppSidebar() {
       label: t('browse'),
       icon: <Compass size={16} strokeWidth={1.75} aria-hidden='true' />,
       match: (path) => path === '/browse' || path.startsWith('/browse/'),
+    },
+    {
+      href: '/practice',
+      label: t('practice'),
+      icon: <Shuffle size={16} strokeWidth={1.75} aria-hidden='true' />,
+      match: (path) => path === '/practice' || path.startsWith('/practice/'),
     },
   ];
 
