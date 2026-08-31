@@ -144,13 +144,12 @@ function AdminTopicsContent() {
               <li key={topic.id} className='border-b border-border py-4 last:border-b-0'>
                 <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
                   <div className='min-w-0 flex-1'>
-                    <p className='m-0 flex items-center gap-1.5 text-sm leading-relaxed text-foreground'>
-                      <TopicIcon iconKey={topic.iconKey} />
+                    <p className='m-0 flex items-center text-sm leading-relaxed text-foreground'>
+                      <TopicIcon iconKey={topic.iconKey} className='mr-2' />
                       {topic.name}
                     </p>
                     <div className='mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs'>
                       <span className={topic.isActive ? 'text-success' : 'text-muted-foreground'}>{topic.isActive ? t('active') : t('disabled')}</span>
-                      <span className='text-muted-foreground'>{topic.slug}</span>
                       <span className='text-muted-foreground'>{t('questionCount', { count: topic.questionCount })}</span>
                       <span className='text-muted-foreground'>{t('exerciseCount', { count: topic.exerciseCount })}</span>
                     </div>

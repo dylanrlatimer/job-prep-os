@@ -164,7 +164,11 @@ function AdminExercisesContent() {
               <li key={exercise.id} className='border-b border-border py-4 last:border-b-0'>
                 <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
                   <div className='min-w-0 flex-1'>
-                    <p className='m-0 text-sm leading-relaxed text-foreground'>{exercise.title}</p>
+                    <Link
+                      href={`/admin/exercises/${exercise.id}`}
+                      className='text-sm leading-relaxed text-foreground no-underline hover:underline'>
+                      {exercise.title}
+                    </Link>
                     <div className='mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs'>
                       <span className={exercise.isPublic ? 'text-success' : 'text-muted-foreground'}>{exercise.isPublic ? t('published') : t('draft')}</span>
                       {exercise.topics.length > 0 ? (

@@ -236,10 +236,10 @@ function SystemExerciseBuilderContent({ exerciseId }: SystemExerciseBuilderPageP
     <AppShell>
       <div className='px-4 py-8 md:px-8'>
         <Link
-          href='/admin/exercises'
+          href={isEdit && exerciseId ? `/admin/exercises/${exerciseId}` : '/admin/exercises'}
           className='inline-flex items-center gap-1 text-sm text-muted-foreground no-underline transition-colors hover:text-foreground'>
           <ChevronLeft size={16} strokeWidth={1.75} aria-hidden='true' />
-          {t('backToList')}
+          {isEdit ? t('backToExercise') : t('backToList')}
         </Link>
 
         <header className='mt-4 border-b border-border pb-6'>
@@ -477,7 +477,7 @@ function SystemExerciseBuilderContent({ exerciseId }: SystemExerciseBuilderPageP
           ) : null}
 
           <div className='flex flex-col-reverse gap-2 border-t border-border pt-6 sm:flex-row sm:justify-end'>
-            <Link href='/admin/exercises' className={cn(secondaryButtonClassName, 'text-center')}>
+            <Link href={isEdit && exerciseId ? `/admin/exercises/${exerciseId}` : '/admin/exercises'} className={cn(secondaryButtonClassName, 'text-center')}>
               {t('cancel')}
             </Link>
             <button type='submit' className={primaryButtonClassName} disabled={isSubmitting || status !== 'ready'}>

@@ -8,6 +8,7 @@ export type BrowseQuestionItem = {
   topics: RepositoryTopic[];
   isSaved: boolean;
   isSystem: boolean;
+  createdAt: string;
 };
 
 export type GetBrowseResponse = {

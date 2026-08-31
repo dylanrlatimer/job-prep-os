@@ -8,6 +8,7 @@ export type BrowseExerciseItem = {
   topics: ExerciseTopic[];
   isSaved: boolean;
   isSystem: boolean;
+  createdAt: string;
 };
 
 export type GetBrowseExercisesResponse = {

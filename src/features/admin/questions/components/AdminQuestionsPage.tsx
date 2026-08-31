@@ -164,7 +164,11 @@ function AdminQuestionsContent() {
               <li key={question.id} className='border-b border-border py-4 last:border-b-0'>
                 <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
                   <div className='min-w-0 flex-1'>
-                    <p className='m-0 text-sm leading-relaxed text-foreground'>{question.question}</p>
+                    <Link
+                      href={`/admin/questions/${question.id}`}
+                      className='text-sm leading-relaxed text-foreground no-underline hover:underline'>
+                      {question.question}
+                    </Link>
                     <div className='mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs'>
                       <span className={question.isPublic ? 'text-success' : 'text-muted-foreground'}>{question.isPublic ? t('published') : t('draft')}</span>
                       {question.topics.length > 0 ? (

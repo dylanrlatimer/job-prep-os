@@ -106,7 +106,7 @@ export function useSystemQuestionBuilderForm({ questionId }: UseSystemQuestionBu
       form.commitSnapshot();
       releaseGuard();
       useToastStore.getState().addToast(isEdit ? t('updateSuccess') : t('createSuccess'), 'success');
-      router.push('/admin/questions');
+      router.push(`/admin/questions/${id}`);
       void invalidateAdminQuestionCaches(queryClient, id);
     },
     [form, isEdit, queryClient, releaseGuard, router, t],

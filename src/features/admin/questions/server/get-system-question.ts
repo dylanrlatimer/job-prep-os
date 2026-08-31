@@ -2,7 +2,7 @@ import 'server-only';
 
 import { and, eq } from 'drizzle-orm';
 import { db } from '@/lib/drizzle/client';
-import { theoryQuestionTopicsInApp, theoryQuestionsInApp } from '@/lib/drizzle/schema';
+import { topicsInApp, theoryQuestionTopicsInApp, theoryQuestionsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError, NotFoundError } from '@/lib/errors';
 import { assertAdmin } from '@/features/auth/server/assert-admin';
 import { questionAccess } from '@/features/theory/server/access';
@@ -31,15 +31,29 @@ export async function getSystemQuestion(id: string): Promise<SystemQuestionRespo
     }
 
     const topicRows = await db
-      .select({ topicId: theoryQuestionTopicsInApp.topicId })
+      .select({
+        id: topicsInApp.id,
+        name: topicsInApp.name,
+        slug: topicsInApp.slug,
+        iconKey: topicsInApp.iconKey,
+      })
       .from(theoryQuestionTopicsInApp)
+      .innerJoin(topicsInApp, eq(theoryQuestionTopicsInApp.topicId, topicsInApp.id))
       .where(eq(theoryQuestionTopicsInApp.questionId, id));
+
+    const topics = topicRows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      iconKey: row.iconKey,
+    }));
 
     return {
       id: question.id,
       question: question.question,
       answer: parseTiptapDocument(question.answer),
-      topicIds: topicRows.map((row) => row.topicId),
+      topicIds: topics.map((topic) => topic.id),
+      topics,
       sourceName: question.sourceName,
       sourceUrl: question.sourceUrl,
       isPublic: question.isPublic,

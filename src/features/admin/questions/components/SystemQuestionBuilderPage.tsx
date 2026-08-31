@@ -144,10 +144,10 @@ function SystemQuestionBuilderContent({ questionId }: SystemQuestionBuilderPageP
     <AppShell>
       <div className='px-4 py-8 md:px-8'>
         <Link
-          href='/admin/questions'
+          href={isEdit && questionId ? `/admin/questions/${questionId}` : '/admin/questions'}
           className='inline-flex items-center gap-1 text-sm text-muted-foreground no-underline transition-colors hover:text-foreground'>
           <ChevronLeft size={16} strokeWidth={1.75} aria-hidden='true' />
-          {t('backToList')}
+          {isEdit ? t('backToQuestion') : t('backToList')}
         </Link>
 
         <header className='mt-4 border-b border-border pb-6'>
@@ -323,7 +323,7 @@ function SystemQuestionBuilderContent({ questionId }: SystemQuestionBuilderPageP
           ) : null}
 
           <div className='flex flex-col-reverse gap-2 border-t border-border pt-6 sm:flex-row sm:justify-end'>
-            <Link href='/admin/questions' className={cn(secondaryButtonClassName, 'text-center')}>
+            <Link href={isEdit && questionId ? `/admin/questions/${questionId}` : '/admin/questions'} className={cn(secondaryButtonClassName, 'text-center')}>
               {t('cancel')}
             </Link>
             <button type='submit' className={primaryButtonClassName} disabled={isSubmitting || status !== 'ready'}>

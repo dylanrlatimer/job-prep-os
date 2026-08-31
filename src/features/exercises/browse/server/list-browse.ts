@@ -18,6 +18,7 @@ export async function listBrowse(): Promise<GetBrowseExercisesResponse> {
         id: exercisesInApp.id,
         title: exercisesInApp.title,
         ownerProfileId: exercisesInApp.ownerProfileId,
+        createdAt: exercisesInApp.createdAt,
       })
       .from(exercisesInApp)
       .where(exerciseAccess.public())
@@ -66,6 +67,7 @@ export async function listBrowse(): Promise<GetBrowseExercisesResponse> {
       topics: topicsByExercise.get(row.id) ?? [],
       isSaved: savedExerciseIds.has(row.id),
       isSystem: isExerciseAppOwned(row.ownerProfileId),
+      createdAt: row.createdAt,
     }));
 
     const topics = [...topicMap.values()].sort((a, b) => a.name.localeCompare(b.name));

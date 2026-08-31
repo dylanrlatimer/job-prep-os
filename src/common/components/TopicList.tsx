@@ -28,7 +28,7 @@ export default function TopicList({ topics, className, empty }: TopicListProps) 
             </span>
           ) : null}
           <span className='inline-flex items-center'>
-            <TopicIcon iconKey={topic.iconKey} />
+            <TopicIcon iconKey={topic.iconKey} className='relative top-px' />
             <span>{topic.name}</span>
           </span>
         </span>

@@ -197,7 +197,7 @@ export function useSystemExerciseBuilderForm({ exerciseId }: UseSystemExerciseBu
       setStatus('ready');
       releaseGuard();
       useToastStore.getState().addToast(isEdit ? t('updateSuccess') : t('createSuccess'), 'success');
-      router.push('/admin/exercises');
+      router.push(`/admin/exercises/${id}`);
       void invalidateAdminExerciseCaches(queryClient, id);
     },
     [getSnapshot, isEdit, queryClient, releaseGuard, router, t],

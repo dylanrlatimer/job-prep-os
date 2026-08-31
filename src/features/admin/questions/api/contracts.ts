@@ -34,6 +34,7 @@ export type SystemQuestionResponse = {
   question: string;
   answer: JSONContent;
   topicIds: string[];
+  topics: RepositoryTopic[];
   sourceName: string | null;
   sourceUrl: string | null;
   isPublic: boolean;

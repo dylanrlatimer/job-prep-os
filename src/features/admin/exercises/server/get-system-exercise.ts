@@ -2,7 +2,7 @@ import 'server-only';
 
 import { and, asc, eq } from 'drizzle-orm';
 import { db } from '@/lib/drizzle/client';
-import { exerciseChoicesInApp, exerciseTopicsInApp, exercisesInApp } from '@/lib/drizzle/schema';
+import { exerciseChoicesInApp, exerciseTopicsInApp, exercisesInApp, topicsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError, NotFoundError } from '@/lib/errors';
 import { assertAdmin } from '@/features/auth/server/assert-admin';
 import { exerciseAccess } from '@/features/exercises/server/access';
@@ -32,7 +32,23 @@ export async function getSystemExercise(id: string): Promise<SystemExerciseRespo
       throw new NotFoundError('exerciseNotFound');
     }
 
-    const topicRows = await db.select({ topicId: exerciseTopicsInApp.topicId }).from(exerciseTopicsInApp).where(eq(exerciseTopicsInApp.exerciseId, id));
+    const topicRows = await db
+      .select({
+        id: topicsInApp.id,
+        name: topicsInApp.name,
+        slug: topicsInApp.slug,
+        iconKey: topicsInApp.iconKey,
+      })
+      .from(exerciseTopicsInApp)
+      .innerJoin(topicsInApp, eq(exerciseTopicsInApp.topicId, topicsInApp.id))
+      .where(eq(exerciseTopicsInApp.exerciseId, id));
+
+    const topics = topicRows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      iconKey: row.iconKey,
+    }));
 
     const choiceRows = await db
       .select({
@@ -49,7 +65,8 @@ export async function getSystemExercise(id: string): Promise<SystemExerciseRespo
       title: exercise.title,
       prompt: parseTiptapDocument(exercise.prompt),
       explanation: exercise.explanation ? parseTiptapDocument(exercise.explanation) : null,
-      topicIds: topicRows.map((row) => row.topicId),
+      topicIds: topics.map((topic) => topic.id),
+      topics,
       sourceName: exercise.sourceName,
       sourceUrl: exercise.sourceUrl,
       isPublic: exercise.isPublic,

@@ -40,6 +40,7 @@ export type SystemExerciseResponse = {
   prompt: JSONContent;
   explanation: JSONContent | null;
   topicIds: string[];
+  topics: ExerciseTopic[];
   sourceName: string | null;
   sourceUrl: string | null;
   isPublic: boolean;

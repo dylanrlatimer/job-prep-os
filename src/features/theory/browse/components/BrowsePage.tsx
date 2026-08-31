@@ -15,16 +15,19 @@ import type { BrowseExerciseItem } from '@/features/exercises/browse/api/contrac
 import { saveBrowseQuestion } from '@/features/theory/browse/api/mutations';
 import { browseQueryOptions } from '@/features/theory/browse/api/queries';
 import type { BrowseQuestionItem } from '@/features/theory/browse/api/contracts';
+import { browseHref, matchesSaved, matchesTopic, type BrowseKind, type BrowseSavedFilter } from '@/features/theory/browse/lib/browse-filters';
 import TheoryRepositorySkeleton from '@/features/theory/repository/components/TheoryRepositorySkeleton';
 import { inputClassName, secondaryButtonClassName } from '@/common/styles/form';
 import { useToastStore } from '@/lib/store/use-toast-store';
 import { cn } from '@/lib/cn';
 
-export type BrowseKind = 'questions' | 'exercises';
-
 type BrowsePageProps = {
   initialKind?: BrowseKind;
 };
+
+type BrowseRow =
+  | { type: 'question'; item: BrowseQuestionItem }
+  | { type: 'exercise'; item: BrowseExerciseItem };
 
 function matchesQuestionSearch(question: BrowseQuestionItem, search: string) {
   if (!search) return true;
@@ -36,12 +39,17 @@ function matchesExerciseSearch(exercise: BrowseExerciseItem, search: string) {
   return exercise.title.toLowerCase().includes(search.toLowerCase());
 }
 
-function matchesTopic<T extends { topics: Array<{ id: string }> }>(item: T, topicId: string | null) {
-  if (!topicId) return true;
-  return item.topics.some((topic) => topic.id === topicId);
+function mergeTopics(questionTopics: BrowseQuestionItem['topics'], exerciseTopics: BrowseExerciseItem['topics']) {
+  const topics = new Map<string, BrowseQuestionItem['topics'][number]>();
+
+  for (const topic of [...questionTopics, ...exerciseTopics]) {
+    topics.set(topic.id, topic);
+  }
+
+  return [...topics.values()].sort((left, right) => left.name.localeCompare(right.name));
 }
 
-function BrowseQuestionRow({ question }: { question: BrowseQuestionItem }) {
+function BrowseQuestionRow({ question, showType }: { question: BrowseQuestionItem; showType: boolean }) {
   const t = useTranslations('BrowsePage');
   const queryClient = useQueryClient();
 
@@ -62,6 +70,7 @@ function BrowseQuestionRow({ question }: { question: BrowseQuestionItem }) {
           </Link>
 
           <div className='mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs'>
+            {showType ? <span className='text-secondary-foreground'>{t('typeQuestion')}</span> : null}
             {question.isSystem ? <span className='text-secondary-foreground'>{t('appLabel')}</span> : null}
             {question.topics.length > 0 ? (
               <TopicList className='text-secondary-foreground' topics={question.topics} />
@@ -84,7 +93,7 @@ function BrowseQuestionRow({ question }: { question: BrowseQuestionItem }) {
   );
 }
 
-function BrowseExerciseRow({ exercise }: { exercise: BrowseExerciseItem }) {
+function BrowseExerciseRow({ exercise, showType }: { exercise: BrowseExerciseItem; showType: boolean }) {
   const t = useTranslations('BrowsePage');
   const queryClient = useQueryClient();
 
@@ -105,6 +114,7 @@ function BrowseExerciseRow({ exercise }: { exercise: BrowseExerciseItem }) {
           </Link>
 
           <div className='mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs'>
+            {showType ? <span className='text-secondary-foreground'>{t('typeExercise')}</span> : null}
             {exercise.isSystem ? <span className='text-secondary-foreground'>{t('appLabel')}</span> : null}
             {exercise.topics.length > 0 ? (
               <TopicList className='text-secondary-foreground' topics={exercise.topics} />
@@ -127,13 +137,17 @@ function BrowseExerciseRow({ exercise }: { exercise: BrowseExerciseItem }) {
   );
 }
 
-export default function BrowsePage({ initialKind = 'questions' }: BrowsePageProps) {
+export default function BrowsePage({ initialKind = 'all' }: BrowsePageProps) {
   const t = useTranslations('BrowsePage');
   const router = useRouter();
 
   const [kind, setKind] = useState<BrowseKind>(initialKind);
+  const [savedFilter, setSavedFilter] = useState<BrowseSavedFilter>('new');
   const [search, setSearch] = useState('');
   const [topicId, setTopicId] = useState<string | null>(null);
+
+  const includeQuestions = kind !== 'exercises';
+  const includeExercises = kind !== 'questions';
 
   useEffect(() => {
     setKind(initialKind);
@@ -142,43 +156,90 @@ export default function BrowsePage({ initialKind = 'questions' }: BrowsePageProp
 
   const questionsQuery = useQuery({
     ...browseQueryOptions,
-    enabled: kind === 'questions',
+    enabled: includeQuestions,
   });
   const exercisesQuery = useQuery({
     ...browseExercisesQueryOptions,
-    enabled: kind === 'exercises',
+    enabled: includeExercises,
   });
 
-  const activeQuery = kind === 'questions' ? questionsQuery : exercisesQuery;
-  const { isPending, isError, refetch, isFetching } = activeQuery;
+  const isPending = (includeQuestions && questionsQuery.isPending) || (includeExercises && exercisesQuery.isPending);
+  const isError = (includeQuestions && questionsQuery.isError) || (includeExercises && exercisesQuery.isError);
+  const isFetching = questionsQuery.isFetching || exercisesQuery.isFetching;
 
   const kindOptions = useMemo(
     () => [
+      { value: 'all', label: t('kindAll') },
       { value: 'questions', label: t('kindQuestions') },
       { value: 'exercises', label: t('kindExercises') },
     ],
     [t],
   );
 
-  const topics = kind === 'questions' ? (questionsQuery.data?.topics ?? []) : (exercisesQuery.data?.topics ?? []);
+  const savedOptions = useMemo(
+    () => [
+      { value: 'all', label: t('savedAll') },
+      { value: 'new', label: t('savedNew') },
+      { value: 'saved', label: t('savedSaved') },
+    ],
+    [t],
+  );
+
+  const topics = useMemo(() => {
+    const questionTopics = includeQuestions ? (questionsQuery.data?.topics ?? []) : [];
+    const exerciseTopics = includeExercises ? (exercisesQuery.data?.topics ?? []) : [];
+    return includeQuestions && includeExercises ? mergeTopics(questionTopics, exerciseTopics) : includeQuestions ? questionTopics : exerciseTopics;
+  }, [includeExercises, includeQuestions, exercisesQuery.data?.topics, questionsQuery.data?.topics]);
 
   const topicOptions = useMemo(() => [{ value: '', label: t('allTopics') }, ...topics.map((topic) => ({ value: topic.id, label: topic.name }))], [t, topics]);
 
   const filteredQuestions = useMemo(() => {
-    if (!questionsQuery.data) return [];
-    return questionsQuery.data.questions.filter((question) => matchesQuestionSearch(question, search) && matchesTopic(question, topicId));
-  }, [questionsQuery.data, search, topicId]);
+    if (!includeQuestions || !questionsQuery.data) return [];
+    return questionsQuery.data.questions.filter(
+      (question) => matchesQuestionSearch(question, search) && matchesTopic(question, topicId) && matchesSaved(question.isSaved, savedFilter),
+    );
+  }, [includeQuestions, questionsQuery.data, search, topicId, savedFilter]);
 
   const filteredExercises = useMemo(() => {
-    if (!exercisesQuery.data) return [];
-    return exercisesQuery.data.exercises.filter((exercise) => matchesExerciseSearch(exercise, search) && matchesTopic(exercise, topicId));
-  }, [exercisesQuery.data, search, topicId]);
+    if (!includeExercises || !exercisesQuery.data) return [];
+    return exercisesQuery.data.exercises.filter(
+      (exercise) => matchesExerciseSearch(exercise, search) && matchesTopic(exercise, topicId) && matchesSaved(exercise.isSaved, savedFilter),
+    );
+  }, [includeExercises, exercisesQuery.data, search, topicId, savedFilter]);
+
+  const rows = useMemo<BrowseRow[]>(() => {
+    const questionRows: BrowseRow[] = filteredQuestions.map((item) => ({ type: 'question', item }));
+    const exerciseRows: BrowseRow[] = filteredExercises.map((item) => ({ type: 'exercise', item }));
+
+    if (!includeQuestions) return exerciseRows;
+    if (!includeExercises) return questionRows;
+
+    return [...questionRows, ...exerciseRows].sort((left, right) => right.item.createdAt.localeCompare(left.item.createdAt));
+  }, [filteredExercises, filteredQuestions, includeExercises, includeQuestions]);
 
   const handleKindChange = (value: string) => {
-    const next: BrowseKind = value === 'exercises' ? 'exercises' : 'questions';
+    const next: BrowseKind = value === 'questions' || value === 'exercises' ? value : 'all';
     setKind(next);
     setTopicId(null);
-    router.replace(next === 'exercises' ? '/browse?kind=exercises' : '/browse');
+    router.replace(browseHref(next));
+  };
+
+  const handleSavedFilterChange = (value: string) => {
+    if (value === 'all' || value === 'saved') {
+      setSavedFilter(value);
+      return;
+    }
+
+    setSavedFilter('new');
+  };
+
+  const refetch = () => {
+    if (includeQuestions) {
+      void questionsQuery.refetch();
+    }
+    if (includeExercises) {
+      void exercisesQuery.refetch();
+    }
   };
 
   if (isPending) {
@@ -189,13 +250,16 @@ export default function BrowsePage({ initialKind = 'questions' }: BrowsePageProp
     );
   }
 
-  if (isError || (kind === 'questions' ? !questionsQuery.data : !exercisesQuery.data)) {
+  const questionsMissing = includeQuestions && !questionsQuery.data;
+  const exercisesMissing = includeExercises && !exercisesQuery.data;
+
+  if (isError || questionsMissing || exercisesMissing) {
     return (
       <AppShell>
         <div className='px-4 py-8 md:px-8'>
           <h1 className='m-0 text-lg font-medium text-foreground'>{t('title')}</h1>
           <p className='mt-2 text-sm text-muted-foreground'>{t('loadError')}</p>
-          <button type='button' className={cn(secondaryButtonClassName, 'mt-4')} onClick={() => refetch()} disabled={isFetching}>
+          <button type='button' className={cn(secondaryButtonClassName, 'mt-4')} onClick={refetch} disabled={isFetching}>
             {isFetching ? t('retrying') : t('retry')}
           </button>
         </div>
@@ -203,10 +267,30 @@ export default function BrowsePage({ initialKind = 'questions' }: BrowsePageProp
     );
   }
 
-  const bankSize = kind === 'questions' ? (questionsQuery.data?.questions.length ?? 0) : (exercisesQuery.data?.exercises.length ?? 0);
-  const filteredCount = kind === 'questions' ? filteredQuestions.length : filteredExercises.length;
+  const questionBankSize = includeQuestions ? (questionsQuery.data?.questions.length ?? 0) : 0;
+  const exerciseBankSize = includeExercises ? (exercisesQuery.data?.exercises.length ?? 0) : 0;
+  const bankSize = questionBankSize + exerciseBankSize;
   const isEmpty = bankSize === 0;
-  const hasNoMatches = !isEmpty && filteredCount === 0;
+  const hasNoMatches = !isEmpty && rows.length === 0;
+  const showType = kind === 'all';
+
+  const searchPlaceholder = kind === 'questions' ? t('searchQuestionsPlaceholder') : kind === 'exercises' ? t('searchExercisesPlaceholder') : t('searchAllPlaceholder');
+
+  const emptyTitle = kind === 'questions' ? t('emptyQuestionsTitle') : kind === 'exercises' ? t('emptyExercisesTitle') : t('emptyAllTitle');
+  const emptyDescription =
+    kind === 'questions' ? t('emptyQuestionsDescription') : kind === 'exercises' ? t('emptyExercisesDescription') : t('emptyAllDescription');
+
+  const countLabel = (() => {
+    if (isEmpty) {
+      if (kind === 'questions') return t('questionCountEmpty');
+      if (kind === 'exercises') return t('exerciseCountEmpty');
+      return t('itemCountEmpty');
+    }
+
+    if (kind === 'questions') return t('questionCount', { count: rows.length });
+    if (kind === 'exercises') return t('exerciseCount', { count: rows.length });
+    return t('itemCount', { count: rows.length });
+  })();
 
   return (
     <AppShell>
@@ -224,12 +308,20 @@ export default function BrowsePage({ initialKind = 'questions' }: BrowsePageProp
               type='search'
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder={kind === 'questions' ? t('searchQuestionsPlaceholder') : t('searchExercisesPlaceholder')}
+              placeholder={searchPlaceholder}
               disabled={isEmpty}
             />
           </label>
 
-          <Select className='w-full lg:w-44' aria-label={t('kindFilterLabel')} value={kind} onValueChange={handleKindChange} options={kindOptions} />
+          <Select className='w-full lg:w-48' aria-label={t('kindFilterLabel')} value={kind} onValueChange={handleKindChange} options={kindOptions} />
+
+          <Select
+            className='w-full lg:w-52'
+            aria-label={t('savedFilterLabel')}
+            value={savedFilter}
+            onValueChange={handleSavedFilterChange}
+            options={savedOptions}
+          />
 
           {topics.length > 0 ? (
             <Select
@@ -242,20 +334,12 @@ export default function BrowsePage({ initialKind = 'questions' }: BrowsePageProp
           ) : null}
         </div>
 
-        <p className='mt-4 border-b border-border pb-4 text-xs text-muted-foreground'>
-          {isEmpty
-            ? kind === 'questions'
-              ? t('questionCountEmpty')
-              : t('exerciseCountEmpty')
-            : kind === 'questions'
-              ? t('questionCount', { count: bankSize })
-              : t('exerciseCount', { count: bankSize })}
-        </p>
+        <p className='mt-4 border-b border-border pb-4 text-xs text-muted-foreground'>{countLabel}</p>
 
         {isEmpty ? (
           <div className='py-12'>
-            <p className='m-0 text-sm text-foreground'>{kind === 'questions' ? t('emptyQuestionsTitle') : t('emptyExercisesTitle')}</p>
-            <p className='mt-1 text-sm text-muted-foreground'>{kind === 'questions' ? t('emptyQuestionsDescription') : t('emptyExercisesDescription')}</p>
+            <p className='m-0 text-sm text-foreground'>{emptyTitle}</p>
+            <p className='mt-1 text-sm text-muted-foreground'>{emptyDescription}</p>
           </div>
         ) : hasNoMatches ? (
           <div className='py-12'>
@@ -264,9 +348,13 @@ export default function BrowsePage({ initialKind = 'questions' }: BrowsePageProp
           </div>
         ) : (
           <ul className='m-0 list-none p-0'>
-            {kind === 'questions'
-              ? filteredQuestions.map((question) => <BrowseQuestionRow key={question.id} question={question} />)
-              : filteredExercises.map((exercise) => <BrowseExerciseRow key={exercise.id} exercise={exercise} />)}
+            {rows.map((row) =>
+              row.type === 'question' ? (
+                <BrowseQuestionRow key={`question-${row.item.id}`} question={row.item} showType={showType} />
+              ) : (
+                <BrowseExerciseRow key={`exercise-${row.item.id}`} exercise={row.item} showType={showType} />
+              ),
+            )}
           </ul>
         )}
       </div>
