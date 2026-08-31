@@ -5,6 +5,8 @@ export const auth = pgSchema("auth");
 export const app = pgSchema("app");
 export const attemptResultInApp = app.enum("attempt_result", ['incorrect', 'partial', 'correct'])
 export const exerciseTypeInApp = app.enum("exercise_type", ['multiple_choice'])
+export const practiceContentTypeInApp = app.enum("practice_content_type", ['theory', 'exercise'])
+export const practiceSessionStatusInApp = app.enum("practice_session_status", ['active', 'completed'])
 export const aalLevelInAuth = auth.enum("aal_level", ['aal1', 'aal2', 'aal3'])
 export const codeChallengeMethodInAuth = auth.enum("code_challenge_method", ['s256', 'plain'])
 export const factorStatusInAuth = auth.enum("factor_status", ['unverified', 'verified'])
@@ -617,6 +619,59 @@ export const topicsInApp = app.table("topics", {
 	unique("topics_slug_key").on(table.slug),
 	check("topics_name_check", sql`length(btrim(name)) > 0`),
 	check("topics_slug_check", sql`length(btrim(slug)) > 0`),
+]);
+
+export const practiceSessionsInApp = app.table("practice_sessions", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	profileId: uuid("profile_id").notNull(),
+	status: practiceSessionStatusInApp().default('active').notNull(),
+	topicIds: uuid("topic_ids").array().notNull(),
+	contentFilter: text("content_filter").default('all').notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	completedAt: timestamp("completed_at", { withTimezone: true, mode: 'string' }),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	index("practice_sessions_profile_completed_idx").using("btree", table.profileId.asc().nullsLast().op("timestamptz_ops"), table.completedAt.desc().nullsFirst().op("uuid_ops")).where(sql`(status = 'completed'::app.practice_session_status)`),
+	index("practice_sessions_profile_status_idx").using("btree", table.profileId.asc().nullsLast().op("enum_ops"), table.status.asc().nullsLast().op("uuid_ops")),
+	foreignKey({
+			columns: [table.profileId],
+			foreignColumns: [profilesInApp.id],
+			name: "practice_sessions_profile_id_fkey"
+		}).onDelete("cascade"),
+	check("practice_sessions_content_filter_check", sql`content_filter = ANY (ARRAY['all'::text, 'theory'::text, 'exercises'::text])`),
+]);
+
+export const practiceSessionItemsInApp = app.table("practice_session_items", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	sessionId: uuid("session_id").notNull(),
+	position: smallint().notNull(),
+	contentType: practiceContentTypeInApp("content_type").notNull(),
+	contentId: uuid("content_id").notNull(),
+	theoryAttemptId: uuid("theory_attempt_id"),
+	exerciseAttemptId: uuid("exercise_attempt_id"),
+	answeredAt: timestamp("answered_at", { withTimezone: true, mode: 'string' }),
+	skipped: boolean().default(false).notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	index("practice_session_items_pending_idx").using("btree", table.sessionId.asc().nullsLast().op("int2_ops"), table.position.asc().nullsLast().op("uuid_ops")).where(sql`((answered_at IS NULL) AND (skipped = false))`),
+	index("practice_session_items_session_position_idx").using("btree", table.sessionId.asc().nullsLast().op("int2_ops"), table.position.asc().nullsLast().op("int2_ops")),
+	foreignKey({
+			columns: [table.exerciseAttemptId],
+			foreignColumns: [exerciseAttemptsInApp.id],
+			name: "practice_session_items_exercise_attempt_id_fkey"
+		}),
+	foreignKey({
+			columns: [table.sessionId],
+			foreignColumns: [practiceSessionsInApp.id],
+			name: "practice_session_items_session_id_fkey"
+		}).onDelete("cascade"),
+	foreignKey({
+			columns: [table.theoryAttemptId],
+			foreignColumns: [theoryAttemptsInApp.id],
+			name: "practice_session_items_theory_attempt_id_fkey"
+		}),
+	unique("practice_session_items_session_id_position_key").on(table.sessionId, table.position),
+	unique("practice_session_items_session_id_content_type_content_id_key").on(table.sessionId, table.contentType, table.contentId),
 ]);
 
 export const profilesInApp = app.table("profiles", {

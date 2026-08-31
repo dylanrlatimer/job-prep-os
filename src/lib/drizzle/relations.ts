@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { profilesInApp, exercisesInApp, flowStateInAuth, samlRelayStatesInAuth, ssoProvidersInAuth, samlProvidersInAuth, exerciseChoicesInApp, exerciseAttemptsInApp, sessionsInAuth, refreshTokensInAuth, ssoDomainsInAuth, mfaAmrClaimsInAuth, usersInAuth, identitiesInAuth, oneTimeTokensInAuth, oauthClientsInAuth, mfaFactorsInAuth, mfaChallengesInAuth, oauthConsentsInAuth, oauthAuthorizationsInAuth, webauthnCredentialsInAuth, webauthnChallengesInAuth, theoryQuestionsInApp, theoryAttemptsInApp, exerciseTopicsInApp, topicsInApp, theoryQuestionTopicsInApp, exerciseLibraryItemsInApp, theoryLibraryItemsInApp } from "./schema";
+import { profilesInApp, exercisesInApp, flowStateInAuth, samlRelayStatesInAuth, ssoProvidersInAuth, samlProvidersInAuth, exerciseChoicesInApp, exerciseAttemptsInApp, sessionsInAuth, refreshTokensInAuth, ssoDomainsInAuth, mfaAmrClaimsInAuth, usersInAuth, identitiesInAuth, oneTimeTokensInAuth, oauthClientsInAuth, mfaFactorsInAuth, mfaChallengesInAuth, oauthConsentsInAuth, oauthAuthorizationsInAuth, webauthnCredentialsInAuth, webauthnChallengesInAuth, practiceSessionsInApp, practiceSessionItemsInApp, theoryAttemptsInApp, theoryQuestionsInApp, exerciseTopicsInApp, topicsInApp, theoryQuestionTopicsInApp, exerciseLibraryItemsInApp, theoryLibraryItemsInApp } from "./schema";
 
 export const exercisesInAppRelations = relations(exercisesInApp, ({one, many}) => ({
 	profilesInApp: one(profilesInApp, {
@@ -15,6 +15,7 @@ export const exercisesInAppRelations = relations(exercisesInApp, ({one, many}) =
 export const profilesInAppRelations = relations(profilesInApp, ({one, many}) => ({
 	exercisesInApps: many(exercisesInApp),
 	exerciseAttemptsInApps: many(exerciseAttemptsInApp),
+	practiceSessionsInApps: many(practiceSessionsInApp),
 	usersInAuth: one(usersInAuth, {
 		fields: [profilesInApp.id],
 		references: [usersInAuth.id]
@@ -60,7 +61,7 @@ export const exerciseChoicesInAppRelations = relations(exerciseChoicesInApp, ({o
 	}),
 }));
 
-export const exerciseAttemptsInAppRelations = relations(exerciseAttemptsInApp, ({one}) => ({
+export const exerciseAttemptsInAppRelations = relations(exerciseAttemptsInApp, ({one, many}) => ({
 	exercisesInApp: one(exercisesInApp, {
 		fields: [exerciseAttemptsInApp.exerciseId],
 		references: [exercisesInApp.id]
@@ -69,6 +70,7 @@ export const exerciseAttemptsInAppRelations = relations(exerciseAttemptsInApp, (
 		fields: [exerciseAttemptsInApp.profileId],
 		references: [profilesInApp.id]
 	}),
+	practiceSessionItemsInApps: many(practiceSessionItemsInApp),
 }));
 
 export const refreshTokensInAuthRelations = relations(refreshTokensInAuth, ({one}) => ({
@@ -188,17 +190,31 @@ export const webauthnChallengesInAuthRelations = relations(webauthnChallengesInA
 	}),
 }));
 
-export const theoryQuestionsInAppRelations = relations(theoryQuestionsInApp, ({one, many}) => ({
+export const practiceSessionsInAppRelations = relations(practiceSessionsInApp, ({one, many}) => ({
 	profilesInApp: one(profilesInApp, {
-		fields: [theoryQuestionsInApp.ownerProfileId],
+		fields: [practiceSessionsInApp.profileId],
 		references: [profilesInApp.id]
 	}),
-	theoryAttemptsInApps: many(theoryAttemptsInApp),
-	theoryQuestionTopicsInApps: many(theoryQuestionTopicsInApp),
-	theoryLibraryItemsInApps: many(theoryLibraryItemsInApp),
+	practiceSessionItemsInApps: many(practiceSessionItemsInApp),
 }));
 
-export const theoryAttemptsInAppRelations = relations(theoryAttemptsInApp, ({one}) => ({
+export const practiceSessionItemsInAppRelations = relations(practiceSessionItemsInApp, ({one}) => ({
+	exerciseAttemptsInApp: one(exerciseAttemptsInApp, {
+		fields: [practiceSessionItemsInApp.exerciseAttemptId],
+		references: [exerciseAttemptsInApp.id]
+	}),
+	practiceSessionsInApp: one(practiceSessionsInApp, {
+		fields: [practiceSessionItemsInApp.sessionId],
+		references: [practiceSessionsInApp.id]
+	}),
+	theoryAttemptsInApp: one(theoryAttemptsInApp, {
+		fields: [practiceSessionItemsInApp.theoryAttemptId],
+		references: [theoryAttemptsInApp.id]
+	}),
+}));
+
+export const theoryAttemptsInAppRelations = relations(theoryAttemptsInApp, ({one, many}) => ({
+	practiceSessionItemsInApps: many(practiceSessionItemsInApp),
 	profilesInApp: one(profilesInApp, {
 		fields: [theoryAttemptsInApp.profileId],
 		references: [profilesInApp.id]
@@ -207,6 +223,16 @@ export const theoryAttemptsInAppRelations = relations(theoryAttemptsInApp, ({one
 		fields: [theoryAttemptsInApp.questionId],
 		references: [theoryQuestionsInApp.id]
 	}),
+}));
+
+export const theoryQuestionsInAppRelations = relations(theoryQuestionsInApp, ({one, many}) => ({
+	profilesInApp: one(profilesInApp, {
+		fields: [theoryQuestionsInApp.ownerProfileId],
+		references: [profilesInApp.id]
+	}),
+	theoryAttemptsInApps: many(theoryAttemptsInApp),
+	theoryQuestionTopicsInApps: many(theoryQuestionTopicsInApp),
+	theoryLibraryItemsInApps: many(theoryLibraryItemsInApp),
 }));
 
 export const exerciseTopicsInAppRelations = relations(exerciseTopicsInApp, ({one}) => ({
