@@ -3,7 +3,7 @@
 -- Password: 123123123
 --
 -- Account:
---   dylanrlatimer@gmail.com  (admin)
+--   contact@jobprepos.com  (admin)
 -- =============================================================================
 
 create or replace function public.seed_dev_auth_user(
@@ -71,7 +71,7 @@ begin
     null,
     null,
     jsonb_build_object('provider', 'email', 'providers', array['email']),
-    jsonb_build_object('display_name', 'Dylan'),
+    jsonb_build_object('display_name', 'Test User'),
     null,
     now(),
     now(),
@@ -139,11 +139,11 @@ declare
   v_pass text := '123123123';
   v_test_user_id uuid := 'f47ac10b-58cc-4372-a567-0e02b2c3d479';
 begin
-  perform public.seed_dev_auth_user(v_test_user_id, 'dylanrlatimer@gmail.com', v_pass);
+  perform public.seed_dev_auth_user(v_test_user_id, 'contact@jobprepos.com', v_pass);
 
   update app.profiles
   set
-    display_name = 'Dylan',
+    display_name = 'Test User',
     is_admin = true
   where id = v_test_user_id;
 end $$;
