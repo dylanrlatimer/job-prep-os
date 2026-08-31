@@ -10,10 +10,11 @@ export type QuestionFormValues = {
   isPublic: boolean;
 };
 
-export type QuestionScalars = Omit<QuestionFormValues, 'answer'>;
-export type QuestionFormSnapshot = QuestionFormValues;
+// The non-document fields held in React state.
+// The `answer` document lives in the TipTap editor ref, not in state.
+export type QuestionFields = Omit<QuestionFormValues, 'answer'>;
 
-export const emptyQuestionScalars: QuestionScalars = {
+export const emptyQuestionFields: QuestionFields = {
   question: '',
   topicIds: [],
   sourceName: '',
@@ -21,23 +22,13 @@ export const emptyQuestionScalars: QuestionScalars = {
   isPublic: false,
 };
 
-export const emptyQuestionFormValues: QuestionFormValues = {
-  ...emptyQuestionScalars,
-  answer: null,
-};
-
 function sameIdSet(left: string[], right: string[]) {
   if (left.length !== right.length) return false;
-
   const rightSet = new Set(right);
   return left.every((id) => rightSet.has(id));
 }
 
-export function toQuestionSnapshot(scalars: QuestionScalars, answer: JSONContent | null): QuestionFormSnapshot {
-  return { ...scalars, answer };
-}
-
-export function areQuestionSnapshotsEqual(left: QuestionFormSnapshot, right: QuestionFormSnapshot) {
+export function areQuestionValuesEqual(left: QuestionFormValues, right: QuestionFormValues) {
   return (
     left.question === right.question &&
     documentsEqual(left.answer, right.answer) &&
@@ -46,9 +37,4 @@ export function areQuestionSnapshotsEqual(left: QuestionFormSnapshot, right: Que
     left.isPublic === right.isPublic &&
     sameIdSet(left.topicIds, right.topicIds)
   );
-}
-
-/** @deprecated Use areQuestionSnapshotsEqual */
-export function areQuestionFormValuesEqual(left: QuestionFormValues, right: QuestionFormValues) {
-  return areQuestionSnapshotsEqual(left, right);
 }

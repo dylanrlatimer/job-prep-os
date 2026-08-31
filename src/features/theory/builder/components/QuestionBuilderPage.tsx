@@ -13,23 +13,29 @@ import VisibilityField from '@/common/components/VisibilityField';
 import { useValidationMessage } from '@/common/hooks/use-validation-message';
 import { destructiveButtonClassName, inputClassName, primaryButtonClassName, secondaryButtonClassName, textareaClassName } from '@/common/styles/form';
 import TiptapEditor from '@/common/components/TiptapEditor';
-import { useQuestionBuilderForm, questionBuilderFieldOrder } from '@/features/theory/builder/hooks/useQuestionBuilderForm';
-import type { BuilderToastMessages, BuilderVariant } from '@/features/theory/builder/hooks/useQuestionBuilderForm';
+import { useQuestionBuilderForm, userQuestionApiLayer, questionBuilderFieldOrder } from '@/features/theory/builder/hooks/useQuestionBuilderForm';
+import type { BuilderToastMessages, QuestionApiLayer } from '@/features/theory/builder/hooks/useQuestionBuilderForm';
 import QuestionBuilderSkeleton from './QuestionBuilderSkeleton';
 import { scrollToFirstFormError } from '@/common/lib/scroll-to-first-form-error';
-import { useFormGuard } from '@/common/form/use-form-guard';
 import { cn } from '@/lib/cn';
 
 type QuestionBuilderPageProps = {
   questionId?: string;
-  variant?: BuilderVariant;
+  apiLayer?: QuestionApiLayer;
   backLink?: { href: string; label: string };
   cancelHref?: string;
   visibilityLabels?: { label: string; falseLabel: string; trueLabel: string };
   toastMessages?: BuilderToastMessages;
 };
 
-export default function QuestionBuilderPage({ questionId, variant = 'user', backLink, cancelHref, visibilityLabels, toastMessages }: QuestionBuilderPageProps) {
+export default function QuestionBuilderPage({
+  questionId,
+  apiLayer = userQuestionApiLayer,
+  backLink,
+  cancelHref,
+  visibilityLabels,
+  toastMessages,
+}: QuestionBuilderPageProps) {
   const t = useTranslations('QuestionBuilderPage');
   const formRef = useRef<HTMLFormElement>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -51,7 +57,6 @@ export default function QuestionBuilderPage({ questionId, variant = 'user', back
     isEdit,
     values,
     fieldErrors,
-    isDirty,
     status,
     initialDocument,
     editorRef,
@@ -70,11 +75,9 @@ export default function QuestionBuilderPage({ questionId, variant = 'user', back
     refetch,
   } = useQuestionBuilderForm({
     questionId,
-    variant,
+    apiLayer,
     toastMessages: resolvedToastMessages,
   });
-
-  useFormGuard(status, isDirty, isError);
 
   const answerErrorMessage = useValidationMessage(fieldErrors.answer);
 
