@@ -17,17 +17,17 @@ import TiptapEditor, { type TiptapEditorRef } from '@/common/components/TiptapEd
 import {
   exerciseBuilderFieldOrder,
   useExerciseBuilderForm,
+  userExerciseApiLayer,
   type BuilderToastMessages,
-  type BuilderVariant,
+  type ExerciseApiLayer,
 } from '@/features/exercises/builder/hooks/useExerciseBuilderForm';
 import ExerciseBuilderSkeleton from './ExerciseBuilderSkeleton';
 import { scrollToFirstFormError } from '@/common/lib/scroll-to-first-form-error';
-import { useFormGuard } from '@/common/form/use-form-guard';
 import { cn } from '@/lib/cn';
 
 type ExerciseBuilderPageProps = {
   exerciseId?: string;
-  variant?: BuilderVariant;
+  apiLayer?: ExerciseApiLayer;
   backLink?: { href: string; label: string };
   cancelHref?: string;
   visibilityLabels?: { label: string; falseLabel: string; trueLabel: string };
@@ -113,7 +113,14 @@ function ChoiceRow({
   );
 }
 
-export default function ExerciseBuilderPage({ exerciseId, variant = 'user', backLink, cancelHref, visibilityLabels, toastMessages }: ExerciseBuilderPageProps) {
+export default function ExerciseBuilderPage({
+  exerciseId,
+  apiLayer = userExerciseApiLayer,
+  backLink,
+  cancelHref,
+  visibilityLabels,
+  toastMessages,
+}: ExerciseBuilderPageProps) {
   const t = useTranslations('ExerciseBuilderPage');
   const formRef = useRef<HTMLFormElement>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -135,7 +142,6 @@ export default function ExerciseBuilderPage({ exerciseId, variant = 'user', back
     isEdit,
     values,
     fieldErrors,
-    isDirty,
     status,
     initialPrompt,
     initialExplanation,
@@ -165,11 +171,9 @@ export default function ExerciseBuilderPage({ exerciseId, variant = 'user', back
     maxChoices,
   } = useExerciseBuilderForm({
     exerciseId,
-    variant,
+    apiLayer,
     toastMessages: resolvedToastMessages,
   });
-
-  useFormGuard(status, isDirty, isError);
 
   const promptErrorMessage = useValidationMessage(fieldErrors.prompt);
   const explanationErrorMessage = useValidationMessage(fieldErrors.explanation);

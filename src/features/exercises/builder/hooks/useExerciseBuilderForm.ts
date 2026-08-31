@@ -3,33 +3,39 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { JSONContent } from '@tiptap/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { QueryClient } from '@tanstack/react-query';
 import { useRouter } from '@/i18n/navigation';
 import type { TiptapEditorRef } from '@/common/components/TiptapEditor';
-import { useReleaseUnsavedGuard } from '@/common/unsaved-changes/use-unsaved-changes-guard';
+import { useUnsavedChangesGuard, useReleaseUnsavedGuard } from '@/common/unsaved-changes/use-unsaved-changes-guard';
 import { mapZodFieldErrorsNested } from '@/common/lib/map-zod-field-errors';
 import { invalidateAdminExerciseCaches } from '@/features/admin/api/invalidate-admin-caches';
 import { createSystemExercise, deleteSystemExercise, updateSystemExercise } from '@/features/admin/exercises/api/mutations';
 import { systemExerciseQueryOptions } from '@/features/admin/exercises/api/queries';
 import { ExerciseInputSchema } from '@/features/exercises/builder/api/contracts';
+import type { CreateExerciseInput, UpdateExerciseInput } from '@/features/exercises/builder/api/contracts';
 import { createExercise, deleteExercise, updateExercise } from '@/features/exercises/builder/api/mutations';
 import { builderMetadataQueryOptions, exerciseDetailQueryOptions } from '@/features/exercises/builder/api/queries';
 import {
   areExerciseSnapshotsEqual,
   createChoiceRowFromLoaded,
-  emptyExerciseScalars,
+  emptyExerciseFields,
   MAX_CHOICES,
   MIN_CHOICES,
   toExerciseSnapshot,
   type ExerciseChoiceDocument,
+  type ExerciseFields,
   type ExerciseFormSnapshot,
-  type ExerciseScalars,
 } from '@/features/exercises/builder/lib/exercise-form-values';
 import { invalidateExerciseCaches, invalidateExerciseRepositoryCache, removeExerciseCaches } from '@/features/exercises/api/invalidate-caches';
 import { useToastStore } from '@/lib/store/use-toast-store';
 
 export type { ExerciseFormValues } from '@/features/exercises/builder/lib/exercise-form-values';
 
-export type BuilderVariant = 'user' | 'admin';
+// Minimal router interface — avoids importing the full next-intl type.
+type RouteNavigator = {
+  push: (href: string) => void;
+  replace: (href: string) => void;
+};
 
 export type BuilderToastMessages = {
   createSuccess: string;
@@ -37,53 +43,79 @@ export type BuilderToastMessages = {
   deleteSuccess: string;
 };
 
-type FormStatus = 'loading' | 'ready' | 'submitting';
+// Encapsulates everything that differs between the user and admin variants:
+// which API functions to call, and what to do after save/delete (navigate + invalidate).
+export type ExerciseApiLayer = {
+  variant: 'user' | 'admin';
+  create: (payload: CreateExerciseInput) => Promise<{ id: string }>;
+  update: (id: string, payload: UpdateExerciseInput) => Promise<{ id: string }>;
+  delete: (id: string) => Promise<{ id: string }>;
+  afterSave: (args: { queryClient: QueryClient; router: RouteNavigator; id: string }) => void;
+  afterDelete: (args: { queryClient: QueryClient; router: RouteNavigator; exerciseId: string }) => void;
+};
 
-function toExerciseInput(snapshot: ExerciseFormSnapshot) {
-  return {
-    title: snapshot.title,
-    prompt: snapshot.prompt!,
-    explanation: snapshot.explanation,
-    topicIds: snapshot.topicIds,
-    sourceName: snapshot.sourceName,
-    sourceUrl: snapshot.sourceUrl,
-    isPublic: snapshot.isPublic,
-    allowMultiple: snapshot.allowMultiple,
-    choices: snapshot.choices.map((choice, index) => ({
-      content: snapshot.choiceDocuments[index]?.content!,
-      isCorrect: choice.isCorrect,
-    })),
-  };
-}
+export const userExerciseApiLayer: ExerciseApiLayer = {
+  variant: 'user',
+  create: createExercise,
+  update: updateExercise,
+  delete: deleteExercise,
+  afterSave: ({ queryClient, router, id }) => {
+    router.replace(`/exercises/${id}`);
+    void invalidateExerciseCaches(queryClient, id);
+  },
+  afterDelete: ({ queryClient, router, exerciseId }) => {
+    removeExerciseCaches(queryClient, exerciseId);
+    router.replace('/exercises');
+    void invalidateExerciseRepositoryCache(queryClient);
+  },
+};
 
-type UseExerciseBuilderFormOptions = {
-  exerciseId?: string;
-  variant: BuilderVariant;
-  toastMessages: BuilderToastMessages;
+export const adminExerciseApiLayer: ExerciseApiLayer = {
+  variant: 'admin',
+  create: createSystemExercise,
+  update: updateSystemExercise,
+  delete: deleteSystemExercise,
+  afterSave: ({ queryClient, router, id }) => {
+    router.push(`/admin/exercises/${id}`);
+    void invalidateAdminExerciseCaches(queryClient, id);
+  },
+  afterDelete: ({ queryClient, router, exerciseId }) => {
+    router.push('/admin/exercises');
+    void invalidateAdminExerciseCaches(queryClient, exerciseId);
+  },
 };
 
 export type ExerciseBuilderSubmitResult = { ok: true } | { ok: false; fieldErrors: Record<string, string> };
 
 export const exerciseBuilderFieldOrder = ['title', 'prompt', 'explanation', 'choices', 'topicIds', 'sourceName', 'sourceUrl'] as const;
 
-export function useExerciseBuilderForm({ exerciseId, variant, toastMessages }: UseExerciseBuilderFormOptions) {
+type UseExerciseBuilderFormOptions = {
+  exerciseId?: string;
+  apiLayer: ExerciseApiLayer;
+  toastMessages: BuilderToastMessages;
+};
+
+export function useExerciseBuilderForm({ exerciseId, apiLayer, toastMessages }: UseExerciseBuilderFormOptions) {
   const router = useRouter();
   const releaseGuard = useReleaseUnsavedGuard();
   const queryClient = useQueryClient();
   const isEdit = !!exerciseId;
-  const isAdmin = variant === 'admin';
+  const isAdmin = apiLayer.variant === 'admin';
 
   const promptRef = useRef<TiptapEditorRef>(null);
   const explanationRef = useRef<TiptapEditorRef>(null);
   const choiceEditorRefs = useRef(new Map<string, TiptapEditorRef | null>());
 
-  const [scalars, setScalars] = useState<ExerciseScalars>(emptyExerciseScalars);
-  const [status, setStatus] = useState<FormStatus>('loading');
+  const [fields, setFields] = useState<ExerciseFields>(emptyExerciseFields);
+  const [status, setStatus] = useState<'loading' | 'ready' | 'submitting'>('loading');
   const [committedSnapshot, setCommittedSnapshot] = useState<ExerciseFormSnapshot | null>(null);
-  const [documentRevision, setDocumentRevision] = useState(0);
+  const [docRevision, setDocRevision] = useState(0);
   const [readyEditorIds, setReadyEditorIds] = useState<Set<string>>(() => new Set());
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
+  // --- Data fetching ---
+  // Two separate queries for TypeScript safety (user and admin return different shapes).
+  // Only one is ever enabled at a time.
   const metadataQuery = useQuery(builderMetadataQueryOptions);
   const userExerciseQuery = useQuery({
     ...exerciseDetailQueryOptions(exerciseId ?? ''),
@@ -98,83 +130,85 @@ export function useExerciseBuilderForm({ exerciseId, variant, toastMessages }: U
   const initialPrompt = exerciseQuery.data?.prompt ?? null;
   const initialExplanation = exerciseQuery.data?.explanation ?? null;
 
-  const loadedScalars = useMemo((): ExerciseScalars | null => {
-    if (!exerciseQuery.data) return null;
-
-    return {
-      title: exerciseQuery.data.title,
-      topicIds: exerciseQuery.data.topicIds,
-      sourceName: exerciseQuery.data.sourceName ?? '',
-      sourceUrl: exerciseQuery.data.sourceUrl ?? '',
-      isPublic: exerciseQuery.data.isPublic,
-      allowMultiple: exerciseQuery.data.allowMultiple,
-      choices: exerciseQuery.data.choices.map((choice) => createChoiceRowFromLoaded(choice.isCorrect)),
-    };
-  }, [exerciseQuery.data]);
-
-  const expectedEditorIds = useMemo(() => ['prompt', 'explanation', ...scalars.choices.map((choice) => choice.id)], [scalars.choices]);
-
   const isDataLoading = metadataQuery.isPending || (isEdit && exerciseQuery.isPending);
   const isDataError = metadataQuery.isError || (isEdit && exerciseQuery.isError);
 
+  // Computed synchronously each render so loadedFieldsRef is always current
+  // (exercise builder relies on the same pattern as question builder).
+  const loadedFields = useMemo((): ExerciseFields | null => {
+    const data = exerciseQuery.data;
+    if (!data) return null;
+    return {
+      title: data.title,
+      topicIds: data.topicIds,
+      sourceName: data.sourceName ?? '',
+      sourceUrl: data.sourceUrl ?? '',
+      isPublic: data.isPublic,
+      allowMultiple: data.allowMultiple,
+      choices: data.choices.map((choice) => createChoiceRowFromLoaded(choice.isCorrect)),
+    };
+  }, [exerciseQuery.data]);
+
+  // The set of editor IDs that must all be mounted before the form is usable.
+  // Changes when choices are added or removed.
+  const expectedEditorIds = useMemo(() => ['prompt', 'explanation', ...fields.choices.map((choice) => choice.id)], [fields.choices]);
+
+  // Seed field state when loaded data arrives (also re-seeds on query refresh).
   useEffect(() => {
     if (!isEdit) {
-      setScalars(emptyExerciseScalars);
+      setFields(emptyExerciseFields);
       return;
     }
+    if (loadedFields) setFields(loadedFields);
+  }, [isEdit, loadedFields]);
 
-    if (loadedScalars) {
-      setScalars(loadedScalars);
-    }
-  }, [isEdit, loadedScalars]);
-
+  // --- Document helpers ---
   const getChoiceDocuments = useCallback((): ExerciseChoiceDocument[] => {
-    return scalars.choices.map((choice) => ({
+    return fields.choices.map((choice) => ({
       id: choice.id,
       content: choiceEditorRefs.current.get(choice.id)?.getJSON() ?? null,
     }));
-  }, [scalars.choices]);
+  }, [fields.choices]);
 
   const getSnapshot = useCallback((): ExerciseFormSnapshot => {
-    return toExerciseSnapshot(scalars, promptRef.current?.getJSON() ?? null, explanationRef.current?.getJSON() ?? null, getChoiceDocuments());
-  }, [getChoiceDocuments, scalars]);
+    return toExerciseSnapshot(fields, promptRef.current?.getJSON() ?? null, explanationRef.current?.getJSON() ?? null, getChoiceDocuments());
+  }, [getChoiceDocuments, fields]);
 
+  // --- Readiness ---
+  // Status becomes 'ready' once all expected editors are mounted AND (in edit mode) data is loaded.
+  // This guarantees editor initial content is set before the committed snapshot is captured.
   useEffect(() => {
     if (isDataLoading || isDataError) return;
-
-    if (!isEdit) {
-      if (expectedEditorIds.every((editorId) => readyEditorIds.has(editorId))) {
-        setCommittedSnapshot(getSnapshot());
-        setStatus('ready');
-      }
-      return;
-    }
-
-    if (loadedScalars && expectedEditorIds.every((editorId) => readyEditorIds.has(editorId))) {
+    if (!expectedEditorIds.every((id) => readyEditorIds.has(id))) return;
+    if (!isEdit || loadedFields) {
       setCommittedSnapshot(getSnapshot());
       setStatus('ready');
     }
-  }, [expectedEditorIds, getSnapshot, isDataError, isDataLoading, isEdit, loadedScalars, readyEditorIds]);
+  }, [expectedEditorIds, getSnapshot, isDataError, isDataLoading, isEdit, loadedFields, readyEditorIds]);
 
+  // --- Dirty detection ---
   const isDirty = useMemo(() => {
     if (status !== 'ready' || committedSnapshot === null) return false;
     return !areExerciseSnapshotsEqual(committedSnapshot, getSnapshot());
-  }, [committedSnapshot, documentRevision, getSnapshot, scalars, status]);
+    // docRevision forces re-evaluation when any TipTap editor fires onUpdate
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [committedSnapshot, docRevision, getSnapshot, fields, status]);
 
+  useUnsavedChangesGuard(status === 'ready' && isDirty && !isDataError);
+
+  // --- Editor callbacks ---
   const onEditorReady = useCallback((editorId: string) => {
-    return (document: JSONContent) => {
+    return (_document: JSONContent) => {
       setReadyEditorIds((current) => {
         const next = new Set(current);
         next.add(editorId);
         return next;
       });
-
-      void document;
     };
   }, []);
 
   const onDocumentUpdate = useCallback(() => {
-    setDocumentRevision((revision) => revision + 1);
+    setDocRevision((n) => n + 1);
   }, []);
 
   const setChoiceEditorRef = useCallback((choiceId: string) => {
@@ -187,84 +221,9 @@ export function useExerciseBuilderForm({ exerciseId, variant, toastMessages }: U
     };
   }, []);
 
-  const onSaveSuccess = useCallback(
-    (id: string) => {
-      setCommittedSnapshot(getSnapshot());
-      setStatus('ready');
-      releaseGuard();
-      useToastStore.getState().addToast(isEdit ? toastMessages.updateSuccess : toastMessages.createSuccess, 'success');
-
-      if (isAdmin) {
-        router.push(`/admin/exercises/${id}`);
-        void invalidateAdminExerciseCaches(queryClient, id);
-        return;
-      }
-
-      router.replace(`/exercises/${id}`);
-      void invalidateExerciseCaches(queryClient, id);
-    },
-    [getSnapshot, isAdmin, isEdit, queryClient, releaseGuard, router, toastMessages],
-  );
-
-  const onDeleteSuccess = useCallback(() => {
-    if (!exerciseId) return;
-
-    releaseGuard();
-    useToastStore.getState().addToast(toastMessages.deleteSuccess, 'success');
-
-    if (isAdmin) {
-      router.push('/admin/exercises');
-      void invalidateAdminExerciseCaches(queryClient, exerciseId);
-      return;
-    }
-
-    removeExerciseCaches(queryClient, exerciseId);
-    router.replace('/exercises');
-    void invalidateExerciseRepositoryCache(queryClient);
-  }, [exerciseId, isAdmin, queryClient, releaseGuard, router, toastMessages]);
-
-  const { mutate: mutateCreate, isPending: isCreating } = useMutation({
-    mutationFn: (payload: Parameters<typeof createExercise>[0]) => (isAdmin ? createSystemExercise(payload) : createExercise(payload)),
-    onSuccess: (response) => onSaveSuccess(response.id),
-  });
-
-  const { mutate: mutateUpdate, isPending: isUpdating } = useMutation({
-    mutationFn: (payload: Parameters<typeof updateExercise>[1]) =>
-      isAdmin ? updateSystemExercise(exerciseId!, payload) : updateExercise(exerciseId!, payload),
-    onSuccess: (response) => onSaveSuccess(response.id),
-  });
-
-  const { mutate: mutateDelete, isPending: isDeleting } = useMutation({
-    mutationFn: () => (isAdmin ? deleteSystemExercise(exerciseId!) : deleteExercise(exerciseId!)),
-    onSuccess: onDeleteSuccess,
-  });
-
-  const isSubmitting = isCreating || isUpdating;
-
-  const submit = useCallback((): ExerciseBuilderSubmitResult => {
-    const snapshot = getSnapshot();
-    const parsed = ExerciseInputSchema.safeParse(toExerciseInput(snapshot));
-
-    if (!parsed.success) {
-      const errors = mapZodFieldErrorsNested(parsed.error);
-      setFieldErrors(errors);
-      return { ok: false, fieldErrors: errors };
-    }
-
-    setFieldErrors({});
-    setStatus('submitting');
-
-    if (isEdit) {
-      mutateUpdate(parsed.data);
-      return { ok: true };
-    }
-
-    mutateCreate(parsed.data);
-    return { ok: true };
-  }, [getSnapshot, isEdit, mutateCreate, mutateUpdate]);
-
-  const setField = useCallback(<K extends keyof ExerciseScalars>(field: K, value: ExerciseScalars[K]) => {
-    setScalars((current) => ({ ...current, [field]: value }));
+  // --- Field setters ---
+  const setField = useCallback(<K extends keyof ExerciseFields>(field: K, value: ExerciseFields[K]) => {
+    setFields((current) => ({ ...current, [field]: value }));
     setFieldErrors((current) => {
       if (!current[field as string]) return current;
       const next = { ...current };
@@ -274,12 +233,10 @@ export function useExerciseBuilderForm({ exerciseId, variant, toastMessages }: U
   }, []);
 
   const toggleTopic = useCallback((topicId: string) => {
-    setScalars((current) => {
-      const topicIds = current.topicIds.includes(topicId) ? current.topicIds.filter((id) => id !== topicId) : [...current.topicIds, topicId];
-
-      return { ...current, topicIds };
-    });
-
+    setFields((current) => ({
+      ...current,
+      topicIds: current.topicIds.includes(topicId) ? current.topicIds.filter((id) => id !== topicId) : [...current.topicIds, topicId],
+    }));
     setFieldErrors((current) => {
       if (!current.topicIds) return current;
       const next = { ...current };
@@ -289,11 +246,10 @@ export function useExerciseBuilderForm({ exerciseId, variant, toastMessages }: U
   }, []);
 
   const setChoiceCorrect = useCallback((choiceId: string, isCorrect: boolean) => {
-    setScalars((current) => ({
+    setFields((current) => ({
       ...current,
       choices: current.choices.map((choice) => (choice.id === choiceId ? { ...choice, isCorrect } : choice)),
     }));
-
     setFieldErrors((current) => {
       if (!current.choices) return current;
       const next = { ...current };
@@ -303,17 +259,14 @@ export function useExerciseBuilderForm({ exerciseId, variant, toastMessages }: U
   }, []);
 
   const addChoice = useCallback(() => {
-    setScalars((current) => {
+    setFields((current) => {
       if (current.choices.length >= MAX_CHOICES) return current;
-      return {
-        ...current,
-        choices: [...current.choices, createChoiceRowFromLoaded(false)],
-      };
+      return { ...current, choices: [...current.choices, createChoiceRowFromLoaded(false)] };
     });
   }, []);
 
   const removeChoice = useCallback((choiceId: string) => {
-    setScalars((current) => {
+    setFields((current) => {
       if (current.choices.length <= MIN_CHOICES) return current;
 
       choiceEditorRefs.current.delete(choiceId);
@@ -330,10 +283,78 @@ export function useExerciseBuilderForm({ exerciseId, variant, toastMessages }: U
     });
   }, []);
 
-  const remove = useCallback(() => {
+  // --- Mutations ---
+  const onSaveSuccess = (id: string) => {
+    setCommittedSnapshot(getSnapshot());
+    setStatus('ready');
+    releaseGuard();
+    useToastStore.getState().addToast(isEdit ? toastMessages.updateSuccess : toastMessages.createSuccess, 'success');
+    apiLayer.afterSave({ queryClient, router, id });
+  };
+
+  const onDeleteSuccess = () => {
+    if (!exerciseId) return;
+    releaseGuard();
+    useToastStore.getState().addToast(toastMessages.deleteSuccess, 'success');
+    apiLayer.afterDelete({ queryClient, router, exerciseId });
+  };
+
+  const { mutate: mutateCreate, isPending: isCreating } = useMutation({
+    mutationFn: (payload: CreateExerciseInput) => apiLayer.create(payload),
+    onSuccess: (response) => onSaveSuccess(response.id),
+  });
+
+  const { mutate: mutateUpdate, isPending: isUpdating } = useMutation({
+    mutationFn: (payload: UpdateExerciseInput) => apiLayer.update(exerciseId!, payload),
+    onSuccess: (response) => onSaveSuccess(response.id),
+  });
+
+  const { mutate: mutateDelete, isPending: isDeleting } = useMutation({
+    mutationFn: () => apiLayer.delete(exerciseId!),
+    onSuccess: onDeleteSuccess,
+  });
+
+  const isSubmitting = isCreating || isUpdating;
+
+  // --- Submit ---
+  const submit = (): ExerciseBuilderSubmitResult => {
+    const snapshot = getSnapshot();
+    const parsed = ExerciseInputSchema.safeParse({
+      title: snapshot.title,
+      prompt: snapshot.prompt!,
+      explanation: snapshot.explanation,
+      topicIds: snapshot.topicIds,
+      sourceName: snapshot.sourceName,
+      sourceUrl: snapshot.sourceUrl,
+      isPublic: snapshot.isPublic,
+      allowMultiple: snapshot.allowMultiple,
+      choices: snapshot.choices.map((choice, index) => ({
+        content: snapshot.choiceDocuments[index]?.content!,
+        isCorrect: choice.isCorrect,
+      })),
+    });
+
+    if (!parsed.success) {
+      const errors = mapZodFieldErrorsNested(parsed.error);
+      setFieldErrors(errors);
+      return { ok: false, fieldErrors: errors };
+    }
+
+    setFieldErrors({});
+    setStatus('submitting');
+
+    if (isEdit) {
+      mutateUpdate(parsed.data);
+    } else {
+      mutateCreate(parsed.data);
+    }
+    return { ok: true };
+  };
+
+  const remove = () => {
     if (!isEdit || isDeleting) return;
     mutateDelete();
-  }, [isDeleting, isEdit, mutateDelete]);
+  };
 
   const getInitialChoiceContent = useCallback(
     (choiceId: string, index: number) => {
@@ -343,69 +364,40 @@ export function useExerciseBuilderForm({ exerciseId, variant, toastMessages }: U
     [exerciseQuery.data, isEdit],
   );
 
-  return useMemo(
-    () => ({
-      isEdit,
-      values: scalars,
-      fieldErrors,
-      isDirty,
-      status,
-      initialPrompt,
-      initialExplanation,
-      promptRef,
-      explanationRef,
-      metadata: metadataQuery.data,
-      isLoading: isDataLoading,
-      isError: isDataError,
-      isFormDataReady: !isEdit || loadedScalars !== null,
-      isSubmitting,
-      isDeleting,
-      submit,
-      setField,
-      toggleTopic,
-      setChoiceCorrect,
-      addChoice,
-      removeChoice,
-      onPromptReady: onEditorReady('prompt'),
-      onExplanationReady: onEditorReady('explanation'),
-      onChoiceReady: (choiceId: string) => onEditorReady(choiceId),
-      onDocumentUpdate,
-      setChoiceEditorRef,
-      getInitialChoiceContent,
-      remove,
-      refetch: () => {
-        void metadataQuery.refetch();
-        if (isEdit) void exerciseQuery.refetch();
-      },
-      minChoices: MIN_CHOICES,
-      maxChoices: MAX_CHOICES,
-    }),
-    [
-      addChoice,
-      fieldErrors,
-      getInitialChoiceContent,
-      initialExplanation,
-      initialPrompt,
-      isDataError,
-      isDataLoading,
-      isDeleting,
-      isDirty,
-      isEdit,
-      isSubmitting,
-      loadedScalars,
-      metadataQuery,
-      exerciseQuery,
-      onDocumentUpdate,
-      onEditorReady,
-      remove,
-      removeChoice,
-      scalars,
-      setChoiceCorrect,
-      setChoiceEditorRef,
-      setField,
-      status,
-      submit,
-      toggleTopic,
-    ],
-  );
+  return {
+    isEdit,
+    values: fields,
+    fieldErrors,
+    isDirty,
+    status,
+    initialPrompt,
+    initialExplanation,
+    promptRef,
+    explanationRef,
+    metadata: metadataQuery.data,
+    isLoading: isDataLoading,
+    isError: isDataError,
+    isFormDataReady: !isEdit || loadedFields !== null,
+    isSubmitting,
+    isDeleting,
+    submit,
+    setField,
+    toggleTopic,
+    setChoiceCorrect,
+    addChoice,
+    removeChoice,
+    onPromptReady: onEditorReady('prompt'),
+    onExplanationReady: onEditorReady('explanation'),
+    onChoiceReady: (choiceId: string) => onEditorReady(choiceId),
+    onDocumentUpdate,
+    setChoiceEditorRef,
+    getInitialChoiceContent,
+    remove,
+    refetch: () => {
+      void metadataQuery.refetch();
+      if (isEdit) void exerciseQuery.refetch();
+    },
+    minChoices: MIN_CHOICES,
+    maxChoices: MAX_CHOICES,
+  };
 }

@@ -15,7 +15,6 @@ import { isTopicIconKey, TOPIC_ICON_KEYS, TOPIC_ICON_LABELS } from '@/common/top
 import { topicBuilderFieldOrder, useTopicBuilderForm } from '@/features/admin/topics/hooks/useTopicBuilderForm';
 import { hardcoded } from '@/utils/hardcoded';
 import { scrollToFirstFormError } from '@/common/lib/scroll-to-first-form-error';
-import { useFormGuard } from '@/common/form/use-form-guard';
 import { cn } from '@/lib/cn';
 
 type TopicBuilderPageProps = {
@@ -60,7 +59,6 @@ function TopicBuilderContent({ topicId }: TopicBuilderPageProps) {
     isEdit,
     values,
     fieldErrors,
-    isDirty,
     status,
     slug,
     questionCount,
@@ -74,8 +72,6 @@ function TopicBuilderContent({ topicId }: TopicBuilderPageProps) {
     remove,
     refetch,
   } = useTopicBuilderForm({ topicId });
-
-  useFormGuard(status, isDirty, isError);
 
   const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();

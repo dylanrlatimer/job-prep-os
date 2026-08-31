@@ -23,7 +23,10 @@ export type ExerciseChoiceDocument = {
   content: JSONContent | null;
 };
 
-export type ExerciseScalars = Omit<ExerciseFormValues, 'prompt' | 'explanation'>;
+// The non-document fields held in React state.
+// prompt, explanation, and choice content live in TipTap editor refs, not in state.
+export type ExerciseFields = Omit<ExerciseFormValues, 'prompt' | 'explanation'>;
+
 export type ExerciseFormSnapshot = ExerciseFormValues & {
   choiceDocuments: ExerciseChoiceDocument[];
 };
@@ -38,9 +41,9 @@ function createChoiceRow(isCorrect = false): ExerciseChoiceFormRow {
   };
 }
 
-export const defaultChoiceRows: ExerciseChoiceFormRow[] = [createChoiceRow(), createChoiceRow()];
+const defaultChoiceRows: ExerciseChoiceFormRow[] = [createChoiceRow(), createChoiceRow()];
 
-export const emptyExerciseScalars: ExerciseScalars = {
+export const emptyExerciseFields: ExerciseFields = {
   title: '',
   topicIds: [],
   sourceName: '',
@@ -51,21 +54,19 @@ export const emptyExerciseScalars: ExerciseScalars = {
 };
 
 export const emptyExerciseFormValues: ExerciseFormValues = {
-  ...emptyExerciseScalars,
+  ...emptyExerciseFields,
   prompt: null,
   explanation: null,
 };
 
 function sameIdSet(left: string[], right: string[]) {
   if (left.length !== right.length) return false;
-
   const rightSet = new Set(right);
   return left.every((id) => rightSet.has(id));
 }
 
 function choicesEqual(left: ExerciseChoiceFormRow[], right: ExerciseChoiceFormRow[]) {
   if (left.length !== right.length) return false;
-
   return left.every((choice, index) => {
     const other = right[index];
     return choice.id === other.id && choice.isCorrect === other.isCorrect;
@@ -73,13 +74,13 @@ function choicesEqual(left: ExerciseChoiceFormRow[], right: ExerciseChoiceFormRo
 }
 
 export function toExerciseSnapshot(
-  scalars: ExerciseScalars,
+  fields: ExerciseFields,
   prompt: JSONContent | null,
   explanation: JSONContent | null,
   choiceDocuments: ExerciseChoiceDocument[],
 ): ExerciseFormSnapshot {
   return {
-    ...scalars,
+    ...fields,
     prompt,
     explanation,
     choiceDocuments,
