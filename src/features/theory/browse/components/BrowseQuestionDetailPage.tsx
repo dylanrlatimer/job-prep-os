@@ -1,19 +1,20 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ChevronLeft } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import AppShell from '@/common/components/AppShell';
+import BackLink from '@/common/components/BackLink';
+import PageLoadError from '@/common/components/PageLoadError';
+import SourceCitation from '@/common/components/SourceCitation';
 import TopicList from '@/common/components/TopicList';
 import { invalidateBrowseCaches } from '@/features/admin/api/invalidate-admin-caches';
 import { saveBrowseQuestion } from '@/features/theory/browse/api/mutations';
 import { browseQuestionDetailQueryOptions } from '@/features/theory/browse/api/queries';
 import QuestionDetailSkeleton from '@/features/theory/detail/components/QuestionDetailSkeleton';
 import TiptapRenderer from '@/common/components/TiptapRenderer';
-import { primaryButtonClassName, secondaryButtonClassName } from '@/common/styles/form';
+import { primaryButtonClassName } from '@/common/styles/form';
 import { useToastStore } from '@/lib/store/use-toast-store';
-import { cn } from '@/lib/cn';
 
 type BrowseQuestionDetailPageProps = {
   questionId: string;
@@ -44,25 +45,21 @@ export default function BrowseQuestionDetailPage({ questionId }: BrowseQuestionD
 
   if (isError || !data) {
     return (
-      <AppShell>
-        <div className='px-4 py-8 md:px-8'>
-          <h1 className='m-0 text-lg font-medium text-foreground'>{tDetail('title')}</h1>
-          <p className='mt-2 text-sm text-muted-foreground'>{t('loadError')}</p>
-          <button type='button' className={cn(secondaryButtonClassName, 'mt-4')} onClick={() => refetch()} disabled={isFetching}>
-            {isFetching ? tDetail('retrying') : tDetail('retry')}
-          </button>
-        </div>
-      </AppShell>
+      <PageLoadError
+        title={tDetail('title')}
+        message={t('loadError')}
+        onRetry={() => refetch()}
+        isRetrying={isFetching}
+        retryLabel={tDetail('retry')}
+        retryingLabel={tDetail('retrying')}
+      />
     );
   }
 
   return (
     <AppShell>
       <div className='px-4 py-8 md:px-8'>
-        <Link href='/browse' className='inline-flex items-center gap-1 text-sm text-muted-foreground no-underline transition-colors hover:text-foreground'>
-          <ChevronLeft size={16} strokeWidth={1.75} aria-hidden='true' />
-          {t('backToBrowse')}
-        </Link>
+        <BackLink href='/browse' label={t('backToBrowse')} />
 
         <header className='mt-4 border-b border-border pb-6'>
           <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
@@ -77,17 +74,7 @@ export default function BrowseQuestionDetailPage({ questionId }: BrowseQuestionD
                   <span className='text-muted-foreground'>{tDetail('noTopics')}</span>
                 )}
 
-                {data.sourceName ? (
-                  <span className='text-secondary-foreground'>
-                    {data.sourceUrl ? (
-                      <a href={data.sourceUrl} target='_blank' rel='noopener noreferrer' className='text-link underline-offset-2 hover:underline'>
-                        {data.sourceName}
-                      </a>
-                    ) : (
-                      data.sourceName
-                    )}
-                  </span>
-                ) : null}
+                <SourceCitation name={data.sourceName} url={data.sourceUrl} />
 
                 {data.isSaved ? <span className='text-muted-foreground'>{tBrowse('saved')}</span> : null}
               </div>

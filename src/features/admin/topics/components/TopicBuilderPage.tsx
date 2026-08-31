@@ -1,13 +1,14 @@
 'use client';
 
-import type { SubmitEvent, ReactNode } from 'react';
+import type { SubmitEvent } from 'react';
 import { useRef } from 'react';
-import { ChevronLeft } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import AppShell from '@/common/components/AppShell';
+import BackLink from '@/common/components/BackLink';
+import Field from '@/common/components/Field';
+import PageLoadError from '@/common/components/PageLoadError';
 import AdminGate from '@/features/admin/components/AdminGate';
-import { useValidationMessage } from '@/common/hooks/use-validation-message';
 import Select from '@/common/components/Select';
 import TopicIcon from '@/common/components/TopicIcon';
 import { destructiveButtonClassName, inputClassName, primaryButtonClassName, secondaryButtonClassName } from '@/common/styles/form';
@@ -20,27 +21,6 @@ import { cn } from '@/lib/cn';
 type TopicBuilderPageProps = {
   topicId?: string;
 };
-
-type FieldProps = {
-  label: string;
-  htmlFor: string;
-  error?: string;
-  children: ReactNode;
-};
-
-function Field({ label, htmlFor, error, children }: FieldProps) {
-  const errorMessage = useValidationMessage(error);
-
-  return (
-    <div data-field={htmlFor}>
-      <label className='block' htmlFor={htmlFor}>
-        <span className='mb-1.5 block text-xs text-secondary-foreground'>{label}</span>
-        {children}
-        {errorMessage ? <span className='mt-1.5 block text-xs text-destructive-bright'>{errorMessage}</span> : null}
-      </label>
-    </div>
-  );
-}
 
 export default function TopicBuilderPage({ topicId }: TopicBuilderPageProps) {
   const t = useTranslations('AdminTopicBuilderPage');
@@ -93,17 +73,7 @@ function TopicBuilderContent({ topicId }: TopicBuilderPageProps) {
   }
 
   if (isError) {
-    return (
-      <AppShell>
-        <div className='px-4 py-8 md:px-8'>
-          <h1 className='m-0 text-lg font-medium text-foreground'>{isEdit ? t('editTitle') : t('createTitle')}</h1>
-          <p className='mt-2 text-sm text-muted-foreground'>{t('loadError')}</p>
-          <button type='button' className={cn(secondaryButtonClassName, 'mt-4')} onClick={refetch}>
-            {t('retry')}
-          </button>
-        </div>
-      </AppShell>
-    );
+    return <PageLoadError title={isEdit ? t('editTitle') : t('createTitle')} message={t('loadError')} onRetry={refetch} retryLabel={t('retry')} />;
   }
 
   const canDelete = isEdit && questionCount === 0 && exerciseCount === 0;
@@ -119,12 +89,7 @@ function TopicBuilderContent({ topicId }: TopicBuilderPageProps) {
   return (
     <AppShell>
       <div className='px-4 py-8 md:px-8'>
-        <Link
-          href='/admin/topics'
-          className='inline-flex items-center gap-1 text-sm text-muted-foreground no-underline transition-colors hover:text-foreground'>
-          <ChevronLeft size={16} strokeWidth={1.75} aria-hidden='true' />
-          {t('backToList')}
-        </Link>
+        <BackLink href='/admin/topics' label={t('backToList')} />
 
         <header className='mt-4 border-b border-border pb-6'>
           <h1 className='m-0 text-lg font-medium text-foreground'>{isEdit ? t('editTitle') : t('createTitle')}</h1>

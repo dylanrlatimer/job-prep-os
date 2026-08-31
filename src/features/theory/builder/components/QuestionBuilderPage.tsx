@@ -2,11 +2,12 @@
 
 import type { SubmitEvent } from 'react';
 import { useRef, useState } from 'react';
-import { ChevronLeft } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import AppShell from '@/common/components/AppShell';
+import BackLink from '@/common/components/BackLink';
 import Field from '@/common/components/Field';
+import PageLoadError from '@/common/components/PageLoadError';
 import TopicsPickerField from '@/common/components/TopicsPickerField';
 import TypeToConfirmDialog from '@/common/components/TypeToConfirmDialog';
 import VisibilityField from '@/common/components/VisibilityField';
@@ -99,28 +100,13 @@ export default function QuestionBuilderPage({
   }
 
   if (isError || !metadata) {
-    return (
-      <AppShell>
-        <div className='px-4 py-8 md:px-8'>
-          <h1 className='m-0 text-lg font-medium text-foreground'>{isEdit ? t('editTitle') : t('createTitle')}</h1>
-          <p className='mt-2 text-sm text-muted-foreground'>{t('loadError')}</p>
-          <button type='button' className={cn(secondaryButtonClassName, 'mt-4')} onClick={refetch}>
-            {t('retry')}
-          </button>
-        </div>
-      </AppShell>
-    );
+    return <PageLoadError title={isEdit ? t('editTitle') : t('createTitle')} message={t('loadError')} onRetry={refetch} retryLabel={t('retry')} />;
   }
 
   return (
     <AppShell>
       <div className='px-4 py-8 md:px-8'>
-        <Link
-          href={resolvedBackLink.href}
-          className='inline-flex items-center gap-1 text-sm text-muted-foreground no-underline transition-colors hover:text-foreground'>
-          <ChevronLeft size={16} strokeWidth={1.75} aria-hidden='true' />
-          {resolvedBackLink.label}
-        </Link>
+        <BackLink href={resolvedBackLink.href} label={resolvedBackLink.label} />
 
         <header className='mt-4 border-b border-border pb-6'>
           <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>

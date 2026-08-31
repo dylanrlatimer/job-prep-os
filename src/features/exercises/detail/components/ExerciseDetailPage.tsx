@@ -2,16 +2,18 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronLeft } from 'lucide-react';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import AppShell from '@/common/components/AppShell';
-import TopicList from '@/common/components/TopicList';
+import AttemptHistoryList from '@/common/components/AttemptHistoryList';
 import AttemptTotals from '@/common/components/AttemptTotals';
+import BackLink from '@/common/components/BackLink';
+import PageLoadError from '@/common/components/PageLoadError';
+import SourceCitation from '@/common/components/SourceCitation';
+import TopicList from '@/common/components/TopicList';
 import TiptapRenderer from '@/common/components/TiptapRenderer';
 import { exerciseDetailQueryOptions } from '@/features/exercises/detail/api/queries';
-import type { ExerciseAttemptResult } from '@/features/exercises/detail/api/contracts';
-import { attemptResultClassName } from '@/features/theory/lib/attempt-result-styles';
+import { resultLabelKey } from '@/features/theory/lib/attempt-result-styles';
 import { primaryButtonClassName, secondaryButtonClassName } from '@/common/styles/form';
 import { cn } from '@/lib/cn';
 import ExerciseDetailSkeleton from './ExerciseDetailSkeleton';
@@ -20,23 +22,10 @@ type ExerciseDetailPageProps = {
   exerciseId: string;
 };
 
-function resultLabelKey(result: ExerciseAttemptResult) {
-  if (result === 'incorrect') return 'resultIncorrect' as const;
-  if (result === 'partial') return 'resultPartial' as const;
-  return 'resultCorrect' as const;
-}
-
 export default function ExerciseDetailPage({ exerciseId }: ExerciseDetailPageProps) {
   const t = useTranslations('ExerciseDetailPage');
-  const locale = useLocale();
   const [answerRevealed, setAnswerRevealed] = useState(false);
   const { data, isPending, isError, refetch, isFetching } = useQuery(exerciseDetailQueryOptions(exerciseId));
-
-  const formatDate = (value: string) =>
-    new Date(value).toLocaleString(locale, {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    });
 
   if (isPending) {
     return (
@@ -48,25 +37,21 @@ export default function ExerciseDetailPage({ exerciseId }: ExerciseDetailPagePro
 
   if (isError || !data) {
     return (
-      <AppShell>
-        <div className='px-4 py-8 md:px-8'>
-          <h1 className='m-0 text-lg font-medium text-foreground'>{t('title')}</h1>
-          <p className='mt-2 text-sm text-muted-foreground'>{t('loadError')}</p>
-          <button type='button' className={cn(secondaryButtonClassName, 'mt-4')} onClick={() => refetch()} disabled={isFetching}>
-            {isFetching ? t('retrying') : t('retry')}
-          </button>
-        </div>
-      </AppShell>
+      <PageLoadError
+        title={t('title')}
+        message={t('loadError')}
+        onRetry={() => refetch()}
+        isRetrying={isFetching}
+        retryLabel={t('retry')}
+        retryingLabel={t('retrying')}
+      />
     );
   }
 
   return (
     <AppShell>
       <div className='px-4 py-8 md:px-8'>
-        <Link href='/exercises' className='inline-flex items-center gap-1 text-sm text-muted-foreground no-underline transition-colors hover:text-foreground'>
-          <ChevronLeft size={16} strokeWidth={1.75} aria-hidden='true' />
-          {t('backToRepository')}
-        </Link>
+        <BackLink href='/exercises' label={t('backToRepository')} />
 
         <header className='mt-4 border-b border-border pb-6'>
           <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
@@ -80,17 +65,7 @@ export default function ExerciseDetailPage({ exerciseId }: ExerciseDetailPagePro
                   <span className='text-muted-foreground'>{t('noTopics')}</span>
                 )}
 
-                {data.sourceName ? (
-                  <span className='text-secondary-foreground'>
-                    {data.sourceUrl ? (
-                      <a href={data.sourceUrl} target='_blank' rel='noopener noreferrer' className='text-link underline-offset-2 hover:underline'>
-                        {data.sourceName}
-                      </a>
-                    ) : (
-                      data.sourceName
-                    )}
-                  </span>
-                ) : null}
+                <SourceCitation name={data.sourceName} url={data.sourceUrl} />
 
                 <AttemptTotals
                   attempts={data.attempts}
@@ -149,23 +124,12 @@ export default function ExerciseDetailPage({ exerciseId }: ExerciseDetailPagePro
           ) : null}
 
           <section className='border-t border-border pt-6'>
-            <h2 className='m-0 text-sm font-medium text-foreground'>{t('historyTitle')}</h2>
-
-            {data.attemptHistory.length === 0 ? (
-              <p className='mt-3 text-sm text-muted-foreground'>{t('historyEmpty')}</p>
-            ) : (
-              <ul className='m-0 mt-4 list-none p-0'>
-                {data.attemptHistory.map((attempt, index) => (
-                  <li key={attempt.id} className={cn(index > 0 && 'mt-4 border-t border-border pt-4')}>
-                    <p className='m-0 text-sm'>
-                      <span className='text-muted-foreground'>{formatDate(attempt.createdAt)}</span>
-                      <span className='text-muted-foreground'> · </span>
-                      <span className={attemptResultClassName(attempt.result)}>{t(resultLabelKey(attempt.result))}</span>
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <AttemptHistoryList
+              title={t('historyTitle')}
+              emptyLabel={t('historyEmpty')}
+              items={data.attemptHistory}
+              resultLabel={(result) => t(resultLabelKey(result))}
+            />
           </section>
         </div>
       </div>

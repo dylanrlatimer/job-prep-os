@@ -1,10 +1,12 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { ChevronLeft } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import AppShell from '@/common/components/AppShell';
+import BackLink from '@/common/components/BackLink';
+import PageLoadError from '@/common/components/PageLoadError';
+import SourceCitation from '@/common/components/SourceCitation';
 import TopicList from '@/common/components/TopicList';
 import TiptapRenderer from '@/common/components/TiptapRenderer';
 import AdminGate from '@/features/admin/components/AdminGate';
@@ -42,27 +44,21 @@ function SystemExerciseViewContent({ exerciseId }: SystemExerciseViewPageProps) 
 
   if (isError || !data) {
     return (
-      <AppShell>
-        <div className='px-4 py-8 md:px-8'>
-          <h1 className='m-0 text-lg font-medium text-foreground'>{t('title')}</h1>
-          <p className='mt-2 text-sm text-muted-foreground'>{t('viewLoadError')}</p>
-          <button type='button' className={cn(secondaryButtonClassName, 'mt-4')} onClick={() => refetch()} disabled={isFetching}>
-            {isFetching ? t('retrying') : t('retry')}
-          </button>
-        </div>
-      </AppShell>
+      <PageLoadError
+        title={t('title')}
+        message={t('viewLoadError')}
+        onRetry={() => refetch()}
+        isRetrying={isFetching}
+        retryLabel={t('retry')}
+        retryingLabel={t('retrying')}
+      />
     );
   }
 
   return (
     <AppShell>
       <div className='px-4 py-8 md:px-8'>
-        <Link
-          href='/admin/exercises'
-          className='inline-flex items-center gap-1 text-sm text-muted-foreground no-underline transition-colors hover:text-foreground'>
-          <ChevronLeft size={16} strokeWidth={1.75} aria-hidden='true' />
-          {t('backToList')}
-        </Link>
+        <BackLink href='/admin/exercises' label={t('backToList')} />
 
         <header className='mt-4 border-b border-border pb-6'>
           <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
@@ -76,17 +72,7 @@ function SystemExerciseViewContent({ exerciseId }: SystemExerciseViewPageProps) 
                 ) : (
                   <span className='text-muted-foreground'>{t('noTopics')}</span>
                 )}
-                {data.sourceName ? (
-                  <span className='text-secondary-foreground'>
-                    {data.sourceUrl ? (
-                      <a href={data.sourceUrl} target='_blank' rel='noopener noreferrer' className='text-link underline-offset-2 hover:underline'>
-                        {data.sourceName}
-                      </a>
-                    ) : (
-                      data.sourceName
-                    )}
-                  </span>
-                ) : null}
+                <SourceCitation name={data.sourceName} url={data.sourceUrl} />
                 {data.allowMultiple ? <span className='text-muted-foreground'>{t('allowMultiple')}</span> : null}
               </div>
             </div>
