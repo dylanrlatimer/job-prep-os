@@ -1,7 +1,21 @@
 {
   "Metadata": {
+    "siteName": "JobPrepOS",
     "title": "JobPrepOS",
-    "description": "Interview preparation workspace."
+    "description": "A workspace for interview theory and multiple-choice exercises.",
+    "browseTitle": "JobPrepOS",
+    "browseDescription": "Practice written interview theory and graded multiple-choice exercises.",
+    "pages": {
+      "repository": "My repository",
+      "exercises": "My exercises",
+      "browseQuestion": "Question",
+      "browseExercise": "Exercise",
+      "auth": "Sign in",
+      "settings": "Settings",
+      "practice": "Practice",
+      "admin": "Administration",
+      "theory": "Theory"
+    }
   },
   "App": {
     "name": "JobPrepOS",

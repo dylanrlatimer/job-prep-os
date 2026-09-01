@@ -1,7 +1,21 @@
 {
   "Metadata": {
+    "siteName": "JobPrepOS",
     "title": "JobPrepOS",
-    "description": "Espace de préparation aux entrevues."
+    "description": "Un espace pour la théorie d'entrevue et les exercices à choix multiples.",
+    "browseTitle": "JobPrepOS",
+    "browseDescription": "Pratiquez la théorie d'entrevue écrite et les exercices à choix multiples notés.",
+    "pages": {
+      "repository": "Mes questions",
+      "exercises": "Mes exercices",
+      "browseQuestion": "Question",
+      "browseExercise": "Exercice",
+      "auth": "Connexion",
+      "settings": "Paramètres",
+      "practice": "Practice",
+      "admin": "Administration",
+      "theory": "Théorie"
+    }
   },
   "App": {
     "name": "JobPrepOS",

@@ -1,10 +1,18 @@
-export default function ListPageSkeleton() {
-  return (
-    <div className='px-4 py-8 md:px-8'>
-      <div className='h-6 w-48 animate-pulse rounded-sm bg-card-muted' />
-      <div className='mt-2 h-4 w-72 max-w-full animate-pulse rounded-sm bg-card-muted' />
+type ListPageSkeletonProps = {
+  omitHeader?: boolean;
+};
 
-      <div className='mt-8 flex flex-col gap-3 sm:flex-row'>
+export default function ListPageSkeleton({ omitHeader = false }: ListPageSkeletonProps) {
+  return (
+    <div className={omitHeader ? undefined : 'px-4 py-8 md:px-8'}>
+      {omitHeader ? null : (
+        <>
+          <div className='h-6 w-48 animate-pulse rounded-sm bg-card-muted' />
+          <div className='mt-2 h-4 w-72 max-w-full animate-pulse rounded-sm bg-card-muted' />
+        </>
+      )}
+
+      <div className={omitHeader ? 'mt-6 flex flex-col gap-3 sm:flex-row' : 'mt-8 flex flex-col gap-3 sm:flex-row'}>
         <div className='h-9 flex-1 animate-pulse rounded-sm bg-card-muted' />
         <div className='h-9 w-full animate-pulse rounded-sm bg-card-muted sm:w-44' />
       </div>

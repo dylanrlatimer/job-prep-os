@@ -33,15 +33,16 @@ pnpm install
 supabase start
 ```
 
-Copy `.env.example` to `.env.test.local`. `pnpm sandbox` sets `NODE_ENV=test`, so Next loads `.env.test.local` and ignores `.env.local`. Fill the three variables the app actually reads:
+Copy `.env.example` to `.env.test.local`. `pnpm sandbox` sets `NODE_ENV=test`, so Next loads `.env.test.local` and ignores `.env.local`. Fill the variables the app actually reads:
 
 | Variable                               | What `supabase start` prints                                                       |
 | -------------------------------------- | ---------------------------------------------------------------------------------- |
 | `NEXT_PUBLIC_SUPABASE_URL`             | API URL, usually `http://127.0.0.1:54321`                                          |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Publishable / anon key                                                             |
 | `TRANSACTION_POOLER`                   | Direct Postgres, usually `postgresql://postgres:postgres@127.0.0.1:54322/postgres` |
+| `NEXT_PUBLIC_APP_URL`                  | Public origin, no trailing slash. Local: `http://localhost:3000`                   |
 
-The example file also has `NEXT_PUBLIC_APP_URL`. Nothing in `src/` reads it.
+`NEXT_PUBLIC_APP_URL` is `metadataBase`, the sitemap host, and Browse canonicals. Production must set the real origin. Local falls back to `http://localhost:3000` if it is unset.
 
 `supabase/.env.example` is only for `supabase functions serve`. This repo has no Edge Functions. `pnpm sandbox` still starts that process (leftover). Copy the example to `supabase/.env` so the command has a file, or ignore it when it errors. The Next process is the one that matters.
 

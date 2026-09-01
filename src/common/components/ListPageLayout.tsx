@@ -5,7 +5,7 @@ type ListPageLayoutProps = {
   description: string;
   headerActions?: ReactNode;
   filters?: ReactNode;
-  countLabel: string;
+  countLabel?: string;
   countExtra?: ReactNode;
   children: ReactNode;
 };
@@ -32,14 +32,16 @@ export default function ListPageLayout({ title, description, headerActions, filt
 
       {filters}
 
-      {countExtra ? (
-        <div className='mt-4 flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-center sm:justify-between'>
-          <p className='m-0 text-xs text-muted-foreground'>{countLabel}</p>
-          {countExtra}
-        </div>
-      ) : (
-        <p className='mt-4 border-b border-border pb-4 text-xs text-muted-foreground'>{countLabel}</p>
-      )}
+      {countLabel || countExtra ? (
+        countExtra ? (
+          <div className='mt-4 flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-center sm:justify-between'>
+            {countLabel ? <p className='m-0 text-xs text-muted-foreground'>{countLabel}</p> : null}
+            {countExtra}
+          </div>
+        ) : (
+          <p className='mt-4 border-b border-border pb-4 text-xs text-muted-foreground'>{countLabel}</p>
+        )
+      ) : null}
 
       {children}
     </div>

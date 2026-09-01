@@ -245,7 +245,9 @@ export default function BrowsePage({ initialKind = 'all' }: BrowsePageProps) {
   if (isPending) {
     return (
       <AppShell>
-        <ListPageSkeleton />
+        <ListPageLayout title={t('title')} description={t('description')}>
+          <ListPageSkeleton omitHeader />
+        </ListPageLayout>
       </AppShell>
     );
   }

@@ -9,6 +9,7 @@ import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import { getServerQueryClient } from '@/lib/query-client';
 import { sessionQueryOptions } from '@/features/auth/api/queries';
 import { getSession } from '@/features/auth/server/get-session';
+import { getAppUrl } from '@/lib/seo';
 
 type LayoutProps = {
   children: React.ReactNode;
@@ -21,17 +22,32 @@ function assertValidLocale(locale: string): asserts locale is (typeof routing.lo
   }
 }
 
-// TODO: Update metadataBase for production
 export async function generateMetadata({ params }: Omit<LayoutProps, 'children'>): Promise<Metadata> {
   const { locale } = await params;
   assertValidLocale(locale);
 
   const t = await getTranslations({ locale, namespace: 'Metadata' });
+  const siteName = t('siteName');
 
   return {
-    title: t('title'),
+    metadataBase: new URL(getAppUrl()),
+    title: {
+      default: t('title'),
+      template: `%s · ${siteName}`,
+    },
     description: t('description'),
-    applicationName: 'JobPrepOS',
+    applicationName: siteName,
+    openGraph: {
+      siteName,
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary',
+    },
+    robots: {
+      index: false,
+      follow: false,
+    },
   };
 }
 
