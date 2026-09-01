@@ -4,14 +4,14 @@ import { and, count, eq } from 'drizzle-orm';
 import { db } from '@/lib/drizzle/client';
 import { exerciseChoicesInApp, exerciseLibraryItemsInApp, exerciseTopicsInApp, exercisesInApp, topicsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError, NotFoundError } from '@/lib/errors';
-import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
+import { getOptionalUser } from '@/lib/supabase/get-authenticated-user';
 import { exerciseAccess, isExerciseAppOwned } from '@/features/exercises/server/access';
 import type { BrowseExerciseDetailResponse } from '@/features/exercises/browse/api/contracts';
 import type { ExerciseTopic } from '@/features/exercises/repository/api/contracts';
 import { parseTiptapDocument } from '@/lib/tiptap/parse-document';
 
 export async function getBrowseExerciseDetail(exerciseId: string): Promise<BrowseExerciseDetailResponse> {
-  const user = await getAuthenticatedUser();
+  const user = await getOptionalUser();
 
   try {
     const [exercise] = await db
@@ -46,11 +46,13 @@ export async function getBrowseExerciseDetail(exerciseId: string): Promise<Brows
       .map((row) => ({ id: row.id, name: row.name, slug: row.slug, iconKey: row.iconKey }))
       .sort((a, b) => a.name.localeCompare(b.name));
 
-    const [savedRow] = await db
-      .select({ exerciseId: exerciseLibraryItemsInApp.exerciseId })
-      .from(exerciseLibraryItemsInApp)
-      .where(and(exerciseAccess.inLibrary(user.id), eq(exerciseLibraryItemsInApp.exerciseId, exerciseId)))
-      .limit(1);
+    const [savedRow] = user
+      ? await db
+          .select({ exerciseId: exerciseLibraryItemsInApp.exerciseId })
+          .from(exerciseLibraryItemsInApp)
+          .where(and(exerciseAccess.inLibrary(user.id), eq(exerciseLibraryItemsInApp.exerciseId, exerciseId)))
+          .limit(1)
+      : [];
 
     const [choiceCountRow] = await db.select({ count: count() }).from(exerciseChoicesInApp).where(eq(exerciseChoicesInApp.exerciseId, exerciseId));
 

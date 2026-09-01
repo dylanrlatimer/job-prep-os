@@ -4,13 +4,13 @@ import { desc, eq, inArray } from 'drizzle-orm';
 import { db } from '@/lib/drizzle/client';
 import { exerciseLibraryItemsInApp, exerciseTopicsInApp, exercisesInApp, topicsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError } from '@/lib/errors';
-import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
+import { getOptionalUser } from '@/lib/supabase/get-authenticated-user';
 import { exerciseAccess, isExerciseAppOwned } from '@/features/exercises/server/access';
 import type { BrowseExerciseItem, GetBrowseExercisesResponse } from '@/features/exercises/browse/api/contracts';
 import type { ExerciseTopic } from '@/features/exercises/repository/api/contracts';
 
 export async function listBrowse(): Promise<GetBrowseExercisesResponse> {
-  const user = await getAuthenticatedUser();
+  const user = await getOptionalUser();
 
   try {
     const exerciseRows = await db
@@ -30,10 +30,9 @@ export async function listBrowse(): Promise<GetBrowseExercisesResponse> {
 
     const exerciseIds = exerciseRows.map((row) => row.id);
 
-    const savedRows = await db
-      .select({ exerciseId: exerciseLibraryItemsInApp.exerciseId })
-      .from(exerciseLibraryItemsInApp)
-      .where(exerciseAccess.inLibrary(user.id));
+    const savedRows = user
+      ? await db.select({ exerciseId: exerciseLibraryItemsInApp.exerciseId }).from(exerciseLibraryItemsInApp).where(exerciseAccess.inLibrary(user.id))
+      : [];
 
     const savedExerciseIds = new Set(savedRows.map((row) => row.exerciseId));
 

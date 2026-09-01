@@ -4,13 +4,13 @@ import { desc, eq, inArray } from 'drizzle-orm';
 import { db } from '@/lib/drizzle/client';
 import { topicsInApp, theoryLibraryItemsInApp, theoryQuestionTopicsInApp, theoryQuestionsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError } from '@/lib/errors';
-import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
+import { getOptionalUser } from '@/lib/supabase/get-authenticated-user';
 import { isQuestionAppOwned, questionAccess } from '@/features/theory/server/access';
 import type { BrowseQuestionItem, GetBrowseResponse } from '@/features/theory/browse/api/contracts';
 import type { RepositoryTopic } from '@/features/theory/repository/api/contracts';
 
 export async function listBrowse(): Promise<GetBrowseResponse> {
-  const user = await getAuthenticatedUser();
+  const user = await getOptionalUser();
 
   try {
     const questionRows = await db
@@ -30,10 +30,9 @@ export async function listBrowse(): Promise<GetBrowseResponse> {
 
     const questionIds = questionRows.map((row) => row.id);
 
-    const savedRows = await db
-      .select({ questionId: theoryLibraryItemsInApp.questionId })
-      .from(theoryLibraryItemsInApp)
-      .where(questionAccess.inLibrary(user.id));
+    const savedRows = user
+      ? await db.select({ questionId: theoryLibraryItemsInApp.questionId }).from(theoryLibraryItemsInApp).where(questionAccess.inLibrary(user.id))
+      : [];
 
     const savedQuestionIds = new Set(savedRows.map((row) => row.questionId));
 

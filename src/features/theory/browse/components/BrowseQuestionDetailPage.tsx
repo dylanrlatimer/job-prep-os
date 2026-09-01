@@ -14,6 +14,7 @@ import { browseQuestionDetailQueryOptions } from '@/features/theory/browse/api/q
 import QuestionDetailSkeleton from '@/features/theory/detail/components/QuestionDetailSkeleton';
 import TiptapRenderer from '@/common/components/TiptapRenderer';
 import { primaryButtonClassName } from '@/common/styles/form';
+import { useRequireAuth } from '@/features/auth/hooks/use-require-auth';
 import { useToastStore } from '@/lib/store/use-toast-store';
 
 type BrowseQuestionDetailPageProps = {
@@ -25,6 +26,7 @@ export default function BrowseQuestionDetailPage({ questionId }: BrowseQuestionD
   const tBrowse = useTranslations('BrowsePage');
   const tDetail = useTranslations('QuestionDetailPage');
   const queryClient = useQueryClient();
+  const { requireAuth } = useRequireAuth();
   const { data, isPending, isError, refetch, isFetching } = useQuery(browseQuestionDetailQueryOptions(questionId));
 
   const { mutate: saveQuestion, isPending: isSaving } = useMutation({
@@ -86,7 +88,14 @@ export default function BrowseQuestionDetailPage({ questionId }: BrowseQuestionD
                   {tDetail('practice')}
                 </Link>
               ) : (
-                <button type='button' className={primaryButtonClassName} onClick={() => saveQuestion()} disabled={isSaving}>
+                <button
+                  type='button'
+                  className={primaryButtonClassName}
+                  onClick={() => {
+                    if (!requireAuth()) return;
+                    saveQuestion();
+                  }}
+                  disabled={isSaving}>
                   {isSaving ? tBrowse('saving') : tBrowse('addQuestionToRepository')}
                 </button>
               )}

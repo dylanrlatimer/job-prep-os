@@ -14,6 +14,7 @@ import { saveExercise } from '@/features/exercises/browse/api/mutations';
 import { browseExerciseDetailQueryOptions } from '@/features/exercises/browse/api/queries';
 import ExerciseDetailSkeleton from '@/features/exercises/detail/components/ExerciseDetailSkeleton';
 import { primaryButtonClassName } from '@/common/styles/form';
+import { useRequireAuth } from '@/features/auth/hooks/use-require-auth';
 import { useToastStore } from '@/lib/store/use-toast-store';
 
 type BrowseExerciseDetailPageProps = {
@@ -25,6 +26,7 @@ export default function BrowseExerciseDetailPage({ exerciseId }: BrowseExerciseD
   const tBrowse = useTranslations('BrowsePage');
   const tDetail = useTranslations('ExerciseDetailPage');
   const queryClient = useQueryClient();
+  const { requireAuth } = useRequireAuth();
   const { data, isPending, isError, refetch, isFetching } = useQuery(browseExerciseDetailQueryOptions(exerciseId));
 
   const { mutate: saveExerciseToLibrary, isPending: isSaving } = useMutation({
@@ -88,7 +90,14 @@ export default function BrowseExerciseDetailPage({ exerciseId }: BrowseExerciseD
                   {tDetail('practice')}
                 </Link>
               ) : (
-                <button type='button' className={primaryButtonClassName} onClick={() => saveExerciseToLibrary()} disabled={isSaving}>
+                <button
+                  type='button'
+                  className={primaryButtonClassName}
+                  onClick={() => {
+                    if (!requireAuth()) return;
+                    saveExerciseToLibrary();
+                  }}
+                  disabled={isSaving}>
                   {isSaving ? tBrowse('saving') : tBrowse('addExerciseToRepository')}
                 </button>
               )}

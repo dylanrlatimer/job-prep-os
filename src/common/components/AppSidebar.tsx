@@ -6,6 +6,8 @@ import { useTranslations } from 'next-intl';
 import { Link, usePathname } from '@/i18n/navigation';
 import LocaleSwitcher from '@/features/home/components/LocaleSwitcher';
 import { sessionQueryOptions } from '@/features/auth/api/queries';
+import { useAuthModal } from '@/features/auth/auth-modal-context';
+import { primaryButtonClassName } from '@/common/styles/form';
 import { cn } from '@/lib/cn';
 
 type NavItem = {
@@ -22,10 +24,19 @@ type AdminNavItem = {
   match: (pathname: string) => boolean;
 };
 
+function navItemClassName(isActive: boolean) {
+  return cn(
+    'flex flex-1 items-center justify-center gap-2 rounded-sm px-2 py-2 text-sm no-underline transition-colors md:flex-none md:justify-start md:px-2.5',
+    isActive ? 'bg-card-muted text-foreground' : 'text-muted-foreground hover:bg-card-muted hover:text-foreground',
+  );
+}
+
 export default function AppSidebar() {
   const t = useTranslations('AppSidebar');
   const pathname = usePathname();
   const { data: session } = useQuery(sessionQueryOptions);
+  const { open: openAuthModal } = useAuthModal();
+  const isSignedIn = !!session?.user;
   const isAdmin = session?.user?.isAdmin ?? false;
 
   const navItems: NavItem[] = [
@@ -79,7 +90,7 @@ export default function AppSidebar() {
   return (
     <aside className='flex w-full shrink-0 flex-col border-b border-border bg-card md:w-56 md:border-b-0 md:border-r'>
       <div className='flex h-11 items-center border-b border-border px-4 md:h-auto md:py-4'>
-        <Link href='/' className='text-sm font-medium tracking-tight text-foreground no-underline'>
+        <Link href={isSignedIn ? '/' : '/browse'} className='text-sm font-medium tracking-tight text-foreground no-underline'>
           {t('appName')}
         </Link>
       </div>
@@ -91,35 +102,53 @@ export default function AppSidebar() {
           <div className='flex gap-1 md:flex-col md:gap-0.5'>
             {navItems.map((item) => {
               const isActive = item.match(pathname);
+              const className = navItemClassName(isActive);
+
+              if (item.href === '/browse' || isSignedIn) {
+                return (
+                  <Link key={item.href} href={item.href} aria-label={item.label} className={className} aria-current={isActive ? 'page' : undefined}>
+                    {item.icon}
+                    <span className='hidden md:inline'>{item.label}</span>
+                  </Link>
+                );
+              }
 
               return (
-                <Link
+                <button
                   key={item.href}
-                  href={item.href}
+                  type='button'
                   aria-label={item.label}
-                  className={cn(
-                    'flex flex-1 items-center justify-center gap-2 rounded-sm px-2 py-2 text-sm no-underline transition-colors md:flex-none md:justify-start md:px-2.5',
-                    isActive ? 'bg-card-muted text-foreground' : 'text-muted-foreground hover:bg-card-muted hover:text-foreground',
-                  )}
-                  aria-current={isActive ? 'page' : undefined}>
+                  className={cn(className, 'cursor-pointer border-0 bg-transparent')}
+                  onClick={() => openAuthModal(item.href)}>
                   {item.icon}
                   <span className='hidden md:inline'>{item.label}</span>
-                </Link>
+                </button>
               );
             })}
 
-            <Link
-              href='/settings'
-              className={cn(
-                'flex flex-1 items-center justify-center gap-2 rounded-sm px-2 py-2 text-sm no-underline transition-colors md:hidden',
-                pathname === '/settings' ? 'bg-card-muted text-foreground' : 'text-muted-foreground hover:bg-card-muted hover:text-foreground',
-              )}
-              aria-label={t('settings')}
-              aria-current={pathname === '/settings' ? 'page' : undefined}>
-              <Settings size={16} strokeWidth={1.75} aria-hidden='true' />
-            </Link>
+            {isSignedIn ? (
+              <Link
+                href='/settings'
+                className={cn(
+                  'flex flex-1 items-center justify-center gap-2 rounded-sm px-2 py-2 text-sm no-underline transition-colors md:hidden',
+                  pathname === '/settings' ? 'bg-card-muted text-foreground' : 'text-muted-foreground hover:bg-card-muted hover:text-foreground',
+                )}
+                aria-label={t('settings')}
+                aria-current={pathname === '/settings' ? 'page' : undefined}>
+                <Settings size={16} strokeWidth={1.75} aria-hidden='true' />
+              </Link>
+            ) : null}
           </div>
         </div>
+
+        {!isSignedIn ? (
+          <div className='px-2'>
+            <p className='mb-2.5 hidden text-[11px] font-medium uppercase tracking-wide text-subtle-foreground md:block'>{t('account')}</p>
+            <button type='button' className={cn(primaryButtonClassName, 'w-full')} onClick={() => openAuthModal()}>
+              {t('signIn')}
+            </button>
+          </div>
+        ) : null}
 
         {isAdmin ? (
           <div>
@@ -134,10 +163,7 @@ export default function AppSidebar() {
                     key={item.href}
                     href={item.href}
                     aria-label={item.label}
-                    className={cn(
-                      'flex flex-1 items-center justify-center gap-2 rounded-sm px-2 py-2 text-sm no-underline transition-colors md:flex-none md:justify-start md:px-2.5',
-                      isActive ? 'bg-card-muted text-foreground' : 'text-muted-foreground hover:bg-card-muted hover:text-foreground',
-                    )}
+                    className={navItemClassName(isActive)}
                     aria-current={isActive ? 'page' : undefined}>
                     {item.icon}
                     <span className='hidden md:inline'>{item.label}</span>
@@ -156,17 +182,19 @@ export default function AppSidebar() {
             {t('adminBadge')}
           </p>
         ) : null}
-        <LocaleSwitcher className='mb-2 w-full' />
-        <Link
-          href='/settings'
-          className={cn(
-            'flex items-center gap-2 rounded-sm px-2.5 py-2 text-sm no-underline transition-colors',
-            pathname === '/settings' ? 'bg-card-muted text-foreground' : 'text-muted-foreground hover:bg-card-muted hover:text-foreground',
-          )}
-          aria-current={pathname === '/settings' ? 'page' : undefined}>
-          <Settings size={16} strokeWidth={1.75} aria-hidden='true' />
-          {t('settings')}
-        </Link>
+        <LocaleSwitcher className={isSignedIn ? 'mb-2 w-full' : 'w-full'} />
+        {isSignedIn ? (
+          <Link
+            href='/settings'
+            className={cn(
+              'flex items-center gap-2 rounded-sm px-2.5 py-2 text-sm no-underline transition-colors',
+              pathname === '/settings' ? 'bg-card-muted text-foreground' : 'text-muted-foreground hover:bg-card-muted hover:text-foreground',
+            )}
+            aria-current={pathname === '/settings' ? 'page' : undefined}>
+            <Settings size={16} strokeWidth={1.75} aria-hidden='true' />
+            {t('settings')}
+          </Link>
+        ) : null}
       </div>
     </aside>
   );

@@ -4,14 +4,14 @@ import { and, eq } from 'drizzle-orm';
 import { db } from '@/lib/drizzle/client';
 import { topicsInApp, theoryLibraryItemsInApp, theoryQuestionTopicsInApp, theoryQuestionsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError, NotFoundError } from '@/lib/errors';
-import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
+import { getOptionalUser } from '@/lib/supabase/get-authenticated-user';
 import { isQuestionAppOwned, questionAccess } from '@/features/theory/server/access';
 import type { BrowseQuestionDetailResponse } from '@/features/theory/browse/api/contracts';
 import type { RepositoryTopic } from '@/features/theory/repository/api/contracts';
 import { parseTiptapDocument } from '@/lib/tiptap/parse-document';
 
 export async function getBrowseQuestionDetail(questionId: string): Promise<BrowseQuestionDetailResponse> {
-  const user = await getAuthenticatedUser();
+  const user = await getOptionalUser();
 
   try {
     const [question] = await db
@@ -46,11 +46,13 @@ export async function getBrowseQuestionDetail(questionId: string): Promise<Brows
       .map((row) => ({ id: row.id, name: row.name, slug: row.slug, iconKey: row.iconKey }))
       .sort((a, b) => a.name.localeCompare(b.name));
 
-    const [savedRow] = await db
-      .select({ questionId: theoryLibraryItemsInApp.questionId })
-      .from(theoryLibraryItemsInApp)
-      .where(and(questionAccess.inLibrary(user.id), eq(theoryLibraryItemsInApp.questionId, questionId)))
-      .limit(1);
+    const [savedRow] = user
+      ? await db
+          .select({ questionId: theoryLibraryItemsInApp.questionId })
+          .from(theoryLibraryItemsInApp)
+          .where(and(questionAccess.inLibrary(user.id), eq(theoryLibraryItemsInApp.questionId, questionId)))
+          .limit(1)
+      : [];
 
     return {
       id: question.id,

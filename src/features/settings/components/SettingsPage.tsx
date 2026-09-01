@@ -41,7 +41,7 @@ export default function SettingsPage() {
     mutationFn: signOut,
     onSuccess: () => {
       resetClientSession(queryClient);
-      router.replace('/auth');
+      router.replace('/browse');
     },
   });
 

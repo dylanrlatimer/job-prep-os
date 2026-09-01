@@ -91,7 +91,9 @@ Normal users cannot create or modify app-owned content.
 
 ## Access Rules
 
-- Authentication is required for the application.
+- Browse of published content is public. Guests land on Browse.
+- Personal surfaces (repositories, practice, sessions, settings, administration) and all writes require authentication.
+- Guests still see save and workspace actions. Those actions open sign-in rather than navigating or writing.
 - Users can always read and edit their own questions and exercises.
 - Users can read published content created by the app or other users.
 - Users can modify only their own repositories and attempts.

@@ -21,6 +21,7 @@ import ListPageLayout, { ListEmptyState } from '@/common/components/ListPageLayo
 import ListPageSkeleton from '@/common/components/ListPageSkeleton';
 import PageLoadError from '@/common/components/PageLoadError';
 import { inputClassName, secondaryButtonClassName } from '@/common/styles/form';
+import { useRequireAuth } from '@/features/auth/hooks/use-require-auth';
 import { useToastStore } from '@/lib/store/use-toast-store';
 import { cn } from '@/lib/cn';
 
@@ -43,6 +44,7 @@ function mergeTopics(questionTopics: BrowseQuestionItem['topics'], exerciseTopic
 function BrowseQuestionRow({ question, showType }: { question: BrowseQuestionItem; showType: boolean }) {
   const t = useTranslations('BrowsePage');
   const queryClient = useQueryClient();
+  const { requireAuth } = useRequireAuth();
 
   const { mutate: saveQuestion, isPending } = useMutation({
     mutationFn: () => saveBrowseQuestion(question.id),
@@ -75,7 +77,10 @@ function BrowseQuestionRow({ question, showType }: { question: BrowseQuestionIte
         <button
           type='button'
           className={cn(secondaryButtonClassName, 'shrink-0 self-start sm:ml-4')}
-          onClick={() => saveQuestion()}
+          onClick={() => {
+            if (!requireAuth()) return;
+            saveQuestion();
+          }}
           disabled={question.isSaved || isPending}>
           {question.isSaved ? t('saved') : isPending ? t('saving') : t('addQuestionToRepository')}
         </button>
@@ -87,6 +92,7 @@ function BrowseQuestionRow({ question, showType }: { question: BrowseQuestionIte
 function BrowseExerciseRow({ exercise, showType }: { exercise: BrowseExerciseItem; showType: boolean }) {
   const t = useTranslations('BrowsePage');
   const queryClient = useQueryClient();
+  const { requireAuth } = useRequireAuth();
 
   const { mutate: saveExerciseToLibrary, isPending } = useMutation({
     mutationFn: () => saveExercise(exercise.id),
@@ -119,7 +125,10 @@ function BrowseExerciseRow({ exercise, showType }: { exercise: BrowseExerciseIte
         <button
           type='button'
           className={cn(secondaryButtonClassName, 'shrink-0 self-start sm:ml-4')}
-          onClick={() => saveExerciseToLibrary()}
+          onClick={() => {
+            if (!requireAuth()) return;
+            saveExerciseToLibrary();
+          }}
           disabled={exercise.isSaved || isPending}>
           {exercise.isSaved ? t('saved') : isPending ? t('saving') : t('addExerciseToRepository')}
         </button>

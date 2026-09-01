@@ -6,13 +6,15 @@ This project is functional at a personal level, but still very early-stage. More
 
 ## What it does
 
-You sign in, build up a set of things to study, and work through them.
+Note that features are subject to change, pretty dramatically.
+
+Guests start on Browse and can read the public question and exercise bank. Sign in to save items, practice, and run sessions.
 
 Theory is the written kind. A question, a reference answer you keep hidden until you want it, then you mark yourself incorrect, partial, or correct. Exercises are multiple choice and the server grades those. You can write your own, or browse a shared bank and save the ones you want.
 
 If you want a run instead of picking items by hand, you start a session. It shuffles from what you have saved, you can leave and come back, and finished runs stay in history.
 
-Sign-in is required. English and French.
+English and French.
 
 ## Stack
 
@@ -69,7 +71,6 @@ Migrations live in `supabase/migrations`. New file: `supabase migration new some
 These are the ones I keep current:
 
 - [`docs/project/app-outline.md`](docs/project/app-outline.md): product, access rules, what is out of scope
-- [`docs/project/practice-sessions.md`](docs/project/practice-sessions.md): sessions
 - [`docs/standards/flow.md`](docs/standards/flow.md): request path, errors, feature layout
 - [`docs/standards/schema-flow.md`](docs/standards/schema-flow.md): `app` schema, Drizzle, RLS with no policies
 

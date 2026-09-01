@@ -11,6 +11,8 @@
     "appName": "JobPrepOS",
     "navigation": "Main navigation",
     "workspace": "Workspace",
+    "account": "Account",
+    "signIn": "Sign in",
     "theoryPractice": "Theory Practice",
     "exercises": "Exercises",
     "browse": "Browse",
@@ -563,6 +565,7 @@
     "or": "or",
     "emailLabel": "Email",
     "emailPlaceholder": "you@example.com",
+    "close": "Close",
     "passwordLabel": "Password",
     "register": {
       "title": "Create your account",

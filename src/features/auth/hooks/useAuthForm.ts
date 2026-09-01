@@ -6,19 +6,29 @@ import { useRouter } from '@/i18n/navigation';
 import { sessionQueryOptions } from '@/features/auth/api/queries';
 import { signIn, signUp } from '@/features/auth/api/mutations';
 import { authKeys } from '@/features/auth/api/query-keys';
+import type { AuthModalNext } from '@/features/auth/auth-modal-context';
 
-export function useAuthForm(isSignUp: boolean) {
+type UseAuthFormOptions = {
+  redirectTo?: AuthModalNext | null;
+  onSuccess?: () => void | Promise<void>;
+};
+
+export function useAuthForm(isSignUp: boolean, options: UseAuthFormOptions = {}) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { redirectTo = '/', onSuccess: onSuccessOption } = options;
 
   const { data: session, isLoading: sessionLoading } = useQuery(sessionQueryOptions);
   const user = session?.user ?? null;
 
   const onSuccess = useCallback(async () => {
     await queryClient.refetchQueries({ queryKey: authKeys.session() });
+    await onSuccessOption?.();
     router.refresh();
-    router.replace('/');
-  }, [queryClient, router]);
+    if (redirectTo) {
+      router.replace(redirectTo);
+    }
+  }, [onSuccessOption, queryClient, redirectTo, router]);
 
   const { mutate: mutateSignIn, isPending: isSignInPending } = useMutation({
     mutationFn: signIn,
