@@ -1,3 +1,4 @@
+import { Analytics } from '@vercel/analytics/next';
 import type { Metadata, Viewport } from 'next';
 import ClientLayout from './ClientLayout';
 import '../globals.css';
@@ -76,6 +77,7 @@ export default async function RootLayout({ children, params }: LayoutProps) {
             <HydrationBoundary state={dehydrate(queryClient)}>{children}</HydrationBoundary>
           </ClientLayout>
         </NextIntlClientProvider>
+        <Analytics />
       </body>
     </html>
   );
