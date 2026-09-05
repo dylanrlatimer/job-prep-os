@@ -11,6 +11,8 @@
       "browseQuestion": "Question",
       "browseExercise": "Exercise",
       "auth": "Sign in",
+      "forgotPassword": "Forgot password",
+      "updatePassword": "Set a new password",
       "settings": "Settings",
       "practice": "Practice",
       "admin": "Administration",
@@ -570,7 +572,8 @@
     "saving": "Saving…",
     "saveSuccess": "Settings saved.",
     "signOut": "Sign out",
-    "signingOut": "Signing out…"
+    "signingOut": "Signing out…",
+    "changePassword": "Change password"
   },
   "AuthPage": {
     "authMode": "Auth mode",
@@ -594,7 +597,39 @@
       "subtitle": "Log in to continue.",
       "submit": "Log in",
       "google": "Continue with Google",
-      "passwordPlaceholder": "Your password"
+      "passwordPlaceholder": "Your password",
+      "forgotPassword": "Forgot password?"
+    },
+    "forgotPassword": {
+      "title": "Forgot your password?",
+      "description": "Enter the email address linked to your account and we'll send a reset link.",
+      "submit": "Send reset link",
+      "backToLogin": "Back to login",
+      "successTitle": "Check your inbox",
+      "successDescription": "If an account exists for that email, you'll receive a reset link shortly. Check your spam folder if you don't see it."
+    },
+    "updatePassword": {
+      "title": "Set a new password",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm password",
+      "passwordMismatch": "Passwords do not match",
+      "submit": "Update password",
+      "successTitle": "Password updated",
+      "successDescription": "Your password has been set. Sign in with your new password.",
+      "signIn": "Sign in",
+      "expiredTitle": "Link expired or invalid",
+      "expiredDescription": "This reset link has already been used or has expired.",
+      "requestNew": "Request a new link"
+    }
+  },
+  "AuthEmails": {
+    "resetPassword": {
+      "subject": "Reset your password",
+      "heading": "Reset your password",
+      "body": "We received a request to reset the password for your JobPrepOS account. Click the button below to choose a new one.",
+      "button": "Reset password",
+      "ignore": "If you didn't request this, you can ignore this email. Your password will not change.",
+      "expiry": "This link expires in 1 hour and can only be used once."
     }
   },
   "PracticeHomePage": {
@@ -739,6 +774,7 @@
     "SIGN_IN_FAILED": "Invalid email or password.",
     "SIGN_UP_ERROR": "Could not create your account. Please try again.",
     "SIGN_OUT_ERROR": "Could not sign out. Please try again.",
+    "UPDATE_PASSWORD_FAILED": "Could not update your password. Please try again.",
     "DATABASE_ERROR": "A database error occurred. Please try again.",
     "INTERNAL_SERVER_ERROR": "An unexpected error occurred. Please try again.",
     "REQUEST_FAILED": "Request failed. Please try again.",

@@ -5,14 +5,20 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import AppShell from '@/common/components/AppShell';
 import SettingsPageSkeleton from './SettingsPageSkeleton';
-import { useRouter } from '@/i18n/navigation';
+import { Link, useRouter } from '@/i18n/navigation';
 import { signOut } from '@/features/auth/api/mutations';
 import { resetClientSession } from '@/features/auth/lib/reset-client-session';
 import { settingsQueryOptions } from '@/features/settings/api/queries';
 import { updateDisplayName } from '@/features/settings/api/mutations';
 import { useToastStore } from '@/lib/store/use-toast-store';
 import { settingsKeys } from '@/features/settings/api/query-keys';
-import { destructiveSolidButtonClassName, inputClassName, primaryButtonClassName, readOnlyInputClassName } from '@/common/styles/form';
+import {
+  destructiveSolidButtonClassName,
+  inputClassName,
+  primaryButtonClassName,
+  readOnlyInputClassName,
+  secondaryButtonClassName,
+} from '@/common/styles/form';
 import { cn } from '@/lib/cn';
 
 export default function SettingsPage() {
@@ -86,7 +92,10 @@ export default function SettingsPage() {
           </button>
         </form>
 
-        <div className='mt-8 border-t border-border pt-6'>
+        <div className='mt-8 flex flex-col gap-3 border-t border-border pt-6'>
+          <Link href='/auth/update-password' className={cn(secondaryButtonClassName, 'w-full')}>
+            {t('changePassword')}
+          </Link>
           <button type='button' className={cn(destructiveSolidButtonClassName, 'w-full')} onClick={() => handleSignOut()} disabled={isSigningOut}>
             {isSigningOut ? t('signingOut') : t('signOut')}
           </button>

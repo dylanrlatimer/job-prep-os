@@ -8,7 +8,7 @@ import { getLocaleAndUnlocalizedPathname } from '@/utils/getLocaleAndUnlocalized
 
 // NOTE: Middleware will not run if path contains dot (e.g. '/users/john.smith') -> See next-intl docs if pertinent
 export const config = {
-  matcher: '/((?!api|trpc|_next|_vercel|auth/callback|.*\\..*).*)',
+  matcher: '/((?!api|trpc|_next|_vercel|auth/callback|auth/confirm|.*\\..*).*)',
 };
 
 // Public paths expressed in unlocalized form

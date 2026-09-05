@@ -11,6 +11,8 @@
       "browseQuestion": "Question",
       "browseExercise": "Exercice",
       "auth": "Connexion",
+      "forgotPassword": "Mot de passe oublié",
+      "updatePassword": "Nouveau mot de passe",
       "settings": "Paramètres",
       "practice": "Practice",
       "admin": "Administration",
@@ -570,7 +572,8 @@
     "saving": "Enregistrement…",
     "saveSuccess": "Paramètres enregistrés.",
     "signOut": "Déconnexion",
-    "signingOut": "Déconnexion…"
+    "signingOut": "Déconnexion…",
+    "changePassword": "Changer le mot de passe"
   },
   "AuthPage": {
     "authMode": "Mode d'authentification",
@@ -594,7 +597,39 @@
       "subtitle": "Connectez-vous pour continuer.",
       "submit": "Connexion",
       "google": "Continuer avec Google",
-      "passwordPlaceholder": "Votre mot de passe"
+      "passwordPlaceholder": "Votre mot de passe",
+      "forgotPassword": "Mot de passe oublié ?"
+    },
+    "forgotPassword": {
+      "title": "Mot de passe oublié ?",
+      "description": "Entrez l'adresse courriel liée à votre compte et nous vous enverrons un lien de réinitialisation.",
+      "submit": "Envoyer le lien",
+      "backToLogin": "Retour à la connexion",
+      "successTitle": "Vérifiez votre boîte de réception",
+      "successDescription": "Si un compte existe pour ce courriel, vous recevrez un lien sous peu. Vérifiez vos indésirables si vous ne le voyez pas."
+    },
+    "updatePassword": {
+      "title": "Nouveau mot de passe",
+      "newPassword": "Nouveau mot de passe",
+      "confirmPassword": "Confirmer le mot de passe",
+      "passwordMismatch": "Les mots de passe ne correspondent pas",
+      "submit": "Mettre à jour",
+      "successTitle": "Mot de passe mis à jour",
+      "successDescription": "Votre mot de passe a été défini. Connectez-vous avec le nouveau.",
+      "signIn": "Connexion",
+      "expiredTitle": "Lien expiré ou invalide",
+      "expiredDescription": "Ce lien a déjà été utilisé ou a expiré.",
+      "requestNew": "Demander un nouveau lien"
+    }
+  },
+  "AuthEmails": {
+    "resetPassword": {
+      "subject": "Réinitialisez votre mot de passe",
+      "heading": "Réinitialisez votre mot de passe",
+      "body": "Nous avons reçu une demande de réinitialisation du mot de passe de votre compte JobPrepOS. Cliquez sur le bouton ci-dessous pour en choisir un nouveau.",
+      "button": "Réinitialiser le mot de passe",
+      "ignore": "Si vous n'avez pas fait cette demande, ignorez ce courriel. Votre mot de passe ne changera pas.",
+      "expiry": "Ce lien expire dans 1 heure et ne peut être utilisé qu'une seule fois."
     }
   },
   "PracticeHomePage": {
@@ -739,6 +774,7 @@
     "SIGN_IN_FAILED": "Courriel ou mot de passe invalide.",
     "SIGN_UP_ERROR": "Impossible de créer votre compte. Veuillez réessayer.",
     "SIGN_OUT_ERROR": "Impossible de se déconnecter. Veuillez réessayer.",
+    "UPDATE_PASSWORD_FAILED": "Impossible de mettre à jour votre mot de passe. Veuillez réessayer.",
     "DATABASE_ERROR": "Une erreur de base de données s'est produite. Veuillez réessayer.",
     "INTERNAL_SERVER_ERROR": "Une erreur inattendue s'est produite. Veuillez réessayer.",
     "REQUEST_FAILED": "La requête a échoué. Veuillez réessayer.",
