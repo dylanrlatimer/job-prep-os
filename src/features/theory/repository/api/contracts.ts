@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ListPageSchema, optionalListSearchSchema, optionalListTopicIdSchema, type ListPageMeta } from '@/common/lib/pagination';
 
 export type RepositoryTopic = {
   id: string;
@@ -21,10 +22,17 @@ export type RepositoryQuestionItem = {
   canUnsave: boolean;
 };
 
+export const RepositoryListQuerySchema = ListPageSchema.extend({
+  search: optionalListSearchSchema,
+  topicId: optionalListTopicIdSchema,
+});
+
+export type RepositoryListQuery = z.infer<typeof RepositoryListQuerySchema>;
+
 export type GetRepositoryResponse = {
   questions: RepositoryQuestionItem[];
   topics: RepositoryTopic[];
-};
+} & ListPageMeta;
 
 export const UnsaveRepositoryQuestionParamsSchema = z.object({
   id: z.uuid(),

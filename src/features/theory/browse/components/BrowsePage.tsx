@@ -1,45 +1,29 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
-import { Link, useRouter } from '@/i18n/navigation';
+import { Link } from '@/i18n/navigation';
 import AppShell from '@/common/components/AppShell';
 import Select from '@/common/components/Select';
 import TopicList from '@/common/components/TopicList';
 import { invalidateBrowseCaches } from '@/features/admin/api/invalidate-admin-caches';
 import { invalidateExerciseBrowseCaches } from '@/features/exercises/api/invalidate-caches';
 import { saveExercise } from '@/features/exercises/browse/api/mutations';
-import { browseExercisesQueryOptions } from '@/features/exercises/browse/api/queries';
 import type { BrowseExerciseItem } from '@/features/exercises/browse/api/contracts';
 import { saveBrowseQuestion } from '@/features/theory/browse/api/mutations';
-import { browseQueryOptions } from '@/features/theory/browse/api/queries';
+import { browsePageQueryOptions } from '@/features/theory/browse/api/queries';
 import type { BrowseQuestionItem } from '@/features/theory/browse/api/contracts';
-import { browseHref, matchesSaved, type BrowseKind, type BrowseSavedFilter } from '@/features/theory/browse/lib/browse-filters';
-import { matchesText, matchesTopic } from '@/common/lib/list-filters';
+import { BrowsePageQuerySchema, type BrowseKind, type BrowseSavedFilter } from '@/features/theory/browse/lib/browse-filters';
 import ListPageLayout, { ListEmptyState } from '@/common/components/ListPageLayout';
 import ListPageSkeleton from '@/common/components/ListPageSkeleton';
+import ListPagination from '@/common/components/ListPagination';
 import PageLoadError from '@/common/components/PageLoadError';
+import { useClampListQuery, useListQueryState } from '@/common/hooks/use-list-query-state';
 import { inputClassName, secondaryButtonClassName } from '@/common/styles/form';
 import { useRequireAuth } from '@/features/auth/hooks/use-require-auth';
 import { useToastStore } from '@/lib/store/use-toast-store';
 import { cn } from '@/lib/cn';
-
-type BrowsePageProps = {
-  initialKind?: BrowseKind;
-};
-
-type BrowseRow = { type: 'question'; item: BrowseQuestionItem } | { type: 'exercise'; item: BrowseExerciseItem };
-
-function mergeTopics(questionTopics: BrowseQuestionItem['topics'], exerciseTopics: BrowseExerciseItem['topics']) {
-  const topics = new Map<string, BrowseQuestionItem['topics'][number]>();
-
-  for (const topic of [...questionTopics, ...exerciseTopics]) {
-    topics.set(topic.id, topic);
-  }
-
-  return [...topics.values()].sort((left, right) => left.name.localeCompare(right.name));
-}
 
 function BrowseQuestionRow({ question, showType }: { question: BrowseQuestionItem; showType: boolean }) {
   const t = useTranslations('BrowsePage');
@@ -137,35 +121,13 @@ function BrowseExerciseRow({ exercise, showType }: { exercise: BrowseExerciseIte
   );
 }
 
-export default function BrowsePage({ initialKind = 'all' }: BrowsePageProps) {
+export default function BrowsePage() {
   const t = useTranslations('BrowsePage');
-  const router = useRouter();
-
-  const [kind, setKind] = useState<BrowseKind>(initialKind);
-  const [savedFilter, setSavedFilter] = useState<BrowseSavedFilter>('new');
-  const [search, setSearch] = useState('');
-  const [topicId, setTopicId] = useState<string | null>(null);
-
-  const includeQuestions = kind !== 'exercises';
-  const includeExercises = kind !== 'questions';
-
-  useEffect(() => {
-    setKind(initialKind);
-    setTopicId(null);
-  }, [initialKind]);
-
-  const questionsQuery = useQuery({
-    ...browseQueryOptions,
-    enabled: includeQuestions,
-  });
-  const exercisesQuery = useQuery({
-    ...browseExercisesQueryOptions,
-    enabled: includeExercises,
-  });
-
-  const isPending = (includeQuestions && questionsQuery.isPending) || (includeExercises && exercisesQuery.isPending);
-  const isError = (includeQuestions && questionsQuery.isError) || (includeExercises && exercisesQuery.isError);
-  const isFetching = questionsQuery.isFetching || exercisesQuery.isFetching;
+  const { query, setQuery, setPage, searchInput, setSearchInput } = useListQueryState(BrowsePageQuerySchema);
+  const { kind, page, search, topicId, saved } = query;
+  const listQuery = { page, search, topicId, saved };
+  const { data, isPending, isError, refetch, isFetching } = useQuery(browsePageQueryOptions(kind, listQuery));
+  useClampListQuery(page, data?.totalCount, setPage);
 
   const kindOptions = useMemo(
     () => [
@@ -185,61 +147,19 @@ export default function BrowsePage({ initialKind = 'all' }: BrowsePageProps) {
     [t],
   );
 
-  const topics = useMemo(() => {
-    const questionTopics = includeQuestions ? (questionsQuery.data?.topics ?? []) : [];
-    const exerciseTopics = includeExercises ? (exercisesQuery.data?.topics ?? []) : [];
-    return includeQuestions && includeExercises ? mergeTopics(questionTopics, exerciseTopics) : includeQuestions ? questionTopics : exerciseTopics;
-  }, [includeExercises, includeQuestions, exercisesQuery.data?.topics, questionsQuery.data?.topics]);
-
-  const topicOptions = useMemo(() => [{ value: '', label: t('allTopics') }, ...topics.map((topic) => ({ value: topic.id, label: topic.name }))], [t, topics]);
-
-  const filteredQuestions = useMemo(() => {
-    if (!includeQuestions || !questionsQuery.data) return [];
-    return questionsQuery.data.questions.filter(
-      (question) => matchesText(question.question, search) && matchesTopic(question, topicId) && matchesSaved(question.isSaved, savedFilter),
-    );
-  }, [includeQuestions, questionsQuery.data, search, topicId, savedFilter]);
-
-  const filteredExercises = useMemo(() => {
-    if (!includeExercises || !exercisesQuery.data) return [];
-    return exercisesQuery.data.exercises.filter(
-      (exercise) => matchesText(exercise.title, search) && matchesTopic(exercise, topicId) && matchesSaved(exercise.isSaved, savedFilter),
-    );
-  }, [includeExercises, exercisesQuery.data, search, topicId, savedFilter]);
-
-  const rows = useMemo<BrowseRow[]>(() => {
-    const questionRows: BrowseRow[] = filteredQuestions.map((item) => ({ type: 'question', item }));
-    const exerciseRows: BrowseRow[] = filteredExercises.map((item) => ({ type: 'exercise', item }));
-
-    if (!includeQuestions) return exerciseRows;
-    if (!includeExercises) return questionRows;
-
-    return [...questionRows, ...exerciseRows].sort((left, right) => right.item.createdAt.localeCompare(left.item.createdAt));
-  }, [filteredExercises, filteredQuestions, includeExercises, includeQuestions]);
+  const topicOptions = useMemo(() => {
+    if (!data) return [{ value: '', label: t('allTopics') }];
+    return [{ value: '', label: t('allTopics') }, ...data.topics.map((topic) => ({ value: topic.id, label: topic.name }))];
+  }, [data, t]);
 
   const handleKindChange = (value: string) => {
     const next: BrowseKind = value === 'questions' || value === 'exercises' ? value : 'all';
-    setKind(next);
-    setTopicId(null);
-    router.replace(browseHref(next));
+    setQuery({ kind: next, topicId: undefined });
   };
 
   const handleSavedFilterChange = (value: string) => {
-    if (value === 'all' || value === 'saved') {
-      setSavedFilter(value);
-      return;
-    }
-
-    setSavedFilter('new');
-  };
-
-  const refetch = () => {
-    if (includeQuestions) {
-      void questionsQuery.refetch();
-    }
-    if (includeExercises) {
-      void exercisesQuery.refetch();
-    }
+    const next: BrowseSavedFilter = value === 'all' || value === 'saved' ? value : 'new';
+    setQuery({ saved: next });
   };
 
   if (isPending) {
@@ -252,15 +172,12 @@ export default function BrowsePage({ initialKind = 'all' }: BrowsePageProps) {
     );
   }
 
-  const questionsMissing = includeQuestions && !questionsQuery.data;
-  const exercisesMissing = includeExercises && !exercisesQuery.data;
-
-  if (isError || questionsMissing || exercisesMissing) {
+  if ((isError && !data) || !data) {
     return (
       <PageLoadError
         title={t('title')}
         message={t('loadError')}
-        onRetry={refetch}
+        onRetry={() => refetch()}
         isRetrying={isFetching}
         retryLabel={t('retry')}
         retryingLabel={t('retrying')}
@@ -268,11 +185,9 @@ export default function BrowsePage({ initialKind = 'all' }: BrowsePageProps) {
     );
   }
 
-  const questionBankSize = includeQuestions ? (questionsQuery.data?.questions.length ?? 0) : 0;
-  const exerciseBankSize = includeExercises ? (exercisesQuery.data?.exercises.length ?? 0) : 0;
-  const bankSize = questionBankSize + exerciseBankSize;
-  const isEmpty = bankSize === 0;
-  const hasNoMatches = !isEmpty && rows.length === 0;
+  const rows = data.items;
+  const isEmpty = data.unfilteredCount === 0;
+  const hasNoMatches = !isEmpty && data.totalCount === 0;
   const showType = kind === 'all';
 
   const searchPlaceholder =
@@ -289,9 +204,9 @@ export default function BrowsePage({ initialKind = 'all' }: BrowsePageProps) {
       return t('itemCountEmpty');
     }
 
-    if (kind === 'questions') return t('questionCount', { count: rows.length });
-    if (kind === 'exercises') return t('exerciseCount', { count: rows.length });
-    return t('itemCount', { count: rows.length });
+    if (kind === 'questions') return t('questionCount', { count: data.totalCount });
+    if (kind === 'exercises') return t('exerciseCount', { count: data.totalCount });
+    return t('itemCount', { count: data.totalCount });
   })();
 
   return (
@@ -300,41 +215,43 @@ export default function BrowsePage({ initialKind = 'all' }: BrowsePageProps) {
         title={t('title')}
         description={t('description')}
         filters={
-          <div className='mt-6 flex flex-col gap-3 lg:flex-row lg:items-center'>
-            <label className='block flex-1'>
-              <span className='sr-only'>{t('searchLabel')}</span>
-              <input
-                className={inputClassName}
-                type='search'
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder={searchPlaceholder}
-                disabled={isEmpty}
-              />
-            </label>
+          isEmpty ? undefined : (
+            <div className='mt-6 flex flex-col gap-3 lg:flex-row lg:items-center'>
+              <label className='block flex-1'>
+                <span className='sr-only'>{t('searchLabel')}</span>
+                <input
+                  className={inputClassName}
+                  type='search'
+                  value={searchInput}
+                  onChange={(event) => setSearchInput(event.target.value)}
+                  placeholder={searchPlaceholder}
+                />
+              </label>
 
-            <Select className='w-full lg:w-48' aria-label={t('kindFilterLabel')} value={kind} onValueChange={handleKindChange} options={kindOptions} />
+              <Select className='w-full lg:w-48' aria-label={t('kindFilterLabel')} value={kind} onValueChange={handleKindChange} options={kindOptions} />
 
-            <Select
-              className='w-full lg:w-52'
-              aria-label={t('savedFilterLabel')}
-              value={savedFilter}
-              onValueChange={handleSavedFilterChange}
-              options={savedOptions}
-            />
-
-            {topics.length > 0 ? (
               <Select
-                className='w-full lg:w-44'
-                aria-label={t('topicFilterLabel')}
-                value={topicId ?? ''}
-                onValueChange={(value) => setTopicId(value || null)}
-                options={topicOptions}
+                className='w-full lg:w-52'
+                aria-label={t('savedFilterLabel')}
+                value={saved}
+                onValueChange={handleSavedFilterChange}
+                options={savedOptions}
               />
-            ) : null}
-          </div>
+
+              {data.topics.length > 0 ? (
+                <Select
+                  className='w-full lg:w-44'
+                  aria-label={t('topicFilterLabel')}
+                  value={topicId ?? ''}
+                  onValueChange={(value) => setQuery({ topicId: value || undefined })}
+                  options={topicOptions}
+                />
+              ) : null}
+            </div>
+          )
         }
-        countLabel={countLabel}>
+        countLabel={countLabel}
+        footer={hasNoMatches || isEmpty ? undefined : <ListPagination page={page} totalCount={data.totalCount} onPageChange={setPage} />}>
         {isEmpty ? (
           <ListEmptyState title={emptyTitle} description={emptyDescription} />
         ) : hasNoMatches ? (

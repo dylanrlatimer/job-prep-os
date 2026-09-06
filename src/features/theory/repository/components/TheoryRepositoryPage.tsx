@@ -9,15 +9,16 @@ import AttemptTotals from '@/common/components/AttemptTotals';
 import ConfirmDialog from '@/common/components/ConfirmDialog';
 import ListPageLayout, { ListEmptyState } from '@/common/components/ListPageLayout';
 import ListPageSkeleton from '@/common/components/ListPageSkeleton';
+import ListPagination from '@/common/components/ListPagination';
 import PageLoadError from '@/common/components/PageLoadError';
 import Select from '@/common/components/Select';
 import TopicList from '@/common/components/TopicList';
-import { matchesText, matchesTopic } from '@/common/lib/list-filters';
+import { useClampListQuery, useListQueryState } from '@/common/hooks/use-list-query-state';
 import { inputClassName, primaryButtonClassName, secondaryButtonClassName } from '@/common/styles/form';
 import { invalidateRepositoryCaches } from '@/features/theory/api/invalidate-repository-caches';
 import { unsaveRepositoryQuestion } from '@/features/theory/repository/api/mutations';
 import { repositoryQueryOptions } from '@/features/theory/repository/api/queries';
-import type { RepositoryQuestionItem } from '@/features/theory/repository/api/contracts';
+import { RepositoryListQuerySchema, type RepositoryQuestionItem } from '@/features/theory/repository/api/contracts';
 import { useToastStore } from '@/lib/store/use-toast-store';
 import { cn } from '@/lib/cn';
 
@@ -88,15 +89,9 @@ function QuestionRow({ question }: { question: RepositoryQuestionItem }) {
 
 export default function TheoryRepositoryPage() {
   const t = useTranslations('TheoryRepositoryPage');
-  const { data, isPending, isError, refetch, isFetching } = useQuery(repositoryQueryOptions);
-
-  const [search, setSearch] = useState('');
-  const [topicId, setTopicId] = useState<string | null>(null);
-
-  const filteredQuestions = useMemo(() => {
-    if (!data) return [];
-    return data.questions.filter((question) => matchesText(question.question, search) && matchesTopic(question, topicId));
-  }, [topicId, data, search]);
+  const { query, setQuery, setPage, searchInput, setSearchInput } = useListQueryState(RepositoryListQuerySchema);
+  const { data, isPending, isError, refetch, isFetching } = useQuery(repositoryQueryOptions(query));
+  useClampListQuery(query.page, data?.totalCount, setPage);
 
   const topicOptions = useMemo(() => {
     if (!data) return [];
@@ -111,7 +106,7 @@ export default function TheoryRepositoryPage() {
     );
   }
 
-  if (isError) {
+  if (isError && !data) {
     return (
       <PageLoadError
         title={t('title')}
@@ -124,8 +119,12 @@ export default function TheoryRepositoryPage() {
     );
   }
 
-  const isEmpty = data.questions.length === 0;
-  const hasNoMatches = !isEmpty && filteredQuestions.length === 0;
+  if (!data) {
+    return null;
+  }
+
+  const isEmpty = data.unfilteredCount === 0;
+  const hasNoMatches = !isEmpty && data.totalCount === 0;
 
   return (
     <AppShell>
@@ -150,8 +149,8 @@ export default function TheoryRepositoryPage() {
                 <input
                   className={inputClassName}
                   type='search'
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
+                  value={searchInput}
+                  onChange={(event) => setSearchInput(event.target.value)}
                   placeholder={t('searchPlaceholder')}
                 />
               </label>
@@ -160,22 +159,23 @@ export default function TheoryRepositoryPage() {
                 <Select
                   className='w-full sm:w-44'
                   aria-label={t('topicFilterLabel')}
-                  value={topicId ?? ''}
-                  onValueChange={(value) => setTopicId(value || null)}
+                  value={query.topicId ?? ''}
+                  onValueChange={(value) => setQuery({ topicId: value || undefined })}
                   options={topicOptions}
                 />
               )}
             </div>
           )
         }
-        countLabel={isEmpty ? t('questionCountEmpty') : t('questionCount', { count: data.questions.length })}
+        countLabel={isEmpty ? t('questionCountEmpty') : t('questionCount', { count: data.totalCount })}
         countExtra={
           isEmpty ? undefined : (
             <button type='button' className={cn(secondaryButtonClassName, 'self-start sm:self-auto')} disabled>
               {t('exportCsv')}
             </button>
           )
-        }>
+        }
+        footer={hasNoMatches || isEmpty ? undefined : <ListPagination page={query.page} totalCount={data.totalCount} onPageChange={setPage} />}>
         {isEmpty ? (
           <ListEmptyState title={t('emptyTitle')} description={t('emptyDescription')}>
             <div className='mt-4 flex flex-wrap gap-2'>
@@ -191,7 +191,7 @@ export default function TheoryRepositoryPage() {
           <ListEmptyState title={t('noMatchesTitle')} description={t('noMatchesDescription')} />
         ) : (
           <ul className='m-0 list-none p-0'>
-            {filteredQuestions.map((question) => (
+            {data.questions.map((question) => (
               <QuestionRow key={question.id} question={question} />
             ))}
           </ul>

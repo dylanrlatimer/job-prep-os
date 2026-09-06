@@ -9,15 +9,16 @@ import AttemptTotals from '@/common/components/AttemptTotals';
 import ConfirmDialog from '@/common/components/ConfirmDialog';
 import ListPageLayout, { ListEmptyState } from '@/common/components/ListPageLayout';
 import ListPageSkeleton from '@/common/components/ListPageSkeleton';
+import ListPagination from '@/common/components/ListPagination';
 import PageLoadError from '@/common/components/PageLoadError';
 import Select from '@/common/components/Select';
 import TopicList from '@/common/components/TopicList';
-import { matchesText, matchesTopic } from '@/common/lib/list-filters';
+import { useClampListQuery, useListQueryState } from '@/common/hooks/use-list-query-state';
 import { inputClassName, primaryButtonClassName, secondaryButtonClassName } from '@/common/styles/form';
 import { invalidateExerciseCaches } from '@/features/exercises/api/invalidate-caches';
 import { unsaveExercise } from '@/features/exercises/repository/api/mutations';
 import { exerciseRepositoryQueryOptions } from '@/features/exercises/repository/api/queries';
-import type { RepositoryExerciseItem } from '@/features/exercises/repository/api/contracts';
+import { ExerciseRepositoryListQuerySchema, type RepositoryExerciseItem } from '@/features/exercises/repository/api/contracts';
 import { useToastStore } from '@/lib/store/use-toast-store';
 import { cn } from '@/lib/cn';
 
@@ -88,15 +89,9 @@ function ExerciseRow({ exercise }: { exercise: RepositoryExerciseItem }) {
 
 export default function ExerciseRepositoryPage() {
   const t = useTranslations('ExerciseRepositoryPage');
-  const { data, isPending, isError, refetch, isFetching } = useQuery(exerciseRepositoryQueryOptions);
-
-  const [search, setSearch] = useState('');
-  const [topicId, setTopicId] = useState<string | null>(null);
-
-  const filteredExercises = useMemo(() => {
-    if (!data) return [];
-    return data.exercises.filter((exercise) => matchesText(exercise.title, search) && matchesTopic(exercise, topicId));
-  }, [data, search, topicId]);
+  const { query, setQuery, setPage, searchInput, setSearchInput } = useListQueryState(ExerciseRepositoryListQuerySchema);
+  const { data, isPending, isError, refetch, isFetching } = useQuery(exerciseRepositoryQueryOptions(query));
+  useClampListQuery(query.page, data?.totalCount, setPage);
 
   const topicOptions = useMemo(() => {
     if (!data) return [];
@@ -111,7 +106,7 @@ export default function ExerciseRepositoryPage() {
     );
   }
 
-  if (isError) {
+  if (isError && !data) {
     return (
       <PageLoadError
         title={t('title')}
@@ -124,8 +119,12 @@ export default function ExerciseRepositoryPage() {
     );
   }
 
-  const isEmpty = data.exercises.length === 0;
-  const hasNoMatches = !isEmpty && filteredExercises.length === 0;
+  if (!data) {
+    return null;
+  }
+
+  const isEmpty = data.unfilteredCount === 0;
+  const hasNoMatches = !isEmpty && data.totalCount === 0;
 
   return (
     <AppShell>
@@ -150,8 +149,8 @@ export default function ExerciseRepositoryPage() {
                 <input
                   className={inputClassName}
                   type='search'
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
+                  value={searchInput}
+                  onChange={(event) => setSearchInput(event.target.value)}
                   placeholder={t('searchPlaceholder')}
                 />
               </label>
@@ -160,22 +159,23 @@ export default function ExerciseRepositoryPage() {
                 <Select
                   className='w-full sm:w-44'
                   aria-label={t('topicFilterLabel')}
-                  value={topicId ?? ''}
-                  onValueChange={(value) => setTopicId(value || null)}
+                  value={query.topicId ?? ''}
+                  onValueChange={(value) => setQuery({ topicId: value || undefined })}
                   options={topicOptions}
                 />
               )}
             </div>
           )
         }
-        countLabel={isEmpty ? t('exerciseCountEmpty') : t('exerciseCount', { count: data.exercises.length })}
+        countLabel={isEmpty ? t('exerciseCountEmpty') : t('exerciseCount', { count: data.totalCount })}
         countExtra={
           isEmpty ? undefined : (
             <button type='button' className={cn(secondaryButtonClassName, 'self-start sm:self-auto')} disabled>
               {t('exportCsv')}
             </button>
           )
-        }>
+        }
+        footer={hasNoMatches || isEmpty ? undefined : <ListPagination page={query.page} totalCount={data.totalCount} onPageChange={setPage} />}>
         {isEmpty ? (
           <ListEmptyState title={t('emptyTitle')} description={t('emptyDescription')}>
             <div className='mt-4 flex flex-wrap gap-2'>
@@ -191,7 +191,7 @@ export default function ExerciseRepositoryPage() {
           <ListEmptyState title={t('noMatchesTitle')} description={t('noMatchesDescription')} />
         ) : (
           <ul className='m-0 list-none p-0'>
-            {filteredExercises.map((exercise) => (
+            {data.exercises.map((exercise) => (
               <ExerciseRow key={exercise.id} exercise={exercise} />
             ))}
           </ul>

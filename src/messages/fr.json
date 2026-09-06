@@ -768,6 +768,11 @@
   "Common": {
     "notifications": "Notifications"
   },
+  "ListPagination": {
+    "previous": "Précédent",
+    "next": "Suivant",
+    "pageOf": "Page {page} sur {total}"
+  },
   "Errors": {
     "fallback": "Une erreur s'est produite. Veuillez réessayer.",
     "UNAUTHENTICATED": "Vous devez être connecté pour continuer.",

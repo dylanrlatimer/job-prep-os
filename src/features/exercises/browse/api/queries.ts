@@ -1,12 +1,15 @@
-import { queryOptions } from '@tanstack/react-query';
+import { keepPreviousData, queryOptions } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/api-client';
+import { toListSearchParams } from '@/common/lib/pagination';
 import { exerciseKeys } from '@/features/exercises/api/query-keys';
-import type { BrowseExerciseDetailResponse, GetBrowseExercisesResponse } from './contracts';
+import type { BrowseExerciseDetailResponse, BrowseExerciseListQuery, GetBrowseExercisesResponse } from './contracts';
 
-export const browseExercisesQueryOptions = queryOptions({
-  queryKey: exerciseKeys.browse(),
-  queryFn: () => apiRequest<GetBrowseExercisesResponse>('/api/exercises/browse'),
-});
+export const browseExercisesQueryOptions = (query: BrowseExerciseListQuery) =>
+  queryOptions({
+    queryKey: exerciseKeys.browseList(query),
+    queryFn: () => apiRequest<GetBrowseExercisesResponse>(`/api/exercises/browse?${toListSearchParams(query)}`),
+    placeholderData: keepPreviousData,
+  });
 
 export const browseExerciseDetailQueryOptions = (id: string) =>
   queryOptions({

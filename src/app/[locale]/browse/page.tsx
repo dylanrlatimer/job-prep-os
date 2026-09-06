@@ -1,15 +1,16 @@
+import { Suspense } from 'react';
 import { getTranslations } from 'next-intl/server';
 import { hasLocale } from 'next-intl';
 import { notFound } from 'next/navigation';
 import { routing } from '@/i18n/routing';
+import AppShell from '@/common/components/AppShell';
+import ListPageSkeleton from '@/common/components/ListPageSkeleton';
 import BrowsePage from '@/features/theory/browse/components/BrowsePage';
-import { parseBrowseKind } from '@/features/theory/browse/lib/browse-filters';
 import { absoluteUrl, buildPageMetadata } from '@/lib/seo';
 import type { Metadata } from 'next';
 
 type PageProps = {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ kind?: string }>;
 };
 
 function assertValidLocale(locale: string): asserts locale is (typeof routing.locales)[number] {
@@ -34,12 +35,11 @@ export async function generateMetadata({ params }: Pick<PageProps, 'params'>): P
   });
 }
 
-export default async function BrowsePageEntry({ params, searchParams }: PageProps) {
+export default async function BrowsePageEntry({ params }: PageProps) {
   const { locale } = await params;
   assertValidLocale(locale);
 
   const t = await getTranslations({ locale, namespace: 'Metadata' });
-  const query = await searchParams;
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
@@ -52,7 +52,14 @@ export default async function BrowsePageEntry({ params, searchParams }: PageProp
   return (
     <>
       <script type='application/ld+json' dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <BrowsePage initialKind={parseBrowseKind(query.kind)} />
+      <Suspense
+        fallback={
+          <AppShell>
+            <ListPageSkeleton />
+          </AppShell>
+        }>
+        <BrowsePage />
+      </Suspense>
     </>
   );
 }

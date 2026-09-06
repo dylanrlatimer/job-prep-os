@@ -1,12 +1,15 @@
-import { queryOptions } from '@tanstack/react-query';
+import { keepPreviousData, queryOptions } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/api-client';
+import { toListSearchParams } from '@/common/lib/pagination';
 import { adminKeys } from '@/features/admin/api/query-keys';
-import type { ListSystemQuestionsResponse, SystemQuestionResponse } from './contracts';
+import type { ListSystemQuestionsResponse, SystemQuestionListQuery, SystemQuestionResponse } from './contracts';
 
-export const systemQuestionsQueryOptions = queryOptions({
-  queryKey: adminKeys.systemQuestions(),
-  queryFn: () => apiRequest<ListSystemQuestionsResponse>('/api/admin/questions'),
-});
+export const systemQuestionsQueryOptions = (query: SystemQuestionListQuery) =>
+  queryOptions({
+    queryKey: adminKeys.systemQuestionsList(query),
+    queryFn: () => apiRequest<ListSystemQuestionsResponse>(`/api/admin/questions?${toListSearchParams(query)}`),
+    placeholderData: keepPreviousData,
+  });
 
 export const systemQuestionQueryOptions = (id: string) =>
   queryOptions({

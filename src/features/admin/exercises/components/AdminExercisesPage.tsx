@@ -1,18 +1,21 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import AppShell from '@/common/components/AppShell';
 import ListPageLayout, { ListEmptyState } from '@/common/components/ListPageLayout';
 import ListPageSkeleton from '@/common/components/ListPageSkeleton';
+import ListPagination from '@/common/components/ListPagination';
 import PageLoadError from '@/common/components/PageLoadError';
 import Select from '@/common/components/Select';
 import TopicList from '@/common/components/TopicList';
 import AdminGate from '@/features/admin/components/AdminGate';
-import { matchesPublication, matchesText, matchesTopic, type PublicationFilter } from '@/common/lib/list-filters';
+import { type PublicationFilter } from '@/common/lib/list-filters';
+import { useClampListQuery, useListQueryState } from '@/common/hooks/use-list-query-state';
 import { systemExercisesQueryOptions } from '@/features/admin/exercises/api/queries';
+import { SystemExerciseListQuerySchema } from '@/features/admin/exercises/api/contracts';
 import { inputClassName, primaryButtonClassName, secondaryButtonClassName } from '@/common/styles/form';
 import { cn } from '@/lib/cn';
 
@@ -28,18 +31,9 @@ export default function AdminExercisesPage() {
 
 function AdminExercisesContent() {
   const t = useTranslations('AdminExercisesPage');
-  const { data, isPending, isError, refetch, isFetching } = useQuery(systemExercisesQueryOptions);
-
-  const [search, setSearch] = useState('');
-  const [topicId, setTopicId] = useState<string | null>(null);
-  const [publication, setPublication] = useState<PublicationFilter>('all');
-
-  const filteredExercises = useMemo(() => {
-    if (!data) return [];
-    return data.exercises.filter(
-      (exercise) => matchesText(exercise.title, search) && matchesTopic(exercise, topicId) && matchesPublication(exercise, publication),
-    );
-  }, [data, publication, search, topicId]);
+  const { query, setQuery, setPage, searchInput, setSearchInput } = useListQueryState(SystemExerciseListQuerySchema);
+  const { data, isPending, isError, refetch, isFetching } = useQuery(systemExercisesQueryOptions(query));
+  useClampListQuery(query.page, data?.totalCount, setPage);
 
   const topicOptions = useMemo(() => {
     if (!data) return [{ value: '', label: t('allTopics') }];
@@ -63,7 +57,7 @@ function AdminExercisesContent() {
     );
   }
 
-  if (isError || !data) {
+  if ((isError && !data) || !data) {
     return (
       <PageLoadError
         title={t('title')}
@@ -76,8 +70,8 @@ function AdminExercisesContent() {
     );
   }
 
-  const isEmpty = data.exercises.length === 0;
-  const hasNoMatches = !isEmpty && filteredExercises.length === 0;
+  const isEmpty = data.unfilteredCount === 0;
+  const hasNoMatches = !isEmpty && data.totalCount === 0;
 
   return (
     <AppShell>
@@ -97,8 +91,8 @@ function AdminExercisesContent() {
                 <input
                   className={inputClassName}
                   type='search'
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
+                  value={searchInput}
+                  onChange={(event) => setSearchInput(event.target.value)}
                   placeholder={t('searchPlaceholder')}
                 />
               </label>
@@ -107,8 +101,8 @@ function AdminExercisesContent() {
                 <Select
                   className='w-full lg:w-44'
                   aria-label={t('topicFilterLabel')}
-                  value={topicId ?? ''}
-                  onValueChange={(value) => setTopicId(value || null)}
+                  value={query.topicId ?? ''}
+                  onValueChange={(value) => setQuery({ topicId: value || undefined })}
                   options={topicOptions}
                 />
               )}
@@ -116,14 +110,15 @@ function AdminExercisesContent() {
               <Select
                 className='w-full lg:w-44'
                 aria-label={t('publicationFilterLabel')}
-                value={publication}
-                onValueChange={(value) => setPublication(value as PublicationFilter)}
+                value={query.publication}
+                onValueChange={(value) => setQuery({ publication: value as PublicationFilter })}
                 options={publicationOptions}
               />
             </div>
           )
         }
-        countLabel={isEmpty ? t('exerciseCountEmpty') : t('exerciseCount', { count: data.exercises.length })}>
+        countLabel={isEmpty ? t('exerciseCountEmpty') : t('exerciseCount', { count: data.totalCount })}
+        footer={hasNoMatches || isEmpty ? undefined : <ListPagination page={query.page} totalCount={data.totalCount} onPageChange={setPage} />}>
         {isEmpty ? (
           <ListEmptyState title={t('emptyTitle')} description={t('emptyDescription')}>
             <Link href='/admin/exercises/new' className={cn(primaryButtonClassName, 'mt-4 inline-flex')}>
@@ -134,7 +129,7 @@ function AdminExercisesContent() {
           <ListEmptyState title={t('noMatchesTitle')} description={t('noMatchesDescription')} />
         ) : (
           <ul className='m-0 list-none p-0'>
-            {filteredExercises.map((exercise) => (
+            {data.exercises.map((exercise) => (
               <li key={exercise.id} className='border-b border-border py-4 last:border-b-0'>
                 <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
                   <div className='min-w-0 flex-1'>

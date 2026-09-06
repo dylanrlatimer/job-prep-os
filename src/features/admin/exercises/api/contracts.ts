@@ -1,5 +1,7 @@
 import { z } from 'zod';
 import type { JSONContent } from '@tiptap/core';
+import { ListPageSchema, optionalListSearchSchema, optionalListTopicIdSchema, type ListPageMeta } from '@/common/lib/pagination';
+import type { PublicationFilter } from '@/common/lib/list-filters';
 import { ExerciseInputSchema } from '@/features/exercises/builder/api/contracts';
 import type { ExerciseTopic } from '@/features/exercises/repository/api/contracts';
 
@@ -24,10 +26,20 @@ export type SystemExerciseListItem = {
   updatedAt: string;
 };
 
+export const SystemExerciseListQuerySchema = ListPageSchema.extend({
+  search: optionalListSearchSchema,
+  topicId: optionalListTopicIdSchema,
+  publication: z.enum(['all', 'published', 'draft']).optional().default('all'),
+});
+
+export type SystemExerciseListQuery = Omit<z.infer<typeof SystemExerciseListQuerySchema>, 'publication'> & {
+  publication: PublicationFilter;
+};
+
 export type ListSystemExercisesResponse = {
   exercises: SystemExerciseListItem[];
   topics: ExerciseTopic[];
-};
+} & ListPageMeta;
 
 export type SystemExerciseChoiceResponse = {
   content: JSONContent;

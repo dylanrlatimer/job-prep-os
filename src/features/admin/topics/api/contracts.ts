@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ListPageSchema, optionalListSearchSchema, type ListPageMeta } from '@/common/lib/pagination';
 import { TOPIC_ICON_KEYS } from '@/common/topics/icon-keys';
 
 const TopicIconKeySchema = z.enum(TOPIC_ICON_KEYS).nullable();
@@ -32,9 +33,20 @@ export type AdminTopicItem = {
   exerciseCount: number;
 };
 
+export const AdminTopicListQuerySchema = ListPageSchema.extend({
+  search: optionalListSearchSchema,
+  status: z.enum(['all', 'active', 'disabled']).optional().default('all'),
+});
+
+export type TopicStatusFilter = 'all' | 'active' | 'disabled';
+
+export type AdminTopicListQuery = Omit<z.infer<typeof AdminTopicListQuerySchema>, 'status'> & {
+  status: TopicStatusFilter;
+};
+
 export type ListAdminTopicsResponse = {
   topics: AdminTopicItem[];
-};
+} & ListPageMeta;
 
 export type TopicResponse = {
   id: string;
