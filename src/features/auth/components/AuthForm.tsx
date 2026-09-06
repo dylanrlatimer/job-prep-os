@@ -5,6 +5,7 @@ import OAuthIcon from '@/common/icons/OAuthIcon';
 import { useAuthForm } from '../hooks/useAuthForm';
 import { supabase } from '@/lib/supabase/client';
 import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 import { inputClassName, primaryButtonClassName, secondaryButtonClassName } from '@/common/styles/form';
 import { cn } from '@/lib/cn';
 import type { AuthModalNext } from '@/features/auth/auth-modal-context';
@@ -19,9 +20,10 @@ type AuthFormProps = {
   headingClassName?: string;
   redirectTo?: AuthModalNext | null;
   onSuccess?: () => void | Promise<void>;
+  onForgotPasswordClick?: () => void;
 };
 
-export default function AuthForm({ headingId, headingLevel = 'h1', headingClassName, redirectTo, onSuccess }: AuthFormProps) {
+export default function AuthForm({ headingId, headingLevel = 'h1', headingClassName, redirectTo, onSuccess, onForgotPasswordClick }: AuthFormProps) {
   const t = useTranslations('AuthPage');
 
   const [mode, setMode] = useState<AuthMode>('login');
@@ -126,7 +128,17 @@ export default function AuthForm({ headingId, headingLevel = 'h1', headingClassN
         </label>
 
         <label className='mb-5 block'>
-          <span className='mb-1.5 block text-xs text-secondary-foreground'>{t('passwordLabel')}</span>
+          <span className={cn('mb-1.5', isSignUp ? 'block' : 'flex items-center justify-between gap-2')}>
+            <span className='text-xs text-secondary-foreground'>{t('passwordLabel')}</span>
+            {!isSignUp && (
+              <Link
+                href='/auth/forgot-password'
+                onClick={onForgotPasswordClick}
+                className='shrink-0 text-xs text-muted-foreground no-underline hover:text-foreground hover:underline'>
+                {t('login.forgotPassword')}
+              </Link>
+            )}
+          </span>
           <input
             className={inputClassName}
             type='password'

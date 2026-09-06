@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { handleApiError } from '@/lib/api-errors';
-import { CreateSystemQuestionSchema } from '@/features/admin/questions/api/contracts';
+import { parseListQuery } from '@/common/lib/pagination';
+import { CreateSystemQuestionSchema, SystemQuestionListQuerySchema } from '@/features/admin/questions/api/contracts';
 import { createSystemQuestion } from '@/features/admin/questions/server/create-system-question';
 import { listSystemQuestions } from '@/features/admin/questions/server/list-system-questions';
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
-    const response = await listSystemQuestions();
+    const query = parseListQuery(SystemQuestionListQuerySchema, req.nextUrl.searchParams);
+    const response = await listSystemQuestions(query);
     return NextResponse.json(response, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
     return handleApiError(req, error);

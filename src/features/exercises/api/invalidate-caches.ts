@@ -1,4 +1,5 @@
 import type { QueryClient } from '@tanstack/react-query';
+import { theoryKeys } from '@/features/theory/api/query-keys';
 import { exerciseKeys } from './query-keys';
 
 export function removeExerciseCaches(queryClient: QueryClient, exerciseId: string) {
@@ -23,6 +24,7 @@ export async function invalidateExerciseRepositoryCache(queryClient: QueryClient
 export async function invalidateExerciseBrowseCaches(queryClient: QueryClient, exerciseId?: string) {
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: exerciseKeys.browse(), refetchType: 'all' }),
+    queryClient.invalidateQueries({ queryKey: theoryKeys.browseAll(), refetchType: 'all' }),
     exerciseId ? queryClient.invalidateQueries({ queryKey: exerciseKeys.browseExercise(exerciseId), refetchType: 'all' }) : Promise.resolve(),
     queryClient.invalidateQueries({ queryKey: exerciseKeys.repository(), refetchType: 'all' }),
   ]);
@@ -56,7 +58,7 @@ export function applyExerciseAttemptToCaches(
 ) {
   const createdAt = attempt.createdAt ?? new Date().toISOString();
 
-  queryClient.setQueryData<{ exercises: Array<{ id: string; attempts: AttemptTotals }> }>(exerciseKeys.repository(), (current) => {
+  queryClient.setQueriesData<{ exercises: Array<{ id: string; attempts: AttemptTotals }> }>({ queryKey: exerciseKeys.repository() }, (current) => {
     if (!current) return current;
     return {
       ...current,

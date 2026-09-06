@@ -7,10 +7,11 @@ type ListPageLayoutProps = {
   filters?: ReactNode;
   countLabel?: string;
   countExtra?: ReactNode;
+  footer?: ReactNode;
   children: ReactNode;
 };
 
-export default function ListPageLayout({ title, description, headerActions, filters, countLabel, countExtra, children }: ListPageLayoutProps) {
+export default function ListPageLayout({ title, description, headerActions, filters, countLabel, countExtra, footer, children }: ListPageLayoutProps) {
   return (
     <div className='px-4 py-8 md:px-8'>
       <header className='border-b border-border pb-6'>
@@ -44,6 +45,8 @@ export default function ListPageLayout({ title, description, headerActions, filt
       ) : null}
 
       {children}
+
+      {footer ? <div className='pt-4'>{footer}</div> : null}
     </div>
   );
 }

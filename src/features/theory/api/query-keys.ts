@@ -1,11 +1,15 @@
 export const theoryKeys = {
   all: () => ['theory'] as const,
   repository: () => [...theoryKeys.all(), 'repository'] as const,
+  repositoryList: (params: { page: number; search: string; topicId?: string }) => [...theoryKeys.repository(), params] as const,
   builderMetadata: () => [...theoryKeys.all(), 'builder-metadata'] as const,
   questions: () => [...theoryKeys.all(), 'questions'] as const,
   question: (id: string) => [...theoryKeys.questions(), id] as const,
   practice: (id: string) => [...theoryKeys.all(), 'practice', id] as const,
   questionDetail: (id: string) => [...theoryKeys.all(), 'question-detail', id] as const,
   browse: () => [...theoryKeys.all(), 'browse'] as const,
+  browseList: (params: { page: number; search: string; topicId?: string; saved: string }) => [...theoryKeys.browse(), 'list', params] as const,
+  browseAll: () => [...theoryKeys.browse(), 'all'] as const,
+  browseAllList: (params: { page: number; search: string; topicId?: string; saved: string }) => [...theoryKeys.browseAll(), params] as const,
   browseQuestion: (id: string) => [...theoryKeys.browse(), 'question', id] as const,
 };

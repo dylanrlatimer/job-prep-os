@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { handleApiError } from '@/lib/api-errors';
-import { CreateSystemExerciseSchema } from '@/features/admin/exercises/api/contracts';
+import { parseListQuery } from '@/common/lib/pagination';
+import { CreateSystemExerciseSchema, SystemExerciseListQuerySchema } from '@/features/admin/exercises/api/contracts';
 import { createSystemExercise } from '@/features/admin/exercises/server/create-system-exercise';
 import { listSystemExercises } from '@/features/admin/exercises/server/list-system-exercises';
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
-    const response = await listSystemExercises();
+    const query = parseListQuery(SystemExerciseListQuerySchema, req.nextUrl.searchParams);
+    const response = await listSystemExercises(query);
     return NextResponse.json(response, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
     return handleApiError(req, error);

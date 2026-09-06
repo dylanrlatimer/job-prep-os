@@ -9,15 +9,17 @@ import AttemptTotals from '@/common/components/AttemptTotals';
 import ConfirmDialog from '@/common/components/ConfirmDialog';
 import ListPageLayout, { ListEmptyState } from '@/common/components/ListPageLayout';
 import ListPageSkeleton from '@/common/components/ListPageSkeleton';
+import ListPagination from '@/common/components/ListPagination';
+import ListRow from '@/common/components/ListRow';
 import PageLoadError from '@/common/components/PageLoadError';
 import Select from '@/common/components/Select';
 import TopicList from '@/common/components/TopicList';
-import { matchesText, matchesTopic } from '@/common/lib/list-filters';
+import { useClampListQuery, useListQueryState } from '@/common/hooks/use-list-query-state';
 import { inputClassName, primaryButtonClassName, secondaryButtonClassName } from '@/common/styles/form';
 import { invalidateRepositoryCaches } from '@/features/theory/api/invalidate-repository-caches';
 import { unsaveRepositoryQuestion } from '@/features/theory/repository/api/mutations';
 import { repositoryQueryOptions } from '@/features/theory/repository/api/queries';
-import type { RepositoryQuestionItem } from '@/features/theory/repository/api/contracts';
+import { RepositoryListQuerySchema, type RepositoryQuestionItem } from '@/features/theory/repository/api/contracts';
 import { useToastStore } from '@/lib/store/use-toast-store';
 import { cn } from '@/lib/cn';
 
@@ -36,30 +38,30 @@ function QuestionRow({ question }: { question: RepositoryQuestionItem }) {
   });
 
   return (
-    <li className='border-b border-border py-4 last:border-b-0'>
-      <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
-        <div className='min-w-0 flex-1'>
-          <Link href={`/theory/${question.id}`} className='text-sm leading-relaxed text-foreground no-underline hover:underline'>
-            {question.question}
-          </Link>
-
-          <div className='mt-2 flex flex-wrap items-center gap-x-3 gap-y-1'>
-            {question.topics.length > 0 ? (
-              <TopicList className='text-xs text-secondary-foreground' topics={question.topics} />
-            ) : (
-              <span className='text-xs text-muted-foreground'>{t('noTopics')}</span>
-            )}
-            <AttemptTotals
-              attempts={question.attempts}
-              incorrectLabel={t('attemptIncorrect', { count: question.attempts.incorrect })}
-              partialLabel={t('attemptPartial', { count: question.attempts.partial })}
-              correctLabel={t('attemptCorrect', { count: question.attempts.correct })}
-              emptyLabel={t('noAttempts')}
-            />
-          </div>
-        </div>
-
-        <div className='flex shrink-0 flex-wrap gap-2 self-start sm:ml-4'>
+    <ListRow
+      title={
+        <Link href={`/theory/${question.id}`} className='text-foreground no-underline hover:underline'>
+          {question.question}
+        </Link>
+      }
+      meta={
+        <>
+          {question.topics.length > 0 ? (
+            <TopicList className='text-xs text-secondary-foreground' topics={question.topics} />
+          ) : (
+            <span className='text-xs text-muted-foreground'>{t('noTopics')}</span>
+          )}
+          <AttemptTotals
+            attempts={question.attempts}
+            incorrectLabel={t('attemptIncorrect', { count: question.attempts.incorrect })}
+            partialLabel={t('attemptPartial', { count: question.attempts.partial })}
+            correctLabel={t('attemptCorrect', { count: question.attempts.correct })}
+            emptyLabel={t('noAttempts')}
+          />
+        </>
+      }
+      actions={
+        <>
           {question.canUnsave ? (
             <button type='button' className={secondaryButtonClassName} onClick={() => setRemoveDialogOpen(true)} disabled={isRemoving}>
               {isRemoving ? t('removing') : t('removeFromRepository')}
@@ -68,9 +70,8 @@ function QuestionRow({ question }: { question: RepositoryQuestionItem }) {
           <Link href={`/theory/${question.id}/practice`} className={primaryButtonClassName}>
             {t('practice')}
           </Link>
-        </div>
-      </div>
-
+        </>
+      }>
       <ConfirmDialog
         open={removeDialogOpen}
         title={t('removeConfirmTitle')}
@@ -82,21 +83,15 @@ function QuestionRow({ question }: { question: RepositoryQuestionItem }) {
         onCancel={() => setRemoveDialogOpen(false)}
         onConfirm={removeQuestion}
       />
-    </li>
+    </ListRow>
   );
 }
 
 export default function TheoryRepositoryPage() {
   const t = useTranslations('TheoryRepositoryPage');
-  const { data, isPending, isError, refetch, isFetching } = useQuery(repositoryQueryOptions);
-
-  const [search, setSearch] = useState('');
-  const [topicId, setTopicId] = useState<string | null>(null);
-
-  const filteredQuestions = useMemo(() => {
-    if (!data) return [];
-    return data.questions.filter((question) => matchesText(question.question, search) && matchesTopic(question, topicId));
-  }, [topicId, data, search]);
+  const { query, setQuery, setPage, searchInput, setSearchInput } = useListQueryState(RepositoryListQuerySchema);
+  const { data, isPending, isError, refetch, isFetching } = useQuery(repositoryQueryOptions(query));
+  useClampListQuery(query.page, data?.totalCount, setPage);
 
   const topicOptions = useMemo(() => {
     if (!data) return [];
@@ -111,7 +106,7 @@ export default function TheoryRepositoryPage() {
     );
   }
 
-  if (isError) {
+  if (isError && !data) {
     return (
       <PageLoadError
         title={t('title')}
@@ -124,8 +119,12 @@ export default function TheoryRepositoryPage() {
     );
   }
 
-  const isEmpty = data.questions.length === 0;
-  const hasNoMatches = !isEmpty && filteredQuestions.length === 0;
+  if (!data) {
+    return null;
+  }
+
+  const isEmpty = data.unfilteredCount === 0;
+  const hasNoMatches = !isEmpty && data.totalCount === 0;
 
   return (
     <AppShell>
@@ -150,8 +149,8 @@ export default function TheoryRepositoryPage() {
                 <input
                   className={inputClassName}
                   type='search'
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
+                  value={searchInput}
+                  onChange={(event) => setSearchInput(event.target.value)}
                   placeholder={t('searchPlaceholder')}
                 />
               </label>
@@ -160,22 +159,23 @@ export default function TheoryRepositoryPage() {
                 <Select
                   className='w-full sm:w-44'
                   aria-label={t('topicFilterLabel')}
-                  value={topicId ?? ''}
-                  onValueChange={(value) => setTopicId(value || null)}
+                  value={query.topicId ?? ''}
+                  onValueChange={(value) => setQuery({ topicId: value || undefined })}
                   options={topicOptions}
                 />
               )}
             </div>
           )
         }
-        countLabel={isEmpty ? t('questionCountEmpty') : t('questionCount', { count: data.questions.length })}
+        countLabel={isEmpty ? t('questionCountEmpty') : t('questionCount', { count: data.totalCount })}
         countExtra={
           isEmpty ? undefined : (
             <button type='button' className={cn(secondaryButtonClassName, 'self-start sm:self-auto')} disabled>
               {t('exportCsv')}
             </button>
           )
-        }>
+        }
+        footer={hasNoMatches || isEmpty ? undefined : <ListPagination page={query.page} totalCount={data.totalCount} onPageChange={setPage} />}>
         {isEmpty ? (
           <ListEmptyState title={t('emptyTitle')} description={t('emptyDescription')}>
             <div className='mt-4 flex flex-wrap gap-2'>
@@ -191,7 +191,7 @@ export default function TheoryRepositoryPage() {
           <ListEmptyState title={t('noMatchesTitle')} description={t('noMatchesDescription')} />
         ) : (
           <ul className='m-0 list-none p-0'>
-            {filteredQuestions.map((question) => (
+            {data.questions.map((question) => (
               <QuestionRow key={question.id} question={question} />
             ))}
           </ul>

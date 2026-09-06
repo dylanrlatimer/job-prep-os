@@ -6,7 +6,16 @@ This project follows loose Semantic Versioning, mostly for the purpose of tracki
 
 ## [Unreleased]
 
-I'll track work in between releases here.
+## [0.2.0] - 2026-09-06
+
+### Added
+
+- Added password recovery and reset functionality.
+- Added pagination throughout the application.
+
+### Changed
+
+- Moved filter state into URL parameters.
 
 ## [0.1.0] - 2026-09-02
 

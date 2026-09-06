@@ -58,7 +58,7 @@ export default function AuthModal({ open, next, onClose }: AuthModalProps) {
           onClick={onClose}>
           <X size={16} strokeWidth={1.75} aria-hidden='true' />
         </button>
-        <AuthForm headingId={titleId} headingLevel='h2' headingClassName='pr-8' redirectTo={next} onSuccess={handleSuccess} />
+        <AuthForm headingId={titleId} headingLevel='h2' headingClassName='pr-8' redirectTo={next} onSuccess={handleSuccess} onForgotPasswordClick={onClose} />
       </div>
     </div>
   );

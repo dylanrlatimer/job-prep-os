@@ -72,8 +72,8 @@ export default function PracticeHomePage() {
         ) : (
           <ul className='m-0 list-none p-0'>
             {data.sessions.map((session) => (
-              <li key={session.id} className='border-b border-border py-4 last:border-b-0'>
-                <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
+              <li key={session.id} className='border-b border-border py-4'>
+                <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
                   <div className='min-w-0 flex-1'>
                     <p className='m-0 text-sm text-foreground'>
                       {t('sessionTitle', {
@@ -86,7 +86,7 @@ export default function PracticeHomePage() {
                       <span>{t('progress', { answered: session.progress.answered, total: session.progress.total })}</span>
                     </div>
                   </div>
-                  <Link href={`/practice/sessions/${session.id}`} className={primaryButtonClassName}>
+                  <Link href={`/practice/sessions/${session.id}`} className={`${primaryButtonClassName} shrink-0 self-start sm:self-auto`}>
                     {t('resume')}
                   </Link>
                 </div>

@@ -1,5 +1,7 @@
 import { z } from 'zod';
 import type { JSONContent } from '@tiptap/core';
+import { ListPageSchema, optionalListSearchSchema, optionalListTopicIdSchema, type ListPageMeta } from '@/common/lib/pagination';
+import type { BrowseSavedFilter } from '@/features/theory/browse/lib/browse-filters';
 import type { ExerciseTopic } from '@/features/exercises/repository/api/contracts';
 
 export type BrowseExerciseItem = {
@@ -11,10 +13,20 @@ export type BrowseExerciseItem = {
   createdAt: string;
 };
 
+export const BrowseExerciseListQuerySchema = ListPageSchema.extend({
+  search: optionalListSearchSchema,
+  topicId: optionalListTopicIdSchema,
+  saved: z.enum(['all', 'new', 'saved']).optional().default('new'),
+});
+
+export type BrowseExerciseListQuery = Omit<z.infer<typeof BrowseExerciseListQuerySchema>, 'saved'> & {
+  saved: BrowseSavedFilter;
+};
+
 export type GetBrowseExercisesResponse = {
   exercises: BrowseExerciseItem[];
   topics: ExerciseTopic[];
-};
+} & ListPageMeta;
 
 export type SaveExerciseResponse = {
   exerciseId: string;

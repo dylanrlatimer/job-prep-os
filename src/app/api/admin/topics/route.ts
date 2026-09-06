@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { handleApiError } from '@/lib/api-errors';
-import { TopicInputSchema } from '@/features/admin/topics/api/contracts';
+import { parseListQuery } from '@/common/lib/pagination';
+import { AdminTopicListQuerySchema, TopicInputSchema } from '@/features/admin/topics/api/contracts';
 import { createTopic } from '@/features/admin/topics/server/create-topic';
 import { listAdminTopics } from '@/features/admin/topics/server/list-topics';
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
-    const response = await listAdminTopics();
+    const query = parseListQuery(AdminTopicListQuerySchema, req.nextUrl.searchParams);
+    const response = await listAdminTopics(query);
     return NextResponse.json(response, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
     return handleApiError(req, error);
