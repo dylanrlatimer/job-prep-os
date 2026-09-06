@@ -10,6 +10,7 @@ import ConfirmDialog from '@/common/components/ConfirmDialog';
 import ListPageLayout, { ListEmptyState } from '@/common/components/ListPageLayout';
 import ListPageSkeleton from '@/common/components/ListPageSkeleton';
 import ListPagination from '@/common/components/ListPagination';
+import ListRow from '@/common/components/ListRow';
 import PageLoadError from '@/common/components/PageLoadError';
 import Select from '@/common/components/Select';
 import TopicList from '@/common/components/TopicList';
@@ -37,30 +38,30 @@ function QuestionRow({ question }: { question: RepositoryQuestionItem }) {
   });
 
   return (
-    <li className='border-b border-border py-4 last:border-b-0'>
-      <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
-        <div className='min-w-0 flex-1'>
-          <Link href={`/theory/${question.id}`} className='text-sm leading-relaxed text-foreground no-underline hover:underline'>
-            {question.question}
-          </Link>
-
-          <div className='mt-2 flex flex-wrap items-center gap-x-3 gap-y-1'>
-            {question.topics.length > 0 ? (
-              <TopicList className='text-xs text-secondary-foreground' topics={question.topics} />
-            ) : (
-              <span className='text-xs text-muted-foreground'>{t('noTopics')}</span>
-            )}
-            <AttemptTotals
-              attempts={question.attempts}
-              incorrectLabel={t('attemptIncorrect', { count: question.attempts.incorrect })}
-              partialLabel={t('attemptPartial', { count: question.attempts.partial })}
-              correctLabel={t('attemptCorrect', { count: question.attempts.correct })}
-              emptyLabel={t('noAttempts')}
-            />
-          </div>
-        </div>
-
-        <div className='flex shrink-0 flex-wrap gap-2 self-start sm:ml-4'>
+    <ListRow
+      title={
+        <Link href={`/theory/${question.id}`} className='text-foreground no-underline hover:underline'>
+          {question.question}
+        </Link>
+      }
+      meta={
+        <>
+          {question.topics.length > 0 ? (
+            <TopicList className='text-xs text-secondary-foreground' topics={question.topics} />
+          ) : (
+            <span className='text-xs text-muted-foreground'>{t('noTopics')}</span>
+          )}
+          <AttemptTotals
+            attempts={question.attempts}
+            incorrectLabel={t('attemptIncorrect', { count: question.attempts.incorrect })}
+            partialLabel={t('attemptPartial', { count: question.attempts.partial })}
+            correctLabel={t('attemptCorrect', { count: question.attempts.correct })}
+            emptyLabel={t('noAttempts')}
+          />
+        </>
+      }
+      actions={
+        <>
           {question.canUnsave ? (
             <button type='button' className={secondaryButtonClassName} onClick={() => setRemoveDialogOpen(true)} disabled={isRemoving}>
               {isRemoving ? t('removing') : t('removeFromRepository')}
@@ -69,9 +70,8 @@ function QuestionRow({ question }: { question: RepositoryQuestionItem }) {
           <Link href={`/theory/${question.id}/practice`} className={primaryButtonClassName}>
             {t('practice')}
           </Link>
-        </div>
-      </div>
-
+        </>
+      }>
       <ConfirmDialog
         open={removeDialogOpen}
         title={t('removeConfirmTitle')}
@@ -83,7 +83,7 @@ function QuestionRow({ question }: { question: RepositoryQuestionItem }) {
         onCancel={() => setRemoveDialogOpen(false)}
         onConfirm={removeQuestion}
       />
-    </li>
+    </ListRow>
   );
 }
 

@@ -84,7 +84,7 @@ export default function SessionHistoryDetailPage({ sessionId }: SessionHistoryDe
 
         <ol className='mx-auto mt-8 max-w-2xl list-none p-0'>
           {data.items.map((item) => (
-            <li key={item.id} className='border-b border-border py-4 last:border-b-0'>
+            <li key={item.id} className='border-b border-border py-4'>
               <p className='m-0 text-xs text-muted-foreground'>
                 {t('itemPosition', { position: item.position + 1 })} · {item.contentType === 'theory' ? t('typeTheory') : t('typeExercise')}
               </p>

@@ -114,8 +114,8 @@ function AdminTopicsContent() {
         ) : (
           <ul className='m-0 list-none p-0'>
             {data.topics.map((topic) => (
-              <li key={topic.id} className='border-b border-border py-4 last:border-b-0'>
-                <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
+              <li key={topic.id} className='border-b border-border py-4'>
+                <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
                   <div className='min-w-0 flex-1'>
                     <p className='m-0 flex items-center text-sm leading-relaxed text-foreground'>
                       <TopicIcon iconKey={topic.iconKey} className='mr-2' />
@@ -128,7 +128,7 @@ function AdminTopicsContent() {
                     </div>
                   </div>
 
-                  <Link href={`/admin/topics/${topic.id}/edit`} className={cn(secondaryButtonClassName, 'shrink-0 self-start sm:ml-4')}>
+                  <Link href={`/admin/topics/${topic.id}/edit`} className={cn(secondaryButtonClassName, 'shrink-0 self-start sm:ml-4 sm:self-auto')}>
                     {t('edit')}
                   </Link>
                 </div>

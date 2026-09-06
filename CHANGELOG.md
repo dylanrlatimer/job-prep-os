@@ -6,7 +6,9 @@ This project follows loose Semantic Versioning, mostly for the purpose of tracki
 
 ## [Unreleased]
 
-I'll track work in between releases here.
+- Added forgot password / reset password flow.
+- Added app-wide pagination.
+- Moved all filters into URL parameters.
 
 ## [0.1.0] - 2026-09-02
 

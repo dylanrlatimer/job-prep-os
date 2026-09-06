@@ -18,12 +18,12 @@ import { BrowsePageQuerySchema, type BrowseKind, type BrowseSavedFilter } from '
 import ListPageLayout, { ListEmptyState } from '@/common/components/ListPageLayout';
 import ListPageSkeleton from '@/common/components/ListPageSkeleton';
 import ListPagination from '@/common/components/ListPagination';
+import ListRow from '@/common/components/ListRow';
 import PageLoadError from '@/common/components/PageLoadError';
 import { useClampListQuery, useListQueryState } from '@/common/hooks/use-list-query-state';
 import { inputClassName, secondaryButtonClassName } from '@/common/styles/form';
 import { useRequireAuth } from '@/features/auth/hooks/use-require-auth';
 import { useToastStore } from '@/lib/store/use-toast-store';
-import { cn } from '@/lib/cn';
 
 function BrowseQuestionRow({ question, showType }: { question: BrowseQuestionItem; showType: boolean }) {
   const t = useTranslations('BrowsePage');
@@ -38,29 +38,29 @@ function BrowseQuestionRow({ question, showType }: { question: BrowseQuestionIte
     },
   });
 
+  const labels = [showType ? t('typeQuestion') : null, question.isSystem ? t('appLabel') : null].filter(Boolean);
+
   return (
-    <li className='border-b border-border py-4 last:border-b-0'>
-      <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
-        <div className='min-w-0 flex-1'>
-          <Link href={`/browse/questions/${question.id}`} className='text-sm leading-relaxed text-foreground no-underline hover:underline'>
-            {question.question}
-          </Link>
-
-          <div className='mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs'>
-            {showType ? <span className='text-secondary-foreground'>{t('typeQuestion')}</span> : null}
-            {question.isSystem ? <span className='text-secondary-foreground'>{t('appLabel')}</span> : null}
-            {question.topics.length > 0 ? (
-              <TopicList className='text-secondary-foreground' topics={question.topics} />
-            ) : (
-              <span className='text-muted-foreground'>{t('noTopics')}</span>
-            )}
-            {question.isSaved ? <span className='text-muted-foreground'>{t('saved')}</span> : null}
-          </div>
-        </div>
-
+    <ListRow
+      title={
+        <Link href={`/browse/questions/${question.id}`} className='text-foreground no-underline hover:underline'>
+          {question.question}
+        </Link>
+      }
+      meta={
+        <>
+          {labels.length > 0 ? <span className='text-xs text-secondary-foreground'>{labels.join(' · ')}</span> : null}
+          {question.topics.length > 0 ? (
+            <TopicList className='text-xs text-secondary-foreground' topics={question.topics} />
+          ) : (
+            <span className='text-xs text-muted-foreground'>{t('noTopics')}</span>
+          )}
+        </>
+      }
+      actions={
         <button
           type='button'
-          className={cn(secondaryButtonClassName, 'shrink-0 self-start sm:ml-4')}
+          className={secondaryButtonClassName}
           onClick={() => {
             if (!requireAuth()) return;
             saveQuestion();
@@ -68,8 +68,8 @@ function BrowseQuestionRow({ question, showType }: { question: BrowseQuestionIte
           disabled={question.isSaved || isPending}>
           {question.isSaved ? t('saved') : isPending ? t('saving') : t('addQuestionToRepository')}
         </button>
-      </div>
-    </li>
+      }
+    />
   );
 }
 
@@ -86,29 +86,29 @@ function BrowseExerciseRow({ exercise, showType }: { exercise: BrowseExerciseIte
     },
   });
 
+  const labels = [showType ? t('typeExercise') : null, exercise.isSystem ? t('appLabel') : null].filter(Boolean);
+
   return (
-    <li className='border-b border-border py-4 last:border-b-0'>
-      <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
-        <div className='min-w-0 flex-1'>
-          <Link href={`/browse/exercises/${exercise.id}`} className='text-sm leading-relaxed text-foreground no-underline hover:underline'>
-            {exercise.title}
-          </Link>
-
-          <div className='mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs'>
-            {showType ? <span className='text-secondary-foreground'>{t('typeExercise')}</span> : null}
-            {exercise.isSystem ? <span className='text-secondary-foreground'>{t('appLabel')}</span> : null}
-            {exercise.topics.length > 0 ? (
-              <TopicList className='text-secondary-foreground' topics={exercise.topics} />
-            ) : (
-              <span className='text-muted-foreground'>{t('noTopics')}</span>
-            )}
-            {exercise.isSaved ? <span className='text-muted-foreground'>{t('saved')}</span> : null}
-          </div>
-        </div>
-
+    <ListRow
+      title={
+        <Link href={`/browse/exercises/${exercise.id}`} className='text-foreground no-underline hover:underline'>
+          {exercise.title}
+        </Link>
+      }
+      meta={
+        <>
+          {labels.length > 0 ? <span className='text-xs text-secondary-foreground'>{labels.join(' · ')}</span> : null}
+          {exercise.topics.length > 0 ? (
+            <TopicList className='text-xs text-secondary-foreground' topics={exercise.topics} />
+          ) : (
+            <span className='text-xs text-muted-foreground'>{t('noTopics')}</span>
+          )}
+        </>
+      }
+      actions={
         <button
           type='button'
-          className={cn(secondaryButtonClassName, 'shrink-0 self-start sm:ml-4')}
+          className={secondaryButtonClassName}
           onClick={() => {
             if (!requireAuth()) return;
             saveExerciseToLibrary();
@@ -116,8 +116,8 @@ function BrowseExerciseRow({ exercise, showType }: { exercise: BrowseExerciseIte
           disabled={exercise.isSaved || isPending}>
           {exercise.isSaved ? t('saved') : isPending ? t('saving') : t('addExerciseToRepository')}
         </button>
-      </div>
-    </li>
+      }
+    />
   );
 }
 

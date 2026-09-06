@@ -130,23 +130,25 @@ function AdminExercisesContent() {
         ) : (
           <ul className='m-0 list-none p-0'>
             {data.exercises.map((exercise) => (
-              <li key={exercise.id} className='border-b border-border py-4 last:border-b-0'>
-                <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
+              <li key={exercise.id} className='border-b border-border py-4'>
+                <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
                   <div className='min-w-0 flex-1'>
                     <Link href={`/admin/exercises/${exercise.id}`} className='text-sm leading-relaxed text-foreground no-underline hover:underline'>
                       {exercise.title}
                     </Link>
-                    <div className='mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs'>
-                      <span className={exercise.isPublic ? 'text-success' : 'text-muted-foreground'}>{exercise.isPublic ? t('published') : t('draft')}</span>
+                    <div className='mt-2 flex flex-wrap items-center gap-x-3 gap-y-1'>
+                      <span className={`text-xs ${exercise.isPublic ? 'text-success' : 'text-muted-foreground'}`}>
+                        {exercise.isPublic ? t('published') : t('draft')}
+                      </span>
                       {exercise.topics.length > 0 ? (
-                        <TopicList className='text-secondary-foreground' topics={exercise.topics} />
+                        <TopicList className='text-xs text-secondary-foreground' topics={exercise.topics} />
                       ) : (
-                        <span className='text-muted-foreground'>{t('noTopics')}</span>
+                        <span className='text-xs text-muted-foreground'>{t('noTopics')}</span>
                       )}
                     </div>
                   </div>
 
-                  <Link href={`/admin/exercises/${exercise.id}/edit`} className={cn(secondaryButtonClassName, 'shrink-0 self-start sm:ml-4')}>
+                  <Link href={`/admin/exercises/${exercise.id}/edit`} className={cn(secondaryButtonClassName, 'shrink-0 self-start sm:ml-4 sm:self-auto')}>
                     {t('edit')}
                   </Link>
                 </div>

@@ -46,7 +46,7 @@ export default function ListPageLayout({ title, description, headerActions, filt
 
       {children}
 
-      {footer ? <div className='mt-4 border-t border-border pt-4'>{footer}</div> : null}
+      {footer ? <div className='pt-4'>{footer}</div> : null}
     </div>
   );
 }

@@ -67,7 +67,7 @@ export default function SessionHistoryPage() {
           ) : (
             <ul className='m-0 list-none p-0'>
               {data.sessions.map((session) => (
-                <li key={session.id} className='border-b border-border py-4 last:border-b-0'>
+                <li key={session.id} className='border-b border-border py-4'>
                   <Link href={`/practice/history/${session.id}`} className='block text-sm text-foreground no-underline hover:underline'>
                     {t('sessionTitle', {
                       date: formatSessionDate(session.createdAt),
