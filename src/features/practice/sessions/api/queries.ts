@@ -1,11 +1,13 @@
-import { queryOptions } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/api-client';
+import { keepPreviousData, queryOptions } from '@tanstack/react-query';
+import { apiPost, apiRequest } from '@/lib/api-client';
 import { practiceKeys } from '@/features/practice/api/query-keys';
 import type {
+  CreateSessionInput,
   GetSessionResponse,
   GetSessionSetupResponse,
   ListActiveSessionsResponse,
   ListCompletedSessionsResponse,
+  PreviewSessionResponse,
   SessionHistoryDetailResponse,
   SessionItemReviewResponse,
 } from './contracts';
@@ -14,6 +16,14 @@ export const sessionSetupQueryOptions = queryOptions({
   queryKey: practiceKeys.setup(),
   queryFn: () => apiRequest<GetSessionSetupResponse>('/api/practice/sessions/setup'),
 });
+
+export const sessionPreviewQueryOptions = (input: CreateSessionInput | null) =>
+  queryOptions({
+    queryKey: practiceKeys.preview(input ?? { exerciseRatio: 0, topics: [] }),
+    queryFn: () => apiPost<PreviewSessionResponse>('/api/practice/sessions/preview', input!),
+    enabled: input !== null,
+    placeholderData: keepPreviousData,
+  });
 
 export const activeSessionsQueryOptions = queryOptions({
   queryKey: practiceKeys.sessions(),

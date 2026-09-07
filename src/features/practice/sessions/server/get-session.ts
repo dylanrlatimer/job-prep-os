@@ -17,7 +17,6 @@ import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
 import { parseTiptapDocument } from '@/lib/tiptap/parse-document';
 import { assertSessionOwnedBy } from '@/features/practice/server/access';
 import type {
-  ContentFilter,
   ExerciseSessionItem,
   GetSessionResponse,
   SessionItem,
@@ -25,14 +24,6 @@ import type {
   SessionTopic,
   TheorySessionItem,
 } from '@/features/practice/sessions/api/contracts';
-
-function asContentFilter(value: string): ContentFilter {
-  if (value === 'theory' || value === 'exercises') {
-    return value;
-  }
-
-  return 'all';
-}
 
 async function loadTheoryItem(item: { id: string; position: number; contentId: string }): Promise<TheorySessionItem | null> {
   const [question] = await db
@@ -153,8 +144,6 @@ export async function getSession(sessionId: string): Promise<GetSessionResponse>
         id: practiceSessionsInApp.id,
         profileId: practiceSessionsInApp.profileId,
         status: practiceSessionsInApp.status,
-        topicIds: practiceSessionsInApp.topicIds,
-        contentFilter: practiceSessionsInApp.contentFilter,
       })
       .from(practiceSessionsInApp)
       .where(eq(practiceSessionsInApp.id, sessionId))
@@ -181,8 +170,6 @@ export async function getSession(sessionId: string): Promise<GetSessionResponse>
       return {
         id: session.id,
         status: 'completed',
-        topicIds: session.topicIds,
-        contentFilter: asContentFilter(session.contentFilter),
         progress,
         currentItem: null,
         unavailableItemId: null,
@@ -211,8 +198,6 @@ export async function getSession(sessionId: string): Promise<GetSessionResponse>
       return {
         id: session.id,
         status: session.status,
-        topicIds: session.topicIds,
-        contentFilter: asContentFilter(session.contentFilter),
         progress,
         currentItem: null,
         unavailableItemId: null,
@@ -224,8 +209,6 @@ export async function getSession(sessionId: string): Promise<GetSessionResponse>
     return {
       id: session.id,
       status: session.status,
-      topicIds: session.topicIds,
-      contentFilter: asContentFilter(session.contentFilter),
       progress,
       currentItem,
       unavailableItemId: currentItem ? null : pendingItem.id,

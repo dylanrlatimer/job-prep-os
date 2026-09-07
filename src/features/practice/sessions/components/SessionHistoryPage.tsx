@@ -9,14 +9,7 @@ import ListPageLayout, { ListEmptyState } from '@/common/components/ListPageLayo
 import ListPageSkeleton from '@/common/components/ListPageSkeleton';
 import PageLoadError from '@/common/components/PageLoadError';
 import { completedSessionsQueryOptions } from '@/features/practice/sessions/api/queries';
-import type { ContentFilter } from '@/features/practice/sessions/api/contracts';
 import { formatSessionDate, sessionTopicLabel } from '@/features/practice/sessions/lib/session-title';
-
-function contentFilterLabel(filter: ContentFilter, t: (key: string) => string) {
-  if (filter === 'theory') return t('contentFilterTheory');
-  if (filter === 'exercises') return t('contentFilterExercises');
-  return t('contentFilterAll');
-}
 
 export default function SessionHistoryPage() {
   const t = useTranslations('SessionHistoryPage');
@@ -71,12 +64,12 @@ export default function SessionHistoryPage() {
                   <Link href={`/practice/history/${session.id}`} className='block text-sm text-foreground no-underline hover:underline'>
                     {t('sessionTitle', {
                       date: formatSessionDate(session.createdAt),
-                      topics: sessionTopicLabel(session.topicNames, t('topicNamesAll')),
+                      topics: sessionTopicLabel(session.topics, t('topicNamesEmpty')),
                     })}
                   </Link>
                   <div className='mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-secondary-foreground'>
                     <span>{formatDate(session.completedAt)}</span>
-                    <span>{contentFilterLabel(session.contentFilter, t)}</span>
+                    <span>{t('mixLabel', { ratio: session.exerciseRatio })}</span>
                     <span>
                       {t('resultTotals', {
                         incorrect: session.result.incorrect,

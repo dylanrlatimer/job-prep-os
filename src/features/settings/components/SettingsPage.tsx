@@ -9,7 +9,8 @@ import { Link, useRouter } from '@/i18n/navigation';
 import { signOut } from '@/features/auth/api/mutations';
 import { resetClientSession } from '@/features/auth/lib/reset-client-session';
 import { settingsQueryOptions } from '@/features/settings/api/queries';
-import { updateDisplayName } from '@/features/settings/api/mutations';
+import { updateSettings } from '@/features/settings/api/mutations';
+import { practiceKeys } from '@/features/practice/api/query-keys';
 import { useToastStore } from '@/lib/store/use-toast-store';
 import { settingsKeys } from '@/features/settings/api/query-keys';
 import {
@@ -28,17 +29,20 @@ export default function SettingsPage() {
 
   const { data, isPending } = useQuery(settingsQueryOptions);
   const [displayName, setDisplayName] = useState('');
+  const [exerciseRatio, setExerciseRatio] = useState(60);
 
   useEffect(() => {
     if (data) {
       setDisplayName(data.displayName ?? '');
+      setExerciseRatio(data.exerciseRatio);
     }
   }, [data]);
 
-  const { mutate: saveDisplayName, isPending: isSaving } = useMutation({
-    mutationFn: updateDisplayName,
+  const { mutate: saveSettings, isPending: isSaving } = useMutation({
+    mutationFn: updateSettings,
     onSuccess: (response) => {
       queryClient.setQueryData(settingsKeys.detail(), response);
+      void queryClient.invalidateQueries({ queryKey: practiceKeys.setup() });
       useToastStore.getState().addToast(t('saveSuccess'), 'success');
     },
   });
@@ -53,7 +57,7 @@ export default function SettingsPage() {
 
   const handleSubmit = (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
-    saveDisplayName({ displayName });
+    saveSettings({ displayName, exerciseRatio });
   };
 
   if (!data && isPending) {
@@ -82,9 +86,29 @@ export default function SettingsPage() {
             />
           </label>
 
-          <label className='mb-6 block'>
+          <label className='mb-4 block'>
             <span className='mb-1.5 block text-xs text-secondary-foreground'>{t('emailLabel')}</span>
             <input className={readOnlyInputClassName} type='email' value={data?.email ?? ''} readOnly tabIndex={-1} aria-readonly='true' />
+          </label>
+
+          <label className='mb-6 block'>
+            <span className='mb-1.5 block text-xs text-secondary-foreground'>{t('exerciseRatioLabel')}</span>
+            <input
+              className={inputClassName}
+              type='number'
+              min={0}
+              max={100}
+              step={1}
+              value={exerciseRatio}
+              onChange={(e) => {
+                const next = Number(e.target.value);
+                if (!Number.isFinite(next)) {
+                  return;
+                }
+                setExerciseRatio(Math.min(100, Math.max(0, Math.round(next))));
+              }}
+            />
+            <span className='mt-1.5 block text-xs text-muted-foreground'>{t('exerciseRatioHint', { questions: 100 - exerciseRatio })}</span>
           </label>
 
           <button type='submit' className={cn(primaryButtonClassName, 'w-full')} disabled={isSaving}>

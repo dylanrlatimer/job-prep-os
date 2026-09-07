@@ -1,20 +1,25 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import AppShell from '@/common/components/AppShell';
 import BackLink from '@/common/components/BackLink';
 import PageLoadError from '@/common/components/PageLoadError';
-import TopicsPickerField from '@/common/components/TopicsPickerField';
-import { primaryButtonClassName, secondaryButtonClassName } from '@/common/styles/form';
+import { useDebouncedValue } from '@/common/hooks/use-debounced-value';
+import { inputClassName, primaryButtonClassName, secondaryButtonClassName } from '@/common/styles/form';
 import { invalidatePracticeSessions } from '@/features/practice/api/invalidate-caches';
 import { createSession } from '@/features/practice/sessions/api/mutations';
-import { sessionSetupQueryOptions } from '@/features/practice/sessions/api/queries';
-import type { ContentFilter } from '@/features/practice/sessions/api/contracts';
+import { sessionPreviewQueryOptions, sessionSetupQueryOptions } from '@/features/practice/sessions/api/queries';
+import type { CreateSessionInput, SessionSetupTopic } from '@/features/practice/sessions/api/contracts';
 import { Link } from '@/i18n/navigation';
 import { cn } from '@/lib/cn';
+import SessionTopicAllocator from './SessionTopicAllocator';
+
+function expectedExercises(requested: number, exerciseRatio: number) {
+  return Math.round((requested * exerciseRatio) / 100);
+}
 
 export default function NewSessionPage() {
   const t = useTranslations('NewSessionPage');
@@ -22,40 +27,58 @@ export default function NewSessionPage() {
   const queryClient = useQueryClient();
   const { data, isPending, isError, refetch, isFetching } = useQuery(sessionSetupQueryOptions);
 
-  const [allTopics, setAllTopics] = useState(true);
-  const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>([]);
-  const [contentFilter, setContentFilter] = useState<ContentFilter>('all');
+  const [exerciseRatio, setExerciseRatio] = useState<number | null>(null);
+  const [counts, setCounts] = useState<Record<string, number>>({});
+  const [applyAllValue, setApplyAllValue] = useState(10);
 
-  const topicIds = data?.topics.map((topic) => topic.id) ?? [];
+  useEffect(() => {
+    if (!data) {
+      return;
+    }
 
-  const pickerSelectedIds = useMemo(() => {
-    if (allTopics) return topicIds;
-    return selectedTopicIds;
-  }, [allTopics, selectedTopicIds, topicIds]);
+    setExerciseRatio((current) => (current === null ? data.exerciseRatio : current));
+    setCounts((current) => {
+      const next: Record<string, number> = {};
+      for (const topic of data.topics) {
+        const max = topic.theoryCount + topic.exerciseCount;
+        next[topic.id] = Math.min(current[topic.id] ?? 0, max);
+      }
+      return next;
+    });
+  }, [data]);
+
+  const allocations = useMemo(
+    () =>
+      Object.entries(counts)
+        .filter(([, count]) => count > 0)
+        .map(([topicId, count]) => ({ topicId, count })),
+    [counts],
+  );
+
+  const previewInput = useMemo<CreateSessionInput | null>(() => {
+    if (exerciseRatio === null || allocations.length === 0) {
+      return null;
+    }
+
+    return { exerciseRatio, topics: allocations };
+  }, [allocations, exerciseRatio]);
+
+  const debouncedPreviewInput = useDebouncedValue(previewInput, 200);
+  const previewQuery = useQuery(sessionPreviewQueryOptions(debouncedPreviewInput));
 
   const { mutate: startSession, isPending: isStarting } = useMutation({
-    mutationFn: () =>
-      createSession({
-        topicIds: allTopics ? [] : selectedTopicIds,
-        contentFilter,
-      }),
+    mutationFn: () => {
+      if (!previewInput) {
+        throw new Error('noTopicsSelected');
+      }
+
+      return createSession(previewInput);
+    },
     onSuccess: async (response) => {
       await invalidatePracticeSessions(queryClient);
       router.push(`/practice/sessions/${response.id}`);
     },
   });
-
-  const toggleTopic = (topicId: string) => {
-    if (allTopics) {
-      setAllTopics(false);
-      setSelectedTopicIds(topicIds.filter((id) => id !== topicId));
-      return;
-    }
-
-    const next = selectedTopicIds.includes(topicId) ? selectedTopicIds.filter((id) => id !== topicId) : [...selectedTopicIds, topicId];
-    setSelectedTopicIds(next);
-    setAllTopics(topicIds.length > 0 && next.length === topicIds.length);
-  };
 
   if (isPending) {
     return (
@@ -67,7 +90,7 @@ export default function NewSessionPage() {
     );
   }
 
-  if (isError) {
+  if (isError || !data) {
     return (
       <PageLoadError
         title={t('title')}
@@ -80,7 +103,37 @@ export default function NewSessionPage() {
     );
   }
 
-  const canStart = allTopics || selectedTopicIds.length > 0 || data.topics.length === 0;
+  const mix = exerciseRatio ?? data.exerciseRatio;
+  const preview = previewQuery.data;
+  const canStart = allocations.length > 0 && (preview?.total ?? 0) > 0;
+  const startBlocked = !canStart || isStarting || (previewQuery.isFetching && !preview);
+
+  const topicById = new Map(data.topics.map((topic) => [topic.id, topic]));
+  const shortfalls =
+    preview?.topics.flatMap((fill) => {
+      const topic = topicById.get(fill.topicId);
+      if (!topic) {
+        return [];
+      }
+
+      if (fill.filled !== fill.requested) {
+        return [t('shortfallCount', { name: topic.name, filled: fill.filled, requested: fill.requested })];
+      }
+
+      if (fill.exercises !== expectedExercises(fill.requested, mix)) {
+        return [t('shortfallMix', { name: topic.name, exercises: fill.exercises, questions: fill.theory })];
+      }
+
+      return [];
+    }) ?? [];
+
+  const applyToAll = () => {
+    const next: Record<string, number> = {};
+    for (const topic of data.topics) {
+      next[topic.id] = Math.min(applyAllValue, topic.theoryCount + topic.exerciseCount);
+    }
+    setCounts(next);
+  };
 
   return (
     <AppShell>
@@ -93,67 +146,82 @@ export default function NewSessionPage() {
         </header>
 
         <div className='mx-auto mt-8 max-w-2xl space-y-6'>
+          <label className='block'>
+            <span className='mb-1.5 block text-xs text-secondary-foreground'>{t('mixLabel')}</span>
+            <input
+              className={cn(inputClassName, 'w-24')}
+              type='number'
+              min={0}
+              max={100}
+              step={1}
+              value={mix}
+              onChange={(event) => {
+                const next = Number(event.target.value);
+                if (!Number.isFinite(next)) {
+                  return;
+                }
+                setExerciseRatio(Math.min(100, Math.max(0, Math.round(next))));
+              }}
+            />
+            <span className='mt-1.5 block text-xs text-muted-foreground'>{t('mixHint', { questions: 100 - mix })}</span>
+          </label>
+
+          <SessionTopicAllocator
+            topics={data.topics}
+            counts={counts}
+            onCountChange={(topicId, count) => {
+              setCounts((current) => ({ ...current, [topicId]: count }));
+            }}
+            labels={{
+              fieldLabel: t('topicsLabel'),
+              searchLabel: t('searchTopics'),
+              searchPlaceholder: t('searchTopicsPlaceholder'),
+              noTopicsMessage: t('noTopicsAvailable'),
+              noResultsMessage: t('noTopicResults'),
+              inventory: (topic: SessionSetupTopic) => t('inventory', { questions: topic.theoryCount, exercises: topic.exerciseCount }),
+            }}
+          />
+
           {data.topics.length > 0 ? (
-            <div>
-              <label className='mb-3 flex cursor-pointer items-center gap-2 text-sm text-foreground'>
-                <input
-                  type='checkbox'
-                  className='size-3.5 cursor-pointer accent-primary'
-                  checked={allTopics}
-                  onChange={(event) => {
-                    setAllTopics(event.target.checked);
-                    setSelectedTopicIds(event.target.checked ? topicIds : []);
-                  }}
-                />
-                {t('allTopics')}
-              </label>
-
-              <TopicsPickerField
-                topics={data.topics}
-                selectedIds={pickerSelectedIds}
-                onToggle={toggleTopic}
-                labels={{
-                  fieldLabel: t('topicsLabel'),
-                  searchLabel: t('searchTopics'),
-                  searchPlaceholder: t('searchTopicsPlaceholder'),
-                  noTopicsMessage: t('noTopicsAvailable'),
-                  noResultsMessage: t('noTopicResults'),
+            <div className='flex flex-wrap items-center gap-2'>
+              <input
+                className={cn(inputClassName, 'w-16 px-2 py-1 text-right')}
+                type='number'
+                min={0}
+                max={200}
+                step={1}
+                value={applyAllValue}
+                onChange={(event) => {
+                  const next = Number(event.target.value);
+                  if (!Number.isFinite(next)) {
+                    return;
+                  }
+                  setApplyAllValue(Math.min(200, Math.max(0, Math.round(next))));
                 }}
+                aria-label={t('applyToAllLabel')}
               />
+              <button type='button' className={secondaryButtonClassName} onClick={applyToAll}>
+                {t('applyToAll')}
+              </button>
             </div>
-          ) : (
-            <p className='m-0 text-sm text-muted-foreground'>{t('noTopicsAvailable')}</p>
-          )}
+          ) : null}
 
-          <fieldset className='m-0 mb-6 border-0 p-0'>
-            <legend className='mb-2 block text-xs text-secondary-foreground'>{t('contentFilterLabel')}</legend>
-            <div className='flex flex-col gap-2 sm:flex-row sm:gap-6'>
-              {(
-                [
-                  ['all', 'allContent'],
-                  ['theory', 'theoryOnly'],
-                  ['exercises', 'exercisesOnly'],
-                ] as const
-              ).map(([value, labelKey]) => (
-                <label key={value} className='flex cursor-pointer items-center gap-2 text-sm text-foreground'>
-                  <input
-                    type='radio'
-                    name='contentFilter'
-                    className='size-3.5 cursor-pointer accent-primary'
-                    checked={contentFilter === value}
-                    onChange={() => setContentFilter(value)}
-                  />
-                  {t(labelKey)}
-                </label>
-              ))}
-            </div>
-          </fieldset>
+          <div className='space-y-1 text-sm text-muted-foreground'>
+            <p className='m-0'>
+              {preview ? t('previewSummary', { total: preview.total, exercises: preview.exercises, questions: preview.theory }) : t('previewEmpty')}
+            </p>
+            {shortfalls.map((line) => (
+              <p key={line} className='m-0 text-xs'>
+                {line}
+              </p>
+            ))}
+          </div>
 
           <div className='flex flex-col-reverse gap-2 border-t border-border pt-6 sm:flex-row sm:justify-end'>
             <Link href='/practice' className={cn(secondaryButtonClassName, 'text-center')}>
               {t('cancel')}
             </Link>
-            <button type='button' className={primaryButtonClassName} disabled={!canStart || isStarting} onClick={() => startSession()}>
+            <button type='button' className={primaryButtonClassName} disabled={startBlocked} onClick={() => startSession()}>
               {isStarting ? t('starting') : t('startSession')}
             </button>
           </div>

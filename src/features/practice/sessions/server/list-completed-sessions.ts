@@ -5,16 +5,8 @@ import { db } from '@/lib/drizzle/client';
 import { exerciseAttemptsInApp, practiceSessionItemsInApp, practiceSessionsInApp, theoryAttemptsInApp } from '@/lib/drizzle/schema';
 import { DatabaseError } from '@/lib/errors';
 import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
-import type { CompletedSessionItem, ContentFilter, ListCompletedSessionsResponse, SessionHistoryResult } from '@/features/practice/sessions/api/contracts';
-import { namesForTopicIds, resolveTopicNames } from './topic-names';
-
-function asContentFilter(value: string): ContentFilter {
-  if (value === 'theory' || value === 'exercises') {
-    return value;
-  }
-
-  return 'all';
-}
+import type { CompletedSessionItem, ListCompletedSessionsResponse, SessionHistoryResult } from '@/features/practice/sessions/api/contracts';
+import { loadSessionTopics } from './load-session-topics';
 
 function emptyResult(): SessionHistoryResult {
   return { incorrect: 0, partial: 0, correct: 0, skipped: 0 };
@@ -27,8 +19,7 @@ export async function listCompletedSessions(): Promise<ListCompletedSessionsResp
     const sessionRows = await db
       .select({
         id: practiceSessionsInApp.id,
-        topicIds: practiceSessionsInApp.topicIds,
-        contentFilter: practiceSessionsInApp.contentFilter,
+        exerciseRatio: practiceSessionsInApp.exerciseRatio,
         completedAt: practiceSessionsInApp.completedAt,
         createdAt: practiceSessionsInApp.createdAt,
       })
@@ -41,16 +32,19 @@ export async function listCompletedSessions(): Promise<ListCompletedSessionsResp
     }
 
     const sessionIds = sessionRows.map((row) => row.id);
-    const itemResultRows = await db
-      .select({
-        sessionId: practiceSessionItemsInApp.sessionId,
-        skipped: practiceSessionItemsInApp.skipped,
-        result: sql<string | null>`coalesce(${theoryAttemptsInApp.result}, ${exerciseAttemptsInApp.result})`,
-      })
-      .from(practiceSessionItemsInApp)
-      .leftJoin(theoryAttemptsInApp, eq(practiceSessionItemsInApp.theoryAttemptId, theoryAttemptsInApp.id))
-      .leftJoin(exerciseAttemptsInApp, eq(practiceSessionItemsInApp.exerciseAttemptId, exerciseAttemptsInApp.id))
-      .where(inArray(practiceSessionItemsInApp.sessionId, sessionIds));
+    const [itemResultRows, topicsBySession] = await Promise.all([
+      db
+        .select({
+          sessionId: practiceSessionItemsInApp.sessionId,
+          skipped: practiceSessionItemsInApp.skipped,
+          result: sql<string | null>`coalesce(${theoryAttemptsInApp.result}, ${exerciseAttemptsInApp.result})`,
+        })
+        .from(practiceSessionItemsInApp)
+        .leftJoin(theoryAttemptsInApp, eq(practiceSessionItemsInApp.theoryAttemptId, theoryAttemptsInApp.id))
+        .leftJoin(exerciseAttemptsInApp, eq(practiceSessionItemsInApp.exerciseAttemptId, exerciseAttemptsInApp.id))
+        .where(inArray(practiceSessionItemsInApp.sessionId, sessionIds)),
+      loadSessionTopics(sessionIds),
+    ]);
 
     const resultBySession = new Map<string, SessionHistoryResult>();
     const totalBySession = new Map<string, number>();
@@ -68,13 +62,10 @@ export async function listCompletedSessions(): Promise<ListCompletedSessionsResp
       resultBySession.set(row.sessionId, totals);
     }
 
-    const topicNames = await resolveTopicNames(sessionRows.flatMap((row) => row.topicIds));
-
     const sessions: CompletedSessionItem[] = sessionRows.map((row) => ({
       id: row.id,
-      topicIds: row.topicIds,
-      topicNames: namesForTopicIds(row.topicIds, topicNames),
-      contentFilter: asContentFilter(row.contentFilter),
+      exerciseRatio: row.exerciseRatio,
+      topics: topicsBySession.get(row.id) ?? [],
       result: resultBySession.get(row.id) ?? emptyResult(),
       total: totalBySession.get(row.id) ?? 0,
       completedAt: row.completedAt ?? row.createdAt,

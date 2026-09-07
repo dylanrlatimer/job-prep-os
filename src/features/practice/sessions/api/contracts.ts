@@ -6,8 +6,26 @@ const optionalTiptapDoc = z
   .transform((val) => val ?? null);
 
 export const CreateSessionSchema = z.object({
-  topicIds: z.array(z.uuid()),
-  contentFilter: z.enum(['all', 'theory', 'exercises']),
+  exerciseRatio: z.number().int().min(0).max(100),
+  topics: z
+    .array(
+      z.object({
+        topicId: z.uuid(),
+        count: z.number().int().min(1).max(200),
+      }),
+    )
+    .min(1, 'noTopicsSelected')
+    .transform((topics) => {
+      const seen = new Set<string>();
+      return topics.filter((topic) => {
+        if (seen.has(topic.topicId)) {
+          return false;
+        }
+
+        seen.add(topic.topicId);
+        return true;
+      });
+    }),
 });
 
 export const SessionParamsSchema = z.object({
@@ -51,7 +69,32 @@ export type SessionHistoryResult = {
   skipped: number;
 };
 
-export type ContentFilter = 'all' | 'theory' | 'exercises';
+export type SessionSetupTopic = SessionTopic & {
+  theoryCount: number;
+  exerciseCount: number;
+};
+
+export type SessionAllocation = {
+  id: string;
+  name: string;
+  requested: number;
+  filled: number;
+};
+
+export type SessionFill = {
+  topicId: string;
+  requested: number;
+  filled: number;
+  exercises: number;
+  theory: number;
+};
+
+export type PreviewSessionResponse = {
+  total: number;
+  exercises: number;
+  theory: number;
+  topics: SessionFill[];
+};
 
 export type TheorySessionItemContent = {
   id: string;
@@ -89,19 +132,18 @@ export type ExerciseSessionItem = {
 export type SessionItem = TheorySessionItem | ExerciseSessionItem;
 
 export type GetSessionSetupResponse = {
-  topics: SessionTopic[];
+  exerciseRatio: number;
+  topics: SessionSetupTopic[];
 };
 
 export type CreateSessionInput = z.infer<typeof CreateSessionSchema>;
-export type CreateSessionResponse = {
+export type CreateSessionResponse = PreviewSessionResponse & {
   id: string;
 };
 
 export type GetSessionResponse = {
   id: string;
   status: 'active' | 'completed';
-  topicIds: string[];
-  contentFilter: ContentFilter;
   progress: SessionProgress;
   currentItem: SessionItem | null;
   unavailableItemId: string | null;
@@ -148,9 +190,8 @@ export type SkipItemResponse = {
 
 export type ActiveSessionItem = {
   id: string;
-  topicIds: string[];
-  topicNames: string[];
-  contentFilter: ContentFilter;
+  exerciseRatio: number;
+  topics: SessionAllocation[];
   progress: SessionProgress;
   createdAt: string;
 };
@@ -161,9 +202,8 @@ export type ListActiveSessionsResponse = {
 
 export type CompletedSessionItem = {
   id: string;
-  topicIds: string[];
-  topicNames: string[];
-  contentFilter: ContentFilter;
+  exerciseRatio: number;
+  topics: SessionAllocation[];
   result: SessionHistoryResult;
   total: number;
   completedAt: string;
@@ -187,9 +227,8 @@ export type SessionHistoryItemEntry = {
 
 export type SessionHistoryDetailResponse = {
   id: string;
-  topicIds: string[];
-  topicNames: string[];
-  contentFilter: ContentFilter;
+  exerciseRatio: number;
+  topics: SessionAllocation[];
   result: SessionHistoryResult;
   total: number;
   completedAt: string;

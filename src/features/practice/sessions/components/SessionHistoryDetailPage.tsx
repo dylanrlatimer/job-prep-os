@@ -8,14 +8,7 @@ import PageLoadError from '@/common/components/PageLoadError';
 import TopicList from '@/common/components/TopicList';
 import { attemptResultClassName, resultLabelKey } from '@/features/theory/lib/attempt-result-styles';
 import { sessionHistoryDetailQueryOptions } from '@/features/practice/sessions/api/queries';
-import type { ContentFilter } from '@/features/practice/sessions/api/contracts';
 import { formatSessionDate, sessionTopicLabel } from '@/features/practice/sessions/lib/session-title';
-
-function contentFilterLabel(filter: ContentFilter, t: (key: string) => string) {
-  if (filter === 'theory') return t('contentFilterTheory');
-  if (filter === 'exercises') return t('contentFilterExercises');
-  return t('contentFilterAll');
-}
 
 type SessionHistoryDetailPageProps = {
   sessionId: string;
@@ -64,12 +57,12 @@ export default function SessionHistoryDetailPage({ sessionId }: SessionHistoryDe
           <h1 className='m-0 text-lg font-medium text-foreground'>
             {t('sessionTitle', {
               date: formatSessionDate(data.createdAt),
-              topics: sessionTopicLabel(data.topicNames, t('topicNamesAll')),
+              topics: sessionTopicLabel(data.topics, t('topicNamesEmpty')),
             })}
           </h1>
           <div className='mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-secondary-foreground'>
             <span>{formatDate(data.completedAt)}</span>
-            <span>{contentFilterLabel(data.contentFilter, t)}</span>
+            <span>{t('mixLabel', { ratio: data.exerciseRatio })}</span>
             <span>
               {t('resultTotals', {
                 incorrect: data.result.incorrect,
