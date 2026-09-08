@@ -9,14 +9,7 @@ import ListPageSkeleton from '@/common/components/ListPageSkeleton';
 import PageLoadError from '@/common/components/PageLoadError';
 import { primaryButtonClassName, secondaryButtonClassName } from '@/common/styles/form';
 import { activeSessionsQueryOptions } from '@/features/practice/sessions/api/queries';
-import type { ContentFilter } from '@/features/practice/sessions/api/contracts';
 import { formatSessionDate, sessionTopicLabel } from '@/features/practice/sessions/lib/session-title';
-
-function contentFilterLabel(filter: ContentFilter, t: (key: string) => string) {
-  if (filter === 'theory') return t('contentFilterTheory');
-  if (filter === 'exercises') return t('contentFilterExercises');
-  return t('contentFilterAll');
-}
 
 export default function PracticeHomePage() {
   const t = useTranslations('PracticeHomePage');
@@ -78,11 +71,11 @@ export default function PracticeHomePage() {
                     <p className='m-0 text-sm text-foreground'>
                       {t('sessionTitle', {
                         date: formatSessionDate(session.createdAt),
-                        topics: sessionTopicLabel(session.topicNames, t('topicNamesAll')),
+                        topics: sessionTopicLabel(session.topics, t('topicNamesEmpty')),
                       })}
                     </p>
                     <div className='mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-secondary-foreground'>
-                      <span>{contentFilterLabel(session.contentFilter, t)}</span>
+                      <span>{t('mixLabel', { ratio: session.exerciseRatio })}</span>
                       <span>{t('progress', { answered: session.progress.answered, total: session.progress.total })}</span>
                     </div>
                   </div>

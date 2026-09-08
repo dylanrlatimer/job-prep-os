@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import Fuse from 'fuse.js';
 import type { BuilderTopic } from '@/features/theory/builder/api/contracts';
 
-export function useFilteredTopics(topics: BuilderTopic[], query: string): BuilderTopic[] {
+export function useFilteredTopics<T extends BuilderTopic>(topics: T[], query: string): T[] {
   const fuse = useMemo(
     () =>
       new Fuse(topics, {

@@ -78,6 +78,14 @@ Practice shows a multiple-choice prompt, accepts selected choices, and grades th
 
 Builders support a title, rich-text prompt, ordered choices (one or more correct), optional explanation, topics, source fields, and visibility. New personal exercises are added to the creator's repository automatically.
 
+### Sessions
+
+A session is a composed run from the user's saved library. The user sets how many items to pull from each topic and a global mix of exercises to questions. The default mix is 60% exercises, stored on the profile and editable in Settings. The builder can override it for that session without changing the default.
+
+The server samples unique items at random. Quantity is the intent. If a topic cannot honor the mix, remaining slots are filled from the other type. An item tagged with more than one selected topic fills one topic's quota, not both. Items exclusive to one selected topic are taken first. Shared leftovers go to the topic that still needs the most. Untagged library items are not included. The queue is shuffled so topics and types are mixed.
+
+Active sessions can be left and resumed. Completed runs stay in history with the mix, requested amounts, and attempt totals.
+
 ### Administration
 
 Administrators have a plain management area for:

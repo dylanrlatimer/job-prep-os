@@ -18,21 +18,12 @@ import { getAuthenticatedUser } from '@/lib/supabase/get-authenticated-user';
 import { assertSessionOwnedBy } from '@/features/practice/server/access';
 import type {
   AttemptResult,
-  ContentFilter,
   SessionHistoryDetailResponse,
   SessionHistoryItemEntry,
   SessionHistoryResult,
   SessionTopic,
 } from '@/features/practice/sessions/api/contracts';
-import { namesForTopicIds, resolveTopicNames } from './topic-names';
-
-function asContentFilter(value: string): ContentFilter {
-  if (value === 'theory' || value === 'exercises') {
-    return value;
-  }
-
-  return 'all';
-}
+import { loadSessionTopics } from './load-session-topics';
 
 function emptyResult(): SessionHistoryResult {
   return { incorrect: 0, partial: 0, correct: 0, skipped: 0 };
@@ -55,8 +46,7 @@ export async function getSessionHistoryDetail(sessionId: string): Promise<Sessio
         id: practiceSessionsInApp.id,
         profileId: practiceSessionsInApp.profileId,
         status: practiceSessionsInApp.status,
-        topicIds: practiceSessionsInApp.topicIds,
-        contentFilter: practiceSessionsInApp.contentFilter,
+        exerciseRatio: practiceSessionsInApp.exerciseRatio,
         completedAt: practiceSessionsInApp.completedAt,
         createdAt: practiceSessionsInApp.createdAt,
       })
@@ -163,13 +153,12 @@ export async function getSessionHistoryDetail(sessionId: string): Promise<Sessio
       };
     });
 
-    const topicNames = await resolveTopicNames(session.topicIds);
+    const topicsBySession = await loadSessionTopics([session.id]);
 
     return {
       id: session.id,
-      topicIds: session.topicIds,
-      topicNames: namesForTopicIds(session.topicIds, topicNames),
-      contentFilter: asContentFilter(session.contentFilter),
+      exerciseRatio: session.exerciseRatio,
+      topics: topicsBySession.get(session.id) ?? [],
       result,
       total: items.length,
       completedAt: session.completedAt ?? session.createdAt,

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { handleApiError } from '@/lib/api-errors';
-import { UpdateDisplayNameSchema } from '@/features/settings/api/contracts';
+import { UpdateSettingsSchema } from '@/features/settings/api/contracts';
 import { getSettings } from '@/features/settings/server/get-settings';
-import { updateDisplayName } from '@/features/settings/server/update-display-name';
+import { updateSettings } from '@/features/settings/server/update-settings';
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
@@ -16,8 +16,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 export async function PATCH(req: NextRequest): Promise<NextResponse> {
   try {
     const body = await req.json();
-    const input = UpdateDisplayNameSchema.parse(body);
-    const response = await updateDisplayName(input);
+    const input = UpdateSettingsSchema.parse(body);
+    const response = await updateSettings(input);
     return NextResponse.json(response);
   } catch (error) {
     return handleApiError(req, error);

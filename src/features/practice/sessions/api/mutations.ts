@@ -6,8 +6,13 @@ import type {
   AnswerTheoryItemResponse,
   CreateSessionInput,
   CreateSessionResponse,
+  PreviewSessionResponse,
   SkipItemResponse,
 } from './contracts';
+
+export function previewSession(input: CreateSessionInput): Promise<PreviewSessionResponse> {
+  return apiPost<PreviewSessionResponse>('/api/practice/sessions/preview', input);
+}
 
 export function createSession(input: CreateSessionInput): Promise<CreateSessionResponse> {
   return apiPost<CreateSessionResponse>('/api/practice/sessions', input);

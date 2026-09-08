@@ -621,26 +621,6 @@ export const topicsInApp = app.table("topics", {
 	check("topics_slug_check", sql`length(btrim(slug)) > 0`),
 ]);
 
-export const practiceSessionsInApp = app.table("practice_sessions", {
-	id: uuid().defaultRandom().primaryKey().notNull(),
-	profileId: uuid("profile_id").notNull(),
-	status: practiceSessionStatusInApp().default('active').notNull(),
-	topicIds: uuid("topic_ids").array().notNull(),
-	contentFilter: text("content_filter").default('all').notNull(),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	completedAt: timestamp("completed_at", { withTimezone: true, mode: 'string' }),
-	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-}, (table) => [
-	index("practice_sessions_profile_completed_idx").using("btree", table.profileId.asc().nullsLast().op("timestamptz_ops"), table.completedAt.desc().nullsFirst().op("uuid_ops")).where(sql`(status = 'completed'::app.practice_session_status)`),
-	index("practice_sessions_profile_status_idx").using("btree", table.profileId.asc().nullsLast().op("enum_ops"), table.status.asc().nullsLast().op("uuid_ops")),
-	foreignKey({
-			columns: [table.profileId],
-			foreignColumns: [profilesInApp.id],
-			name: "practice_sessions_profile_id_fkey"
-		}).onDelete("cascade"),
-	check("practice_sessions_content_filter_check", sql`content_filter = ANY (ARRAY['all'::text, 'theory'::text, 'exercises'::text])`),
-]);
-
 export const practiceSessionItemsInApp = app.table("practice_session_items", {
 	id: uuid().defaultRandom().primaryKey().notNull(),
 	sessionId: uuid("session_id").notNull(),
@@ -652,9 +632,11 @@ export const practiceSessionItemsInApp = app.table("practice_session_items", {
 	answeredAt: timestamp("answered_at", { withTimezone: true, mode: 'string' }),
 	skipped: boolean().default(false).notNull(),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	topicId: uuid("topic_id"),
 }, (table) => [
 	index("practice_session_items_pending_idx").using("btree", table.sessionId.asc().nullsLast().op("int2_ops"), table.position.asc().nullsLast().op("uuid_ops")).where(sql`((answered_at IS NULL) AND (skipped = false))`),
-	index("practice_session_items_session_position_idx").using("btree", table.sessionId.asc().nullsLast().op("int2_ops"), table.position.asc().nullsLast().op("int2_ops")),
+	index("practice_session_items_session_position_idx").using("btree", table.sessionId.asc().nullsLast().op("int2_ops"), table.position.asc().nullsLast().op("uuid_ops")),
+	index("practice_session_items_topic_id_idx").using("btree", table.topicId.asc().nullsLast().op("uuid_ops")).where(sql`(topic_id IS NOT NULL)`),
 	foreignKey({
 			columns: [table.exerciseAttemptId],
 			foreignColumns: [exerciseAttemptsInApp.id],
@@ -670,8 +652,32 @@ export const practiceSessionItemsInApp = app.table("practice_session_items", {
 			foreignColumns: [theoryAttemptsInApp.id],
 			name: "practice_session_items_theory_attempt_id_fkey"
 		}),
+	foreignKey({
+			columns: [table.topicId],
+			foreignColumns: [topicsInApp.id],
+			name: "practice_session_items_topic_id_fkey"
+		}),
 	unique("practice_session_items_session_id_position_key").on(table.sessionId, table.position),
 	unique("practice_session_items_session_id_content_type_content_id_key").on(table.sessionId, table.contentType, table.contentId),
+]);
+
+export const practiceSessionsInApp = app.table("practice_sessions", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	profileId: uuid("profile_id").notNull(),
+	status: practiceSessionStatusInApp().default('active').notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	completedAt: timestamp("completed_at", { withTimezone: true, mode: 'string' }),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	exerciseRatio: smallint("exercise_ratio").default(60).notNull(),
+}, (table) => [
+	index("practice_sessions_profile_completed_idx").using("btree", table.profileId.asc().nullsLast().op("timestamptz_ops"), table.completedAt.desc().nullsFirst().op("uuid_ops")).where(sql`(status = 'completed'::app.practice_session_status)`),
+	index("practice_sessions_profile_status_idx").using("btree", table.profileId.asc().nullsLast().op("enum_ops"), table.status.asc().nullsLast().op("uuid_ops")),
+	foreignKey({
+			columns: [table.profileId],
+			foreignColumns: [profilesInApp.id],
+			name: "practice_sessions_profile_id_fkey"
+		}).onDelete("cascade"),
+	check("practice_sessions_exercise_ratio_check", sql`(exercise_ratio >= 0) AND (exercise_ratio <= 100)`),
 ]);
 
 export const profilesInApp = app.table("profiles", {
@@ -680,12 +686,14 @@ export const profilesInApp = app.table("profiles", {
 	isAdmin: boolean("is_admin").default(false).notNull(),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	exerciseRatio: smallint("exercise_ratio").default(60).notNull(),
 }, (table) => [
 	foreignKey({
 			columns: [table.id],
 			foreignColumns: [usersInAuth.id],
 			name: "profiles_id_fkey"
 		}).onDelete("cascade"),
+	check("profiles_exercise_ratio_check", sql`(exercise_ratio >= 0) AND (exercise_ratio <= 100)`),
 ]);
 
 export const theoryQuestionsInApp = app.table("theory_questions", {
@@ -804,4 +812,24 @@ export const theoryLibraryItemsInApp = app.table("theory_library_items", {
 			name: "theory_library_items_question_id_fkey"
 		}).onDelete("cascade"),
 	primaryKey({ columns: [table.profileId, table.questionId], name: "theory_library_items_pkey"}),
+]);
+
+export const practiceSessionTopicsInApp = app.table("practice_session_topics", {
+	sessionId: uuid("session_id").notNull(),
+	topicId: uuid("topic_id").notNull(),
+	requestedCount: smallint("requested_count").notNull(),
+}, (table) => [
+	index("practice_session_topics_topic_id_idx").using("btree", table.topicId.asc().nullsLast().op("uuid_ops")),
+	foreignKey({
+			columns: [table.sessionId],
+			foreignColumns: [practiceSessionsInApp.id],
+			name: "practice_session_topics_session_id_fkey"
+		}).onDelete("cascade"),
+	foreignKey({
+			columns: [table.topicId],
+			foreignColumns: [topicsInApp.id],
+			name: "practice_session_topics_topic_id_fkey"
+		}),
+	primaryKey({ columns: [table.sessionId, table.topicId], name: "practice_session_topics_pkey"}),
+	check("practice_session_topics_requested_count_check", sql`requested_count > 0`),
 ]);

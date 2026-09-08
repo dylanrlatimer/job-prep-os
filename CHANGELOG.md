@@ -6,6 +6,14 @@ This project follows loose Semantic Versioning, mostly for the purpose of tracki
 
 ## [Unreleased]
 
+### Changed
+
+## [0.3.0] - 2026-09-08
+
+### Added
+
+- Practice sessions are composed per topic with a countable mix instead of dumping the whole library.
+
 ## [0.2.0] - 2026-09-06
 
 ### Added

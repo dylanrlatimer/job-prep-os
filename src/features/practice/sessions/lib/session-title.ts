@@ -1,3 +1,5 @@
+import type { SessionAllocation } from '@/features/practice/sessions/api/contracts';
+
 export function formatSessionDate(value: string) {
   const date = new Date(value);
   const year = date.getFullYear();
@@ -6,6 +8,10 @@ export function formatSessionDate(value: string) {
   return `${year}-${month}-${day}`;
 }
 
-export function sessionTopicLabel(topicNames: string[], allTopicsLabel: string) {
-  return topicNames.length > 0 ? topicNames.join(' · ') : allTopicsLabel;
+export function sessionTopicLabel(topics: SessionAllocation[], emptyLabel: string) {
+  if (topics.length === 0) {
+    return emptyLabel;
+  }
+
+  return topics.map((topic) => `${topic.name} ${topic.requested}`).join(' · ');
 }
